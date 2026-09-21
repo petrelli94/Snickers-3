@@ -1,0 +1,123 @@
+/* V4: Saturday-morning cartoon ink, brighter arcade panels and high-speed run HUDs. */
+:root{--cartoon-ink:#2a2230;--cartoon-cream:#fff2c6}
+body{background-image:radial-gradient(rgb(var(--accent-rgb)/.045) 1px,transparent 1px);background-size:8px 8px}
+.game-shell{border:3px solid var(--cartoon-ink);border-radius:11px;box-shadow:0 18px 0 rgb(42 34 48/.18),0 28px 65px #0006}
+.game-shell canvas{filter:saturate(1.12) contrast(1.06)}
+.key-art{filter:saturate(1.25) contrast(1.1)}
+.art-shade{mix-blend-mode:multiply}
+.game-tools .icon-button{border:2px solid var(--cartoon-ink);border-radius:8px;box-shadow:2px 3px 0 rgb(42 34 48/.32)}
+.primary-button,.secondary-button,.text-button,.upgrade,.theme-option,.accent-option{border-radius:8px}
+.primary-button{border:2px solid var(--cartoon-ink);box-shadow:3px 4px 0 rgb(42 34 48/.45)}
+.primary-button:hover{transform:translate(-1px,-2px);box-shadow:4px 6px 0 rgb(42 34 48/.45)}
+.secondary-button{border-width:2px}
+.hud{font-weight:800}
+.health-segment{border:2px solid var(--cartoon-ink);border-radius:4px;transform:skewX(-10deg) rotate(-2deg)}
+.boss-hud{filter:drop-shadow(2px 3px 0 rgb(42 34 48/.45))}
+.boss-hud .boss-track{border:2px solid var(--cartoon-ink);height:10px;border-radius:5px}
+.boss-hud.karnil .boss-track{background:#4b3439;border-color:#2a2230}
+.boss-hud.karnil .boss-track>div{background:linear-gradient(90deg,#c98265,#ffb35e)}
+.boss-hud.karnil>div:first-child span:last-child{color:#ffc17b}
+.weapon-ability{border:2px solid var(--cartoon-ink);padding:6px 9px;border-radius:8px;background:rgb(var(--bg-rgb)/.8);box-shadow:2px 3px 0 rgb(42 34 48/.3)}
+.weapon-ability kbd{background:var(--lime);color:#2a2230;border-color:var(--cartoon-ink)}
+.weapon-ability strong{font-family:var(--display);color:var(--lime);font-size:18px}
+.power-hud{position:absolute;right:26px;top:126px;z-index:4;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;max-width:34%;pointer-events:none}
+.power-chip{display:flex;align-items:center;gap:5px;border:2px solid var(--cartoon-ink);border-radius:999px;padding:6px 9px;background:rgb(var(--panel-rgb,var(--bg-rgb))/0.92);color:#fff2c6;box-shadow:2px 3px 0 rgb(42 34 48/.35);font-size:12px}
+.power-chip b{font-size:10px;letter-spacing:.3px}
+.power-chip i{font-style:normal;color:var(--lime);font-variant-numeric:tabular-nums}
+.power-chip.haste{background:#47744f}
+.power-chip.berserk{background:#8a4b4b}
+.power-chip.magnet{background:#496b86}
+.power-chip.barrier{background:#6f5d94}
+.power-chip.jackpot{background:#8a6a36}
+.power-chip.freeze{background:#397b91}
+.power-chip.doubleShot{background:#8b5791}
+.power-chip.phase{background:#3f7180}
+.power-chip.scoreRush{background:#956a36}
+.power-chip.thorns{background:#7c4a53}
+.intro-card,.retry-card{border:2px solid var(--cartoon-ink);border-radius:10px;background:rgb(var(--bg-rgb)/.75);box-shadow:4px 5px 0 rgb(42 34 48/.3)}
+.retry-badge{display:inline-flex;align-items:center;justify-content:center;margin:4px auto 18px;padding:8px 12px;border:2px solid var(--cartoon-ink);border-radius:999px;background:var(--lime);color:#2a2230;font:800 11px/1 var(--body);letter-spacing:1px;box-shadow:2px 3px 0 rgb(42 34 48/.35)}
+.special-upgrades .special-upgrade{background:linear-gradient(145deg,rgb(var(--accent-rgb)/.25),rgb(var(--bg-rgb)/.72));border-color:var(--lime)}
+.special-upgrade .upgrade-icon{background:var(--lime);color:#2a2230}
+.achievement-hud{position:absolute;right:26px;top:72px;z-index:8;pointer-events:none}
+.achievement-pop{display:flex;flex-direction:column;gap:3px;min-width:220px;padding:14px 18px;border:2px solid var(--cartoon-ink);border-radius:9px;background:var(--lime);color:#2a2230;box-shadow:3px 4px 0 rgb(42 34 48/.45);animation:achievement-in .24s ease-out}
+.achievement-pop b{font-size:10px;letter-spacing:1.6px}
+.achievement-pop strong{font-family:var(--display);font-size:24px;line-height:1}
+.achievement-pop small{font-size:12px;line-height:1.25}
+.achievement-list{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:740px;margin:18px auto 22px;text-align:left}
+.achievement-row{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:8px;padding:9px 10px;border:2px solid var(--line);border-radius:8px;background:rgb(var(--bg-rgb)/.55);opacity:.65}
+.achievement-row.done{opacity:1;border-color:var(--lime);background:rgb(var(--accent-rgb)/.12)}
+.achievement-badge{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:rgb(var(--accent-rgb)/.18);color:var(--lime);font-size:16px}
+.achievement-row strong{display:block;font-size:12px;letter-spacing:.7px}
+.achievement-row small{display:block;color:var(--dim);font-size:10px;line-height:1.2;margin-top:2px}
+.achievement-row>b{font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums}
+.achievement-track{height:3px;margin-top:6px;background:rgb(var(--accent-rgb)/.15);border-radius:99px;overflow:hidden}
+.achievement-track i{display:block;height:100%;background:var(--lime)}
+.settings-section,.achievement-row,.upgrade{box-shadow:2px 3px 0 rgb(42 34 48/.17)}
+.snickers-quote{border:2px solid var(--cartoon-ink);border-left-width:7px;border-radius:8px;box-shadow:2px 3px 0 rgb(42 34 48/.23)}
+.upgrade:hover,.theme-option:hover,.accent-option:hover{transform:translateY(-2px);box-shadow:3px 4px 0 rgb(42 34 48/.25)}
+@keyframes achievement-in{from{opacity:0;transform:translateY(-12px) rotate(-2deg)}to{opacity:1;transform:translateY(0) rotate(0)}}
+@media(max-width:1100px){.power-hud{right:20px;top:116px;max-width:42%}.achievement-hud{right:18px}.achievement-list{gap:6px}.weapon-ability{padding:5px 7px}}
+@media(max-width:760px){.game-shell{border-width:2px;box-shadow:0 11px 0 rgb(42 34 48/.18),0 20px 45px #0006}.power-hud{top:128px;right:15px;max-width:calc(100% - 30px);gap:4px}.power-chip{font-size:10px;padding:4px 7px}.power-chip b{font-size:9px}.power-chip i{font-size:9px}.achievement-hud{top:60px;right:12px}.achievement-pop{min-width:190px;padding:11px 13px}.achievement-pop strong{font-size:20px}.achievement-list{grid-template-columns:1fr;max-width:390px;margin-top:10px}.achievement-row{padding:8px}.weapon-ability{padding:4px 6px}.weapon-ability strong{font-size:15px}.run-info{gap:7px}}
+@media(max-width:430px){.power-hud{top:143px}.power-chip b{display:none}.achievement-pop{min-width:175px}.achievement-list{max-height:260px;overflow:auto}.weapon-ability{max-width:148px}.weapon-ability span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:102px;display:block}}
+
+/* Power-up encyclopedia in the main menu */
+.powerup-guide{max-width:760px;max-height:420px;overflow:auto;padding-right:4px}
+.power-guide-row{min-height:74px}
+.power-guide-icon{display:grid!important;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:50%;background:rgb(var(--accent-rgb)/.16);border:1px solid rgb(var(--accent-rgb)/.48);color:var(--lime);font-family:var(--display);font-size:24px!important}
+@media(max-width:760px){.powerup-guide{max-height:330px}.power-guide-row{min-height:0}.power-guide-icon{flex-basis:34px;width:34px;height:34px;font-size:20px!important}}
+
+/* Karnil phase-two miniboss HUD */
+.mini-boss-hud{margin-top:8px;padding:6px 8px 7px;border:2px solid var(--cartoon-ink);border-radius:7px;background:rgb(37 30 43/.86);box-shadow:2px 3px 0 rgb(42 34 48/.35)}
+.mini-boss-hud>div:first-child{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;color:#e5ddc8;font-size:9px;font-weight:900;letter-spacing:1px}
+.mini-boss-hud>div:first-child span:last-child{color:#9fd86f;font-size:8px}
+.mini-boss-track{height:7px;border:2px solid var(--cartoon-ink);border-radius:4px;background:#24362a;overflow:hidden}
+.mini-boss-track>div{height:100%;width:100%;background:linear-gradient(90deg,#769b62,#d5dc72);transition:width .1s}
+@media(max-width:760px){.mini-boss-hud{margin-top:5px;padding:4px 5px}.mini-boss-hud>div:first-child{font-size:8px}.mini-boss-track{height:6px}}
+
+
+/* Upgrade type clarity + rare legendary cards */
+.upgrade{position:relative}
+.upgrade-kind{display:inline-flex;align-items:center;min-height:20px;margin:0 0 10px;padding:4px 7px;border:2px solid var(--cartoon-ink);border-radius:999px;font:900 9px/1 var(--body);letter-spacing:1.15px;box-shadow:1px 2px 0 rgb(42 34 48/.28)}
+.upgrade-kind.skill-kind{background:rgb(var(--accent-rgb)/.14);color:var(--lime)}
+.upgrade-kind.weapon-kind{background:#f0b45d;color:#2a2230}
+.upgrade-kind.special-kind{background:var(--lime);color:#2a2230}
+.weapon-upgrade{border-color:#b47b3d}
+.weapon-upgrade .upgrade-icon{background:#f0b45d22;border-color:#f0b45d88;color:#ffd58b}
+.legendary-upgrade{border:3px solid #ffd86b!important;background:linear-gradient(145deg,#5c4421,#241b30 58%,#4b2e18)!important;box-shadow:0 0 0 3px #8d6428,0 0 22px #ffd86b55,3px 5px 0 rgb(42 34 48/.45)!important;overflow:hidden}
+.legendary-upgrade:after{content:'✦';position:absolute;right:10px;top:7px;color:#ffe9a5;font-size:20px;text-shadow:0 0 9px #ffd86b}
+.legendary-upgrade .legendary-kind{background:linear-gradient(90deg,#ffd86b,#fff0ab);color:#39270e;border-color:#5b3d12}
+.legendary-upgrade .upgrade-icon{background:#ffd86b;color:#35250e;border-color:#fff0ab;box-shadow:0 0 16px #ffd86b66}
+.legendary-upgrade strong{color:#fff0b1;text-shadow:0 1px 8px #000}
+.legendary-upgrade em{color:#ffd86b}
+
+/* Power-up encyclopedia inside pause */
+.pause-power-guide{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;max-width:760px;max-height:290px;overflow:auto;margin:0 auto 20px;padding:3px;text-align:left}
+.pause-power-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:2px solid var(--line);border-radius:8px;background:rgb(var(--bg-rgb)/.58)}
+.pause-power-row .power-guide-icon{flex:0 0 34px;width:34px;height:34px;font-size:19px!important}
+.pause-power-row b{display:block;font-size:11px;letter-spacing:.5px;color:var(--ink)}
+.pause-power-row small{display:block;margin-top:2px;color:var(--dim);font-size:10px;line-height:1.25}
+@media(max-width:760px){.pause-power-guide{grid-template-columns:1fr;max-height:250px}.upgrade-kind{font-size:8px;margin-bottom:7px;padding:3px 6px}}
+@media(max-width:430px){.upgrade-kind{grid-column:2;margin:0 0 3px;width:max-content}.legendary-upgrade:after{display:none}.pause-power-guide{max-height:230px}}
+.legendary-skill-chip{border-color:#ffd86b!important;box-shadow:0 0 8px #ffd86b55!important}
+.legendary-skill-chip>span{color:#ffe8a0!important}
+
+
+.reward-upgrades{grid-template-columns:repeat(2,minmax(0,1fr));max-width:900px;margin-left:auto;margin-right:auto}
+.heal-upgrade{border:3px solid #e58b9d!important;background:linear-gradient(145deg,#4b2532,#241b30 62%,#3c2737)!important;box-shadow:0 0 0 2px #7e4454,3px 5px 0 rgb(42 34 48/.35)!important}
+.heal-upgrade .heal-kind{background:#f1a5b4;color:#351d27;border-color:#6d3948}
+.heal-upgrade .upgrade-icon{background:#f1a5b422;border-color:#f1a5b488;color:#ffc1ce}
+.heal-upgrade strong{color:#ffd5de}
+.heal-upgrade em{color:#f1a5b4}
+@media(min-width:980px){.reward-upgrades{grid-template-columns:repeat(4,minmax(0,1fr));max-width:1160px}.overlay-content:has(.reward-upgrades){max-width:1180px}}
+@media(max-width:760px){.reward-upgrades{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.reward-upgrades{grid-template-columns:1fr}}
+
+/* 30.000-Punkte-Meilenstein: eigener pausierender Run-Skill-Screen */
+.score-skill-upgrades{grid-template-columns:repeat(3,1fr);max-width:900px;margin-left:auto;margin-right:auto}
+.score-skill-card{border-color:rgb(var(--accent-rgb)/.48);background:linear-gradient(155deg,rgb(var(--accent-rgb)/.12),rgb(var(--bg-rgb)/.78))}
+.score-skill-card .upgrade-icon{box-shadow:0 0 20px rgb(var(--accent-rgb)/.13)}
+@media(max-width:760px){.score-skill-upgrades{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:430px){.score-skill-upgrades{grid-template-columns:1fr}}
+
+/* New Game+ */
+.ngplus-menu-button{color:#ffd96f;font-weight:900;letter-spacing:1.3px}.ngplus-menu-button .help-circle{border-color:#ffd96f;color:#ffd96f}.ngplus-kicker{color:#ffd96f!important;text-shadow:0 0 12px #ff9f4a77}.ngplus-button{background:linear-gradient(135deg,#ffd96f,#ff8f55)!important;color:#281813!important;box-shadow:0 0 24px #ff9a4d55}.ngplus-upgrade{border-color:#ffb65f!important;background:linear-gradient(145deg,#38291f,#271e25)!important;box-shadow:0 0 0 2px #ffb65f35,0 0 22px #ff8f4930!important}.ngplus-upgrade .upgrade-icon{color:#ffd96f!important;border-color:#ffb65f66!important;background:#ffad4d16!important}.ngplus-upgrade .upgrade-kind{color:#ffd96f!important}.pafti-scene{height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:8px auto 16px}.pafti-controller{position:relative;width:118px;height:62px;border:4px solid #392f35;border-radius:31px 31px 24px 24px;background:#c9c5bd;box-shadow:0 8px 0 #17131a55;display:flex;align-items:center;justify-content:space-between;padding:0 18px;color:#433b46;font-style:normal;z-index:2}.pafti-controller:before,.pafti-controller:after{content:'';position:absolute;bottom:-12px;width:27px;height:22px;background:#c9c5bd;border:4px solid #392f35;border-top:0}.pafti-controller:before{left:11px;transform:rotate(13deg)}.pafti-controller:after{right:11px;transform:rotate(-13deg)}.pafti-controller b{font-size:26px}.pafti-controller em{font-style:normal;font-size:15px;color:#7b4c93;letter-spacing:5px}.pafti-controller i{position:absolute;top:-17px;left:48px;width:20px;height:17px;border:3px solid #392f35;border-bottom:0;border-radius:12px 12px 0 0;background:#ddd8cc}.pafti-body{position:relative;width:62px;height:65px;margin-top:-2px;background:#756b68;border:4px solid #392f35;border-radius:22px 22px 12px 12px;box-shadow:0 6px 0 #15101855}.pafti-body:before{content:'';position:absolute;left:-17px;top:13px;width:17px;height:43px;border:4px solid #392f35;border-right:0;border-radius:18px 0 0 18px;background:#847873;transform:rotate(10deg)}.pafti-body:after{content:'';position:absolute;right:-22px;top:20px;width:4px;height:58px;background:#a98b60;border:2px solid #392f35;border-radius:5px;transform:rotate(-8deg)}
