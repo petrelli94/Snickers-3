@@ -41,15 +41,8 @@
   };
   const accents = {lime:{name:'Limette',hex:'#c7f36b',rgb:'199 243 107'}, cyan:{name:'Eisblau',hex:'#7ee5f5',rgb:'126 229 245'}, violet:{name:'Flieder',hex:'#d1afff',rgb:'209 175 255'}, amber:{name:'Gold',hex:'#ffd17a',rgb:'255 209 122'}, pink:{name:'Pink',hex:'#ffa9ca',rgb:'255 169 202'}};
   let settings = {theme:'forest',accent:'lime'}, settingsReturn = 'menu', generalDefeated = false, cyberDefeated = false, lastDefeatedBoss = '';
-  let gamePlusLevel=0, newGamePlus=false, newGamePlus2=false, ngPlusUnlocked=false, ngPlusBuild=null, ngPlus2Unlocked=false, ngPlus2Build=null, ngPlusEverUnlocked=false, hallOfFame=[];
-  try{
-    ngPlusUnlocked=localStorage.getItem('snickers3-ngplus-unlocked-v1')==='1';
-    ngPlusBuild=JSON.parse(localStorage.getItem('snickers3-ngplus-build-v1')||'null');
-    ngPlus2Unlocked=localStorage.getItem('snickers3-ngplus2-unlocked-v1')==='1';
-    ngPlus2Build=JSON.parse(localStorage.getItem('snickers3-ngplus2-build-v1')||'null');
-    ngPlusEverUnlocked=localStorage.getItem('snickers3-ngplus-ever-v1')==='1'||ngPlusUnlocked||ngPlus2Unlocked;
-    hallOfFame=JSON.parse(localStorage.getItem('snickers3-hall-of-fame-v1')||'[]')||[];
-  }catch{}
+  let newGamePlus=false, ngPlusUnlocked=false, ngPlusBuild=null;
+  try{ngPlusUnlocked=localStorage.getItem('snickers3-ngplus-unlocked-v1')==='1';ngPlusBuild=JSON.parse(localStorage.getItem('snickers3-ngplus-build-v1')||'null');}catch{}
   try { const saved=JSON.parse(localStorage.getItem('snickers3-settings-v4')||localStorage.getItem('snickers3-settings-v3')||localStorage.getItem('snickers3-settings-v2')||'{}'); if(themes[saved.theme])settings.theme=saved.theme;if(accents[saved.accent])settings.accent=saved.accent; } catch {}
   const accent = () => accents[settings.accent].hex;
   const isBoss = e => e?.type === 'boss';
@@ -109,7 +102,7 @@
     {id:'ngplus_juggernaut',title:'SCHWEINEPANZER',desc:'Besiege 5 Juggernaut-Ferkel in New Game+.',goal:5,kind:'progress',ngplus:true,secret:true},
     {id:'ngplus_mustard',title:'MIT SENF, BITTE',desc:'Feuere die NUSS-BAZOOKA MIT SENF ab.',goal:1,kind:'gag',ngplus:true,secret:true},
     {id:'ngplus_first_skill',title:'PLUS ULTRA',desc:'Wähle dein erstes exklusives New-Game+-Upgrade.',goal:1,kind:'gag',ngplus:true,secret:true},
-    {id:'ngplus_all_skills',title:'ACHT PLUS',desc:'Sammle alle acht exklusiven New-Game+-Skills.',goal:8,kind:'progress',ngplus:true,secret:true},
+    {id:'ngplus_all_skills',title:'FÜNF PLUS',desc:'Sammle alle fünf exklusiven New-Game+-Skills.',goal:5,kind:'progress',ngplus:true,secret:true},
     {id:'ngplus_phase3',title:'DRITTE RUNDE',desc:'Erreiche Karnils dritte Phase in New Game+.',goal:1,kind:'gag',ngplus:true,secret:true},
     {id:'ngplus_pafti',title:'PAFTI WAR HIER',desc:'Erlebe Paftis Eingriff in Karnils dritte Phase.',goal:1,kind:'gag',ngplus:true,secret:true},
     {id:'ngplus_clear',title:'PLUS DURCHGESPIELT',desc:'Schließe New Game+ vollständig ab.',goal:1,kind:'gag',ngplus:true,secret:true}
@@ -186,7 +179,7 @@
   }
   function showAchievements(){
     if(mode!=='menu')return;mode='achievements';
-    const rows=achievements.map(a=>{const hidden=a.secret&&!ngPlusEverUnlocked;if(hidden)return `<div class="achievement-row secret-achievement"><span class="achievement-badge">?</span><div><strong>???</strong><small>GEHEIM · Wird nach dem ersten Durchspielen enthüllt.</small><div class="achievement-track"><i style="width:0%"></i></div></div><b>—</b></div>`;const value=Math.min(a.goal,achievementValue(a.id)),done=achievementUnlocked(a.id),pct=value/a.goal*100;return `<div class="achievement-row ${done?'done':''}${a.ngplus?' ngplus-achievement':''}"><span class="achievement-badge">${done?'★':'○'}</span><div><strong>${a.title}</strong><small>${a.desc}</small><div class="achievement-track"><i style="width:${pct}%"></i></div></div><b>${value}/${a.goal}</b></div>`;}).join('');
+    const rows=achievements.map(a=>{const hidden=a.secret&&!ngPlusUnlocked;if(hidden)return `<div class="achievement-row secret-achievement"><span class="achievement-badge">?</span><div><strong>???</strong><small>GEHEIM · Wird nach dem ersten Durchspielen enthüllt.</small><div class="achievement-track"><i style="width:0%"></i></div></div><b>—</b></div>`;const value=Math.min(a.goal,achievementValue(a.id)),done=achievementUnlocked(a.id),pct=value/a.goal*100;return `<div class="achievement-row ${done?'done':''}${a.ngplus?' ngplus-achievement':''}"><span class="achievement-badge">${done?'★':'○'}</span><div><strong>${a.title}</strong><small>${a.desc}</small><div class="achievement-track"><i style="width:${pct}%"></i></div></div><b>${value}/${a.goal}</b></div>`;}).join('');
     showOverlay(`<span class="eyebrow">DEINE NUSS-CHRONIK</span><h2 id="overlayTitle">ACHIEVEMENTS</h2><p>${achievements.filter(a=>achievementUnlocked(a.id)).length} von ${achievements.length} freigeschaltet.</p><div class="achievement-list">${rows}</div><button class="primary-button" id="achievementClose">ZURÜCK <span>↗</span></button>`);$('achievementClose').onclick=()=>{mode='menu';hideOverlay();$('startButton').focus();};
   }
   function announce(kicker, title) {
@@ -219,18 +212,16 @@
   }
   function showHamsterRebirth(){
     if(mode!=='settings')return;
-    showOverlay(`<span class="eyebrow">OPTIONEN · LOKALE DATEN</span><h2 id="overlayTitle">HAMSTERNEUGEBURT</h2><p>Wähle aus, was auf diesem Gerät zurückgesetzt werden soll. Nicht angehakte Daten bleiben erhalten.</p><div class="rebirth-options"><label class="rebirth-choice"><input type="checkbox" id="resetAchievements"><span><strong>Achievements zurücksetzen</strong><small>Setzt alle Achievements und deren Fortschritt auf 0.</small></span></label><label class="rebirth-choice"><input type="checkbox" id="resetHighscore"><span><strong>Highscore zurücksetzen</strong><small>Löscht den lokal gespeicherten Rekord.</small></span></label><label class="rebirth-choice"><input type="checkbox" id="resetRun"><span><strong>Run / New Game+ zurücksetzen</strong><small>Löscht den gespeicherten Sieger-Build sowie New Game+ und New Game+2. Die Hall of Fame bleibt erhalten.</small></span></label></div><div class="overlay-actions"><button class="secondary-button" id="rebirthBack">ZURÜCK</button><button class="primary-button danger-button" id="rebirthConfirm" disabled>NEUGEBURT STARTEN <span>↻</span></button></div>`);
-    const ach=$('resetAchievements'),high=$('resetHighscore'),run=$('resetRun'),confirm=$('rebirthConfirm');
-    const sync=()=>{confirm.disabled=!(ach.checked||high.checked||run.checked);};
-    ach.onchange=sync;high.onchange=sync;run.onchange=sync;
+    showOverlay(`<span class="eyebrow">OPTIONEN · LOKALE DATEN</span><h2 id="overlayTitle">HAMSTERNEUGEBURT</h2><p>Wähle aus, was auf diesem Gerät zurückgesetzt werden soll. Nicht angehakte Daten bleiben erhalten.</p><div class="rebirth-options"><label class="rebirth-choice"><input type="checkbox" id="resetAchievements"><span><strong>Achievements zurücksetzen</strong><small>Setzt alle 40 Achievements und deren Fortschritt auf 0.</small></span></label><label class="rebirth-choice"><input type="checkbox" id="resetHighscore"><span><strong>Highscore zurücksetzen</strong><small>Löscht den lokal gespeicherten Rekord.</small></span></label></div><div class="overlay-actions"><button class="secondary-button" id="rebirthBack">ZURÜCK</button><button class="primary-button danger-button" id="rebirthConfirm" disabled>NEUGEBURT STARTEN <span>↻</span></button></div>`);
+    const ach=$('resetAchievements'),high=$('resetHighscore'),confirm=$('rebirthConfirm');
+    const sync=()=>{confirm.disabled=!(ach.checked||high.checked);};
+    ach.onchange=sync;high.onchange=sync;
     $('rebirthBack').onclick=showSettings;
     confirm.onclick=()=>{
       if(confirm.disabled)return;
-      const done=[];
-      if(ach.checked){achievementData={};try{localStorage.removeItem('snickers3-achievements-v4');localStorage.removeItem('snickers3-achievements-v3');}catch{}$('achievementHud').classList.add('hidden');done.push('Achievements');}
-      if(high.checked){record=0;try{localStorage.removeItem('snickers3-best-v4');localStorage.removeItem('snickers3-best-v3');}catch{}$('menuRecord').textContent='';done.push('Highscore');}
-      if(run.checked){ngPlusUnlocked=false;ngPlusBuild=null;ngPlus2Unlocked=false;ngPlus2Build=null;try{localStorage.removeItem('snickers3-ngplus-unlocked-v1');localStorage.removeItem('snickers3-ngplus-build-v1');localStorage.removeItem('snickers3-ngplus2-unlocked-v1');localStorage.removeItem('snickers3-ngplus2-build-v1');}catch{}updateNGPlusMenu();done.push('Run / New Game+');}
-      showOverlay(`<span class="eyebrow">HAMSTERNEUGEBURT ABGESCHLOSSEN</span><h2 id="overlayTitle">FRISCH AUS DEM NEST.</h2><p>${done.join(', ')} wurde zurückgesetzt.</p><button class="primary-button" id="rebirthDone">ZURÜCK ZU DEN OPTIONEN <span>↗</span></button>`);
+      if(ach.checked){achievementData={};try{localStorage.removeItem('snickers3-achievements-v4');localStorage.removeItem('snickers3-achievements-v3');}catch{}$('achievementHud').classList.add('hidden');}
+      if(high.checked){record=0;try{localStorage.removeItem('snickers3-best-v4');localStorage.removeItem('snickers3-best-v3');}catch{}$('menuRecord').textContent='';}
+      showOverlay(`<span class="eyebrow">HAMSTERNEUGEBURT ABGESCHLOSSEN</span><h2 id="overlayTitle">FRISCH AUS DEM NEST.</h2><p>${ach.checked&&high.checked?'Achievements und Highscore wurden zurückgesetzt.':ach.checked?'Alle Achievements wurden zurückgesetzt.':'Der Highscore wurde zurückgesetzt.'}</p><button class="primary-button" id="rebirthDone">ZURÜCK ZU DEN OPTIONEN <span>↗</span></button>`);
       $('rebirthDone').onclick=showSettings;
     };
   }
@@ -244,63 +235,29 @@
     keys.clear(); touch.x = touch.y = 0; touch.id = null;
     $('joystickThumb').style.transform = 'translate(0,0)';
   }
-  const ngPlusCarryKeys=['maxHp','speed','dashCooldown','damage','fireRate','spread','pierce','magnet','frost','chain','orbit','nutSentry','carrotDrone','eggBooger','merzEggs','shield','vampire','powerLuck','ammoBonus','ammoDropLuck','specialDamage','damageGuard','pickupLifeBonus','bossDamage','homing','crit','shockDash','ammoRefillBonus','scoreRushBonus','powerDuration','nutstorm','waveRenew','turretVolley','mustardTrail','dashNova','executioner','powerFrenzy','dodgeChance','deathBurst','deathBurstKills','ammoAlchemy'];
+  const ngPlusCarryKeys=['maxHp','speed','dashCooldown','damage','fireRate','spread','pierce','magnet','frost','chain','orbit','nutSentry','carrotDrone','eggBooger','merzEggs','shield','vampire','powerLuck','ammoBonus','ammoDropLuck','specialDamage','damageGuard','pickupLifeBonus','bossDamage','homing','crit','shockDash','ammoRefillBonus','scoreRushBonus','powerDuration','nutstorm','waveRenew','turretVolley','mustardTrail','dashNova','executioner','powerFrenzy'];
   function captureNGPlusBuild(p){
     const build={};for(const k of ngPlusCarryKeys)if(p[k]!==undefined)build[k]=p[k];
     build.skills={...(p.skills||{})};build.specials={...(p.specials||{})};build.weapons=[...(p.weapons||['nutBomb'])];build.scorePerks={...(p.scorePerks||{})};return build;
   }
   function applyNGPlusBuild(p,build){
     if(!build)return;for(const k of ngPlusCarryKeys)if(build[k]!==undefined)p[k]=build[k];
-    p.skills={...(build.skills||{})};p.specials={...(build.specials||{})};p.weapons=[...(build.weapons||['nutBomb'])];p.scorePerks={damage:0,speed:0,fireRate:0,dash:0,powerLuck:0,dodge:0,...(build.scorePerks||{})};
+    p.skills={...(build.skills||{})};p.specials={...(build.specials||{})};p.weapons=[...(build.weapons||['nutBomb'])];p.scorePerks={damage:0,speed:0,fireRate:0,dash:0,powerLuck:0,...(build.scorePerks||{})};
     p.weaponUses={};for(const id of p.weapons)p.weaponUses[id]=(weaponBook[id]?.max||0)+(p.ammoBonus||0);p.weaponIndex=0;p.hp=p.maxHp;p.shieldReady=Boolean(p.shield);p.shieldCd=0;p.nutSentryCd=0;p.carrotDroneCd=0;p.eggBoogerCd=0;p.eggBoogerAnim=0;p.eggBoogerFrom=null;p.eggBoogerTo=null;p.merzEggCd=0;p.ossiWallTime=0;
   }
-  function scorePerkLevels(p){return Object.values(p?.scorePerks||{}).reduce((a,b)=>a+Number(b||0),0);}
-  function scoreSkillCost(level){return 50000+level*25000;}
-  function initializeScoreSkillProgress(p){p.scoreSkillQueue=[];p.scoreSkillNext=scoreSkillCost(scorePerkLevels(p));}
-  function persistProgressionWin(){
-    if(!player)return;
-    const build=captureNGPlusBuild(player);
-    if(gamePlusLevel===0){
-      ngPlusUnlocked=true;ngPlusBuild=build;ngPlusEverUnlocked=true;
-      try{localStorage.setItem('snickers3-ngplus-unlocked-v1','1');localStorage.setItem('snickers3-ngplus-build-v1',JSON.stringify(build));localStorage.setItem('snickers3-ngplus-ever-v1','1');}catch{}
-    }else if(gamePlusLevel===1){
-      ngPlus2Unlocked=true;ngPlus2Build=build;ngPlusEverUnlocked=true;
-      try{localStorage.setItem('snickers3-ngplus2-unlocked-v1','1');localStorage.setItem('snickers3-ngplus2-build-v1',JSON.stringify(build));localStorage.setItem('snickers3-ngplus-ever-v1','1');}catch{}
-    }else{
-      const entry={completedAt:new Date().toISOString(),score,kills,time:Math.floor(runTime),maxHp:player.maxHp,retriesLeft,skills:Object.keys(player.skills||{}),specials:Object.keys(player.specials||{}),weapons:[...(player.weapons||[])],scorePerks:{...(player.scorePerks||{})}};
-      hallOfFame=[entry,...hallOfFame].slice(0,8);
-      ngPlusUnlocked=false;ngPlusBuild=null;ngPlus2Unlocked=false;ngPlus2Build=null;
-      try{localStorage.setItem('snickers3-hall-of-fame-v1',JSON.stringify(hallOfFame));localStorage.removeItem('snickers3-ngplus-unlocked-v1');localStorage.removeItem('snickers3-ngplus-build-v1');localStorage.removeItem('snickers3-ngplus2-unlocked-v1');localStorage.removeItem('snickers3-ngplus2-build-v1');}catch{}
-    }
-    updateNGPlusMenu();
+  function saveNGPlusBuild(){
+    if(!player)return;ngPlusUnlocked=true;ngPlusBuild=captureNGPlusBuild(player);try{localStorage.setItem('snickers3-ngplus-unlocked-v1','1');localStorage.setItem('snickers3-ngplus-build-v1',JSON.stringify(ngPlusBuild));}catch{}updateNGPlusMenu();
   }
-  function updateNGPlusMenu(){
-    const b1=$('ngPlusButton'),b2=$('ngPlus2Button'),hall=$('hallOfFameButton');
-    if(b1)b1.classList.toggle('hidden',!(ngPlusUnlocked&&ngPlusBuild));
-    if(b2)b2.classList.toggle('hidden',!(ngPlus2Unlocked&&ngPlus2Build));
-    if(hall)hall.classList.toggle('hidden',!hallOfFame.length);
-  }
-  function showHallOfFame(){
-    if(mode!=='menu'||!hallOfFame.length)return;mode='hallOfFame';
-    const skillName=id=>(skillBook[id]||legendarySkillBook[id]||ngPlusSkillBook[id])?.title||id;
-    const specialName=id=>specialUpgradeBook[id]?.title||id;
-    const weaponName=id=>weaponBook[id]?.name||id;
-    const rows=hallOfFame.map((r,i)=>`<article class="hall-entry"><div class="hall-entry-head"><strong>♛ RUN ${hallOfFame.length-i} · NEW GAME+2</strong><span>${new Date(r.completedAt).toLocaleDateString('de-DE')}</span></div><div class="hall-stats"><b>${Number(r.score||0).toLocaleString('de-DE')} Punkte</b><b>${r.kills||0} Gegner</b><b>${formatTime(r.time||0)}</b><b>${r.maxHp||0} Max-♥</b></div><small><b>Skills:</b> ${(r.skills||[]).map(skillName).join(' · ')||'—'}</small><small><b>Boss-Upgrades:</b> ${(r.specials||[]).map(specialName).join(' · ')||'—'}</small><small><b>Waffen:</b> ${(r.weapons||[]).map(weaponName).join(' · ')||'—'}</small><small><b>10%-Boni:</b> Schaden ${r.scorePerks?.damage||0} · Tempo ${r.scorePerks?.speed||0} · Feuer ${r.scorePerks?.fireRate||0} · Dash ${r.scorePerks?.dash||0} · Drops ${r.scorePerks?.powerLuck||0} · Dodge ${r.scorePerks?.dodge||0}%</small></article>`).join('');
-    showOverlay(`<span class="eyebrow">DIE UNSTERBLICHEN KNABBERLÄUFE</span><h2 id="overlayTitle">HALL OF FAME</h2><p>Hier landen vollständig abgeschlossene Runs nach New Game+2 – inklusive Build und Upgrades.</p><div class="hall-list">${rows}</div><button class="primary-button" id="hallClose">ZURÜCK <span>↗</span></button>`);
-    $('hallClose').onclick=()=>{mode='menu';hideOverlay();$('hallOfFameButton').focus();};
-  }
-  function startGame(level=0) {
+  function updateNGPlusMenu(){const b=$('ngPlusButton');if(!b)return;b.classList.toggle('hidden',!(ngPlusUnlocked&&ngPlusBuild));}
+  function startGame(ng=false) {
     clearTimeout(announcementTimer); clearTimeout(noticeTimer); resetInput();
-    gamePlusLevel=Number(level)||0;newGamePlus=gamePlusLevel>0;newGamePlus2=gamePlusLevel===2;
-    const carryBuild=gamePlusLevel===2?ngPlus2Build:gamePlusLevel===1?ngPlusBuild:null;
-    if(gamePlusLevel===1&&!(ngPlusUnlocked&&carryBuild))return;
-    if(gamePlusLevel===2&&!(ngPlus2Unlocked&&carryBuild))return;
-    player = { x: W / 2, y: H / 2 + 25, r: 18, hp: 5, maxHp: 5, speed: 264, invuln: 1.8, dashCd: 0, dashCooldown:2.25, dashTime: 0, dashX: 1, dashY: 0, face: 1, moving: false, angle: 0, bombs: 2, damage: 1, fireRate: .32, spread: 0, pierce: 0, magnet: 90, trail: [], skills:{}, frost:false, chain:false, orbit:false, orbitCd:0, nutSentry:false, nutSentryCd:0, carrotDrone:false, carrotDroneCd:0, shield:false, shieldReady:false, shieldCd:0, vampire:false, vampireKills:0, shotCount:0, weapons:['nutBomb'],weaponIndex:0,weaponUses:{nutBomb:3},usedWeapons:new Set(),powerups:{},powerLuck:1,powerDryKills:0,ammoBonus:0,ammoDropLuck:1,ammoDropsThisWave:0,ammoDropTarget:0,ammoDryKills:0,waveAmmoSnapshot:null,bossAmmoSnapshot:null,bossPhaseAmmoSnapshot:null,specialDamage:1,damageGuard:0,dodgeChance:0,powerSeen:new Set(),moveDistance:0,dashCount:0,weaponShots:0,usedBombThisWave:false,lastWaveKills:0,waveHits:0,scoreSkillNext:50000,scoreSkillQueue:[],scorePerks:{damage:0,speed:0,fireRate:0,dash:0,powerLuck:0,dodge:0} };
+    newGamePlus=Boolean(ng&&ngPlusUnlocked&&ngPlusBuild);
+    player = { x: W / 2, y: H / 2 + 25, r: 18, hp: 5, maxHp: 5, speed: 264, invuln: 1.8, dashCd: 0, dashCooldown:2.25, dashTime: 0, dashX: 1, dashY: 0, face: 1, moving: false, angle: 0, bombs: 2, damage: 1, fireRate: .32, spread: 0, pierce: 0, magnet: 90, trail: [], skills:{}, frost:false, chain:false, orbit:false, orbitCd:0, nutSentry:false, nutSentryCd:0, carrotDrone:false, carrotDroneCd:0, shield:false, shieldReady:false, shieldCd:0, vampire:false, vampireKills:0, shotCount:0, weapons:['nutBomb'],weaponIndex:0,weaponUses:{nutBomb:3},usedWeapons:new Set(),powerups:{},powerLuck:1,powerDryKills:0,ammoBonus:0,ammoDropLuck:1,ammoDropsThisWave:0,ammoDropTarget:0,ammoDryKills:0,waveAmmoSnapshot:null,bossAmmoSnapshot:null,bossPhaseAmmoSnapshot:null,specialDamage:1,damageGuard:0,powerSeen:new Set(),moveDistance:0,dashCount:0,weaponShots:0,usedBombThisWave:false,lastWaveKills:0,waveHits:0,scoreSkillNext:50000,scoreSkillQueue:[],scorePerks:{damage:0,speed:0,fireRate:0,dash:0,powerLuck:0} };
     if(newGamePlus){
-      applyNGPlusBuild(player,carryBuild);initializeScoreSkillProgress(player);
+      applyNGPlusBuild(player,ngPlusBuild);
       const ownedNgSkills=Object.keys(ngPlusSkillBook).filter(id=>player.skills[id]).length;
-      if(ownedNgSkills){addAchievementProgress('ngplus_first_skill');const missing=Math.max(0,Math.min(8,ownedNgSkills)-achievementValue('ngplus_all_skills'));if(missing)addAchievementProgress('ngplus_all_skills',missing);}
-    }else initializeScoreSkillProgress(player);
+      if(ownedNgSkills){addAchievementProgress('ngplus_first_skill');const missing=Math.max(0,ownedNgSkills-achievementValue('ngplus_all_skills'));if(missing)addAchievementProgress('ngplus_all_skills',missing);}
+    }
     enemies = []; bullets = []; enemyBullets = []; particles = []; pickups = []; hazards = []; floaters = []; thrownWeapons = []; ossiWalls = [];
     wave = 0; waveTime = 0; runTime = 0; score = 0; kills = 0; boss = null; generalDefeated=false; cyberDefeated=false; lastDefeatedBoss=''; retriesLeft=3;retryWave=0;retryBossKind=null; spawnTimer = .65; shotTimer = .2; shake = 0; bombFlash = 0; musicStep = 0; musicTrack=-1; pointer.x=W/2;pointer.y=H/2;pointer.active=false;
     mode = 'intro';
@@ -308,8 +265,9 @@
     $('runInfo').classList.remove('hidden'); $('pauseButton').classList.remove('hidden'); $('touchControls').classList.remove('hidden'); $('bossHud').classList.add('hidden'); $('loadingNotice').classList.add('hidden');$('powerHud').classList.add('hidden');$('achievementHud').classList.add('hidden');
     $('skillHud').classList.add('hidden');$('skillHud').innerHTML='';
     updateHud(); updateWeaponHud(); updatePowerHud();updateSkills();
-    const intro=gamePlusLevel===2?'<span class="eyebrow ngplus-kicker">NEW GAME+2 · JETZT WIRD ES UNVERNÜNFTIG</span><h2 id="overlayTitle">RUNDE DREI. ENDE DER NAHRUNGSKETTE.</h2><p>Dein kompletter NG+-Build bleibt. Die Gegner sind gegenüber NG+ nochmals härter: mehr Leben, mehr Schaden, deutlich mehr Tempo und noch mehr Masse.</p><blockquote class="snickers-quote"><b>SNICKERS</b>„Danach ist Schluss. Entweder mit den Hasen oder mit dem Garten.“</blockquote><button class="primary-button ngplus-button" id="introButton">NEW GAME+2 STARTEN <span>↗</span></button>':gamePlusLevel===1?'<span class="eyebrow ngplus-kicker">NEW GAME+ · DIE HASEN HABEN NICHT GELERNT</span><h2 id="overlayTitle">RUNDE ZWEI. KEINE AUSREDEN.</h2><p>Snickers behält seinen kompletten Build. Dafür kommen doppelt so viele Gegner, sie verursachen doppelten Schaden, laufen schneller und haben neue Verstärkung dabei.</p><blockquote class="snickers-quote"><b>SNICKERS</b>„Ihr wolltet mehr? Ich habe meine Upgrades mitgebracht.“</blockquote><button class="primary-button ngplus-button" id="introButton">NEW GAME+ STARTEN <span>↗</span></button>':'<span class="eyebrow">VORSPANN · DIE ERSTE NUSS</span><h2 id="overlayTitle">DER FELLIGE FRIEDEN IST VORBEI.</h2><p>Snickers putzt gerade gemütlich sein Fell. Da schnappt sich ein frecher Hase seine Nuss und hoppelt davon. Snickers wird wütend, schnappt sich den Blaster und geht auf Hasenjagd.</p><blockquote class="snickers-quote"><b>SNICKERS</b>„Meine Nuss. Meine Regeln.“</blockquote><button class="primary-button" id="introButton">HASENJAGD STARTEN <span>↗</span></button>';
-    showOverlay(intro);$('introButton').onclick=beginFirstWave;addAchievementProgress('intro_story',1);
+    showOverlay(newGamePlus?'<span class="eyebrow ngplus-kicker">NEW GAME+ · DIE HASEN HABEN NICHT GELERNT</span><h2 id="overlayTitle">RUNDE ZWEI. KEINE AUSREDEN.</h2><p>Snickers behält seinen kompletten Build. Dafür kommen doppelt so viele Gegner, sie verursachen doppelten Schaden, laufen schneller und haben neue Verstärkung dabei.</p><blockquote class="snickers-quote"><b>SNICKERS</b>„Ihr wolltet mehr? Ich habe meine Upgrades mitgebracht.“</blockquote><button class="primary-button ngplus-button" id="introButton">NEW GAME+ STARTEN <span>↗</span></button>':'<span class="eyebrow">VORSPANN · DIE ERSTE NUSS</span><h2 id="overlayTitle">DER FELLIGE FRIEDEN IST VORBEI.</h2><p>Snickers putzt gerade gemütlich sein Fell. Da schnappt sich ein frecher Hase seine Nuss und hoppelt davon. Snickers wird wütend, schnappt sich den Blaster und geht auf Hasenjagd.</p><blockquote class="snickers-quote"><b>SNICKERS</b>„Meine Nuss. Meine Regeln.“</blockquote><button class="primary-button" id="introButton">HASENJAGD STARTEN <span>↗</span></button>');
+    $('introButton').onclick=beginFirstWave;
+    addAchievementProgress('intro_story',1);
   }
   function beginFirstWave(){
     if(mode!=='intro')return;
@@ -335,7 +293,7 @@
   function showHelp() {
     if (mode !== 'menu') return;
     mode = 'help';
-    showOverlay('<span class="eyebrow">DEIN SEHR KURZES ÜBERLEBENSHANDBUCH</span><h2 id="overlayTitle">KLEIN, ABER BEWAFFNET.</h2><p>Überlebe 9 Wellen. Der Nachschub läuft eine Weile, aber eine Welle ist erst geschafft, wenn wirklich jeder Gegner erledigt ist. Nach Welle 3 wartet General Hasenbein, nach Welle 6 seine Cyber-Version, danach Karnil.</p><div class="help-grid"><div class="help-row"><kbd>WASD</kbd><span>Bewegen<small>Auch mit Pfeiltasten oder dem Touch-Stick.</small></span></div><div class="help-row"><kbd>MAUS</kbd><span>Zielen<small>Sanfte Zielhilfe korrigiert nur leicht in Richtung Gegner.</small></span></div><div class="help-row"><kbd>LMB</kbd><span>Waffe abfeuern<small>Die normalen Schüsse starten automatisch; Linksklick feuert sofort in Maus-Richtung.</small></span></div><div class="help-row"><kbd>E</kbd><span>Spezialwaffe abfeuern<small>Benutzt die aktuell ausgewählte Spezialwaffe.</small></span></div><div class="help-row"><kbd>SPACE</kbd><span>Ausweichen<small>Kurz unverwundbar. Alle 2,25 Sekunden.</small></span></div><div class="help-row"><kbd>Q/R</kbd><span>Spezialwaffe wechseln<small>Wechselt zwischen Nussbombe und freigeschalteten Spezialwaffen.</small></span></div></div><p>Orange Warnungen bedeuten: raus da! Gegner können seltene, zeitlich begrenzte Power-ups und sehr selten Spezialmunition fallen lassen. Nach jeder Welle und jedem Bosskampf laden sich Spezialwaffen um 50 % auf; die Nussbombe wird komplett gefüllt. Du hast insgesamt 3 Retries für den kompletten Run.</p><button class="primary-button" id="helpClose">ALLES KLAR <span>↗</span></button>');
+    showOverlay('<span class="eyebrow">DEIN SEHR KURZES ÜBERLEBENSHANDBUCH</span><h2 id="overlayTitle">KLEIN, ABER BEWAFFNET.</h2><p>Überlebe 9 Wellen. Der Nachschub läuft eine Weile, aber eine Welle ist erst geschafft, wenn wirklich jeder Gegner erledigt ist. Nach Welle 3 wartet General Hasenbein, nach Welle 6 seine Cyber-Version, danach Karnil.</p><div class="help-grid"><div class="help-row"><kbd>WASD</kbd><span>Bewegen<small>Auch mit Pfeiltasten oder dem Touch-Stick.</small></span></div><div class="help-row"><kbd>MAUS</kbd><span>Zielen<small>Sanfte Zielhilfe korrigiert nur leicht in Richtung Gegner.</small></span></div><div class="help-row"><kbd>LMB</kbd><span>Waffe abfeuern<small>Die normalen Schüsse starten automatisch; Linksklick feuert sofort in Maus-Richtung.</small></span></div><div class="help-row"><kbd>E</kbd><span>Spezialwaffe abfeuern<small>Benutzt die aktuell ausgewählte Spezialwaffe.</small></span></div><div class="help-row"><kbd>SPACE</kbd><span>Ausweichen<small>Kurz unverwundbar. Alle 2,25 Sekunden.</small></span></div><div class="help-row"><kbd>Q/R</kbd><span>Spezialwaffe wechseln<small>Wechselt zwischen Nussbombe und freigeschalteten Spezialwaffen.</small></span></div></div><p>Orange Warnungen bedeuten: raus da! Gegner können seltene, zeitlich begrenzte Power-ups und sehr selten Spezialmunition fallen lassen. Nach jeder Welle und jedem Bosskampf laden sich Spezialwaffen um 50 % auf; die Nussbombe wird komplett gefüllt. Du hast 3 Retries pro Welle und pro Bosskampf.</p><button class="primary-button" id="helpClose">ALLES KLAR <span>↗</span></button>');
     $('helpClose').onclick = () => { mode = 'menu'; hideOverlay(); $('startButton').focus(); };
   }
   function showPowerups() {
@@ -353,7 +311,6 @@
     if (m < .1) { x = player.face; y = 0; } else { x /= m; y /= m; }
     player.dashX = x; player.dashY = y; player.dashTime = .19; player.dashCd = player.dashCooldown; player.invuln = Math.max(player.invuln, .42);
     if(player.shockDash){for(const e of enemies)if(!e.dead&&dist(player,e)<105)damageEnemy(e,15,true);if(boss&&!boss.dead&&dist(player,boss)<120)damageEnemy(boss,18,true);}
-    if(player.dashNova){for(let i=0;i<12;i++){const a=TAU*i/12;bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*560,vy:Math.sin(a)*560,life:.85,damage:10*(player.damage||1),pierce:1,hitIds:new Set(),r:7,a,frost:false});}burst(player.x,player.y,'#ffd36f',24,175);}
     burst(player.x, player.y, accent(), 14, 110); tone(250, .18, 'sine', .05, 650);
   }
   const weaponBook={
@@ -368,8 +325,6 @@
     acornRocket:{name:'EICHEL-RAKETE',icon:'➤',desc:'Große Explosion mit sehr hohem Flächen- und Boss-Schaden.',max:2},
     nutDrill:{name:'NUSSBOHRER',icon:'↠',desc:'Massive Bohrnuss mit enormem Linienschaden und fast unbegrenztem Durchschlag.',max:2},
     mustardBazooka:{name:'NUSS-BAZOOKA MIT SENF',icon:'☢',desc:'NG+-Waffe: Eine gewaltige Senfnuss explodiert im Zielgebiet und schleudert brennende Senfsplitter weiter.',max:2},
-    nutTesla:{name:'NUSS-TESLA',icon:'ϟ',desc:'NG+-Waffe: Kettenblitz springt automatisch durch bis zu acht Gegner und trifft Bosse besonders hart.',max:3},
-    pickleMortar:{name:'GURKEN-MÖRSER',icon:'◉',desc:'NG+-Waffe: Schleudert eine Spreewald-Gurke ins Zielgebiet, verursacht großen Flächenschaden und bremst Überlebende.',max:3},
     ossiWall:{name:'OSSI MAUER',icon:'▥',desc:'Riegelt in normalen Wellen die Hälfte der Gegner kurz ab. Im Bosskampf blockt sie ungefähr die Hälfte der Boss-Schüsse.',max:3}
   };
   function maxWeaponAmmo(id){return (weaponBook[id]?.max||0)+(player?.ammoBonus||0);}
@@ -464,16 +419,6 @@
       if(boss&&!boss.dead&&Math.hypot(boss.x-tx,boss.y-ty)<235+boss.r)damageEnemy(boss,70*sm,true);
       for(let i=0;i<10;i++){const ba=TAU*i/10;bullets.push({x:tx,y:ty,vx:Math.cos(ba)*430,vy:Math.sin(ba)*430,life:.8,damage:12*sm,pierce:2,hitIds:new Set(),r:8,a:ba,frost:false,mustard:true});}
       shake=reducedMotion?0:12;tone(72,.55,'sawtooth',.12,28);
-    }else if(id==='nutTesla'){
-      const sm=player.specialDamage||1,targets=(boss&&!boss.dead?[...enemies,boss]:enemies).filter(e=>!e.dead).sort((a,b)=>dist(player,a)-dist(player,b)).slice(0,8);
-      let from={x:player.x,y:player.y};for(const e of targets){particles.push({type:'beam',x:from.x,y:from.y,x2:e.x,y2:e.y,life:.16,maxLife:.16,color:'#86efff'});damageEnemy(e,(isBoss(e)?48:31)*sm,true);from=e;}
-      burst(player.x,player.y,'#86efff',20,150);tone(740,.32,'sawtooth',.08,1220);
-    }else if(id==='pickleMortar'){
-      const a=player.angle,tx=clamp(player.x+Math.cos(a)*455,80,W-80),ty=clamp(player.y+Math.sin(a)*455,140,H-70),sm=player.specialDamage||1;
-      burst(tx,ty,'#99d665',55,300);particles.push({type:'ring',x:tx,y:ty,life:.65,maxLife:.65,r:0,color:'#9bdc62'});
-      for(const e of enemies)if(!e.dead&&Math.hypot(e.x-tx,e.y-ty)<190+e.r){damageEnemy(e,38*sm,true);e.slow=Math.max(e.slow||0,2.6);}
-      if(boss&&!boss.dead&&Math.hypot(boss.x-tx,boss.y-ty)<210+boss.r){damageEnemy(boss,52*sm,true);boss.slow=Math.max(boss.slow||0,1.7);}
-      shake=reducedMotion?0:8;tone(120,.38,'square',.08,55);
     }else if(id==='ossiWall'){
       if(boss&&!boss.dead){
         player.ossiWallTime=Math.max(player.ossiWallTime||0,5.5);ossiWalls=[{x:player.x,y:player.y-78,life:5.5,maxLife:5.5,boss:true}];
@@ -517,14 +462,14 @@
   function spawnEnemy(type) {
     const angle = rnd(0, TAU), x = clamp(player.x + Math.cos(angle) * 660, 38, W - 38), y = clamp(player.y + Math.sin(angle) * 660, 112, H - 48);
     const stats = { bunny: [2+(wave>2?1:0), 76 + wave * 7, 18, 65], runner: [1+(wave>2?1:0), 154 + wave * 5, 15, 85], brute: [9, 49, 27, 160], gunner: [4, 58, 20, 120], rabid:[5,114,19,150], gatling:[9,53,24,230], splitter:[6,92,22,180], sniper:[6,46,21,280], sapper:[7,61,22,245], pigRammer:[12,68,31,320], pigMortar:[10,42,28,350], pigCannon:[14,51,27,420], pigDrone:[5,130,17,260], pigHowler:[11,48,30,390], zombieBoss:[300,58,37,1100], voidBunny:[18,102,25,560], rocketHare:[14,66,23,640], pigJuggernaut:[28,61,35,820] }[type] || [2,76,18,65];
-    const enemyHpMult=gamePlusLevel===2?2:1,enemySpeedMult=gamePlusLevel===2?1.32:gamePlusLevel===1?1.1:1;
-    const e={ x, y, type, hp:stats[0]*enemyHpMult, maxHp:stats[0]*enemyHpMult, speed:stats[1]*enemySpeedMult, r:stats[2], points:stats[3], phase:rnd(0,TAU), hit:0, fireCd:rnd(1.8,3), slow:0, chargeCd:rnd(1.6,2.8), windup:0, charge:0, aim:0, burstLeft:0, burstCd:0, dead:false, mortarCd:rnd(2.5,4), summonCd:rnd(3,5), summoned:false, mineCd:rnd(2.5,4), howlCd:rnd(2.8,4.5),teleportCd:rnd(2.4,4),rocketCd:rnd(2,3.4),shockCd:rnd(2.5,4) };
+    const e={ x, y, type, hp:stats[0], maxHp:stats[0], speed:stats[1]*(newGamePlus?1.1:1), r:stats[2], points:stats[3], phase:rnd(0,TAU), hit:0, fireCd:rnd(1.8,3), slow:0, chargeCd:rnd(1.6,2.8), windup:0, charge:0, aim:0, burstLeft:0, burstCd:0, dead:false, mortarCd:rnd(2.5,4), summonCd:rnd(3,5), summoned:false, mineCd:rnd(2.5,4), howlCd:rnd(2.8,4.5),teleportCd:rnd(2.4,4),rocketCd:rnd(2,3.4),shockCd:rnd(2.5,4) };
     enemies.push(e);return e;
   }
   function spawnBoss(cyber=false,karnil=false,keepRetries=false) {
+    if(!keepRetries)retriesLeft=3;
     ossiWalls=[];player.ossiWallTime=0;
-    const baseHp=karnil?1800:(cyber?900:420),bossHpMult=gamePlusLevel===2?6:gamePlusLevel===1?3:1,hp=baseHp*bossHpMult,bossSpeedMult=gamePlusLevel===2?1.32:gamePlusLevel===1?1.1:1;
-    boss = { x: W / 2, y: 170, type:'boss', cyber, karnil, r:karnil?78:(cyber?55:49), hp, maxHp:hp, speed:(karnil?54:(cyber?67:49))*bossSpeedMult, phase:0, hit:0, actionCd:karnil?1.85:2.2, attack:0, summonCd:karnil?6:8, enraged:false, dead:false, points:karnil?18000:(cyber?10000:5600), slow:0, windup:0, charge:0, aim:0, burstLeft:0, burstCd:0, phaseTwo:false,phaseThree:false,paftiHealed:false,supplyStep:0,supplyThresholds:[.78,.52,.28], pattern:0 };
+    const hp=karnil?1800:(cyber?900:420);
+    boss = { x: W / 2, y: 170, type:'boss', cyber, karnil, r:karnil?78:(cyber?55:49), hp, maxHp:hp, speed:(karnil?54:(cyber?67:49))*(newGamePlus?1.1:1), phase:0, hit:0, actionCd:karnil?1.85:2.2, attack:0, summonCd:karnil?6:8, enraged:false, dead:false, points:karnil?18000:(cyber?10000:5600), slow:0, windup:0, charge:0, aim:0, burstLeft:0, burstCd:0, phaseTwo:false,phaseThree:false,paftiHealed:false,supplyStep:0,supplyThresholds:[.78,.52,.28], pattern:0 };
     player.bossAmmoSnapshot=snapshotAmmo();player.bossPhaseAmmoSnapshot=null;
     waveTime = 0; enemyBullets = []; hazards = []; player.x=W/2;player.y=H/2+60;player.invuln=2;
     $('bossName').textContent=karnil?'KARNIL · FERKEL DER EINGESTÜRZTEN':cyber?'CYBER-HASENBEIN':'GENERAL HASENBEIN';
@@ -536,24 +481,24 @@
   function spawnZombieHasenbein(){
     const existing=getMiniBoss();if(existing)return existing;
     const zombie=spawnEnemy('zombieBoss');
-    zombie.miniBoss=true;zombie.hp=zombie.maxHp=520*(gamePlusLevel===2?2:1);zombie.points=4200;zombie.speed=72*(gamePlusLevel===2?1.32:newGamePlus?1.1:1);zombie.r=43;zombie.fireCd=.9;zombie.chargeCd=2.1;
+    zombie.miniBoss=true;zombie.hp=zombie.maxHp=520;zombie.points=4200;zombie.speed=72;zombie.r=43;zombie.fireCd=.9;zombie.chargeCd=2.1;
     zombie.x=clamp((boss?.x||W/2)-185,80,W-80);zombie.y=clamp((boss?.y||170)+120,155,H-75);
     burst(zombie.x,zombie.y,'#a7c86f',34,190);tone(84,.55,'sawtooth',.07,44);updateHud();return zombie;
   }
   function activateKarnilPhaseTwo(fromRetry=false){
     if(!boss||!boss.karnil||boss.phaseTwo)return;
-    boss.phaseTwo=true;boss.enraged=true;boss.hp=boss.maxHp;boss.speed=92*(gamePlusLevel===2?1.32:newGamePlus?1.1:1);boss.actionCd=.95;boss.summonCd=5.5;boss.windup=0;boss.charge=0;boss.burstLeft=0;boss.hit=0;boss.supplyStep=0;
+    boss.phaseTwo=true;boss.enraged=true;boss.hp=boss.maxHp;boss.speed=92;boss.actionCd=.95;boss.summonCd=5.5;boss.windup=0;boss.charge=0;boss.burstLeft=0;boss.hit=0;boss.supplyStep=0;
     enemyBullets=[];hazards=[];player.invuln=Math.max(player.invuln,1.4);player.bossPhaseAmmoSnapshot=snapshotAmmo();
     spawnZombieHasenbein();addAchievementProgress('comeback');
     if(!fromRetry)announce('DER FELSEN BRICHT ENDGÜLTIG AUF.','PHASE 2 · KARNIL + ZOMBIE-HASENBEIN');
     burst(boss.x,boss.y,'#ff8c59',65,260);shake=reducedMotion?0:14;tone(42,.9,'sawtooth',.11,22);updateHud();
   }
   function spawnCyberHasenbein(){
-    enemies=enemies.filter(e=>!e.miniBoss);const cyber=spawnEnemy('zombieBoss');cyber.miniBoss=true;cyber.cyberMini=true;cyber.hp=cyber.maxHp=900*(gamePlusLevel===2?2:1);cyber.points=7000;cyber.speed=88*(gamePlusLevel===2?1.32:newGamePlus?1.1:1);cyber.r=47;cyber.fireCd=.65;cyber.chargeCd=1.7;cyber.x=clamp((boss?.x||W/2)-195,85,W-85);cyber.y=clamp((boss?.y||170)+125,160,H-80);burst(cyber.x,cyber.y,'#81eaff',45,230);tone(110,.65,'sawtooth',.08,780);updateHud();return cyber;
+    enemies=enemies.filter(e=>!e.miniBoss);const cyber=spawnEnemy('zombieBoss');cyber.miniBoss=true;cyber.cyberMini=true;cyber.hp=cyber.maxHp=900;cyber.points=7000;cyber.speed=88*(newGamePlus?1.1:1);cyber.r=47;cyber.fireCd=.65;cyber.chargeCd=1.7;cyber.x=clamp((boss?.x||W/2)-195,85,W-85);cyber.y=clamp((boss?.y||170)+125,160,H-80);burst(cyber.x,cyber.y,'#81eaff',45,230);tone(110,.65,'sawtooth',.08,780);updateHud();return cyber;
   }
   function activateKarnilPhaseThree(){
     if(!newGamePlus||!boss||!boss.karnil||boss.phaseThree)return;
-    boss.phaseThree=true;boss.phaseTwo=true;boss.enraged=true;boss.hp=boss.maxHp;boss.speed=112*(gamePlusLevel===2?1.32:1.1);boss.actionCd=.72;boss.summonCd=4.7;boss.windup=0;boss.charge=0;boss.burstLeft=0;boss.hit=0;boss.paftiHealed=false;boss.supplyStep=0;addAchievementProgress('ngplus_phase3');
+    boss.phaseThree=true;boss.phaseTwo=true;boss.enraged=true;boss.hp=boss.maxHp;boss.speed=112;boss.actionCd=.72;boss.summonCd=4.7;boss.windup=0;boss.charge=0;boss.burstLeft=0;boss.hit=0;boss.paftiHealed=false;boss.supplyStep=0;addAchievementProgress('ngplus_phase3');
     enemyBullets=[];hazards=[];player.invuln=Math.max(player.invuln,1.8);spawnCyberHasenbein();announce('NEW GAME+ · DER STEINBRUCH BRENNT.','PHASE 3 · KARNIL + CYBER-HASENBEIN');burst(boss.x,boss.y,'#6fe7ff',90,330);shake=reducedMotion?0:18;tone(35,1.1,'sawtooth',.13,18);updateHud();
   }
   function triggerPaftiIntervention(){
@@ -614,16 +559,9 @@
     hyperFur:{icon:'⚡',title:'HYPERFELL',short:'Hyperfell',desc:'NG+: +20 % Bewegungstempo und 20 % kürzerer Dash-Cooldown.',ngplus:true,apply:p=>{p.speed*=1.2;p.dashCooldown*=.8;}},
     turretVolley:{icon:'♜',title:'WACHEN-SCHWARM',short:'Wachen-Schwarm',desc:'NG+: Der Knabber-Turm feuert eine Doppelsalve und deutlich schneller.',ngplus:true,apply:p=>{p.nutSentry=true;p.turretVolley=true;}},
     powerFrenzy:{icon:'✦',title:'POWER-FIEBER',short:'Power-Fieber',desc:'NG+: Power-ups fallen 60 % häufiger und halten 30 % länger.',ngplus:true,apply:p=>{p.powerLuck=(p.powerLuck||1)*1.6;p.powerDuration=Math.max(p.powerDuration||1,1.3);p.powerFrenzy=true;}},
-    executioner:{icon:'⌖',title:'ENDGEGNER-SCHRECK',short:'Boss-Schreck',desc:'NG+: +40 % Schaden gegen Bosse und Minibosse sowie +10 % Krit-Chance.',ngplus:true,apply:p=>{p.bossDamage=(p.bossDamage||1)*1.4;p.crit=Math.min(.75,(p.crit||0)+.1);p.executioner=true;}},
-    dashNova:{icon:'✺',title:'DASH-KOMET',short:'Dash-Komet',desc:'NG+: Jeder Dash schleudert automatisch zwölf starke Nüsse radial heraus.',ngplus:true,apply:p=>{p.dashNova=true;p.dashCooldown*=.9;}},
-    ammoAlchemy:{icon:'⊕',title:'MUNITIONS-ALCHEMIE',short:'Ammo-Alchemie',desc:'NG+: +2 maximale Ladungen für alle Spezialwaffen, +15 % Spezialschaden und Munitionskisten füllen deutlich stärker.',ngplus:true,apply:p=>{p.ammoAlchemy=true;p.ammoBonus=(p.ammoBonus||0)+2;p.specialDamage=(p.specialDamage||1)*1.15;p.ammoRefillBonus=Math.min(.45,(p.ammoRefillBonus||0)+.2);}},
-    deathBurst:{icon:'✸',title:'TODESSPLITTER',short:'Todessplitter',desc:'NG+: Jeder fünfte Kill löst automatisch eine schädliche Nuss-Explosion am besiegten Gegner aus.',ngplus:true,apply:p=>{p.deathBurst=true;p.deathBurstKills=0;}}
+    executioner:{icon:'⌖',title:'ENDGEGNER-SCHRECK',short:'Boss-Schreck',desc:'NG+: +40 % Schaden gegen Bosse und Minibosse sowie +10 % Krit-Chance.',ngplus:true,apply:p=>{p.bossDamage=(p.bossDamage||1)*1.4;p.crit=Math.min(.75,(p.crit||0)+.1);p.executioner=true;}}
   };
-  const ngPlusWeaponUpgrades={
-    mustardBazookaUnlock:{icon:'☢',title:'NUSS-BAZOOKA MIT SENF',short:'Senf-Bazooka',desc:'NG+-Waffe: gigantische Senfexplosion mit Splittersalve. Sehr stark, aber nur 2 Schuss.',weapon:'mustardBazooka',ngplus:true,apply:p=>{if(!p.weapons.includes('mustardBazooka'))p.weapons.push('mustardBazooka');p.weaponUses.mustardBazooka=maxWeaponAmmo('mustardBazooka');}},
-    nutTeslaUnlock:{icon:'ϟ',title:'NUSS-TESLA',short:'Nuss-Tesla',desc:'NG+-Waffe: Kettenblitz durch bis zu acht Ziele. 3 Ladungen.',weapon:'nutTesla',ngplus:true,apply:p=>{if(!p.weapons.includes('nutTesla'))p.weapons.push('nutTesla');p.weaponUses.nutTesla=maxWeaponAmmo('nutTesla');}},
-    pickleMortarUnlock:{icon:'◉',title:'GURKEN-MÖRSER',short:'Gurken-Mörser',desc:'NG+-Waffe: großer Flächenschaden plus Verlangsamung. 3 Ladungen.',weapon:'pickleMortar',ngplus:true,apply:p=>{if(!p.weapons.includes('pickleMortar'))p.weapons.push('pickleMortar');p.weaponUses.pickleMortar=maxWeaponAmmo('pickleMortar');}}
-  };
+  const ngPlusWeaponUpgrade={icon:'☢',title:'NUSS-BAZOOKA MIT SENF',short:'Senf-Bazooka',desc:'NG+-Waffe: gigantische Senfexplosion mit Splittersalve. Sehr stark, aber nur 2 Schuss.',weapon:'mustardBazooka',ngplus:true,apply:p=>{if(!p.weapons.includes('mustardBazooka'))p.weapons.push('mustardBazooka');p.weaponUses.mustardBazooka=maxWeaponAmmo('mustardBazooka');}};
   const upgradePools=[['spread','rapid','health','walnutCannon','nutSentry','eggBooger','homing','hotPaws','specialCore','waveRenew'],['frost','carrotMine','hazelnutShotgun','carrotDrone','merzEggs','shield','turbo','ammoHunter','ironFur'],['orbit','power','peanutBoomerang','carrotLaser','nutSentry','ossiWall','crit','specialCore','hunter','waveRenew'],['reflex','vampire','acornNova','acornRocket','carrotDrone','eggBooger','fortified','ammoScrounger','hotPaws'],['chain','frost','ammo','nutDrill','nutSentry','merzEggs','scavenger','ammoHunter','ironFur','waveRenew'],['power','orbit','pigPopper','walnutCannon','carrotDrone','ossiWall','shockDash','specialCore','hunter'],['peanutBoomerang','hazelnutShotgun','powerLuck','health','nutSentry','eggBooger','homing','ammoScrounger','hotPaws','waveRenew'],['carrotMine','carrotLaser','nutDrill','ammo','carrotDrone','merzEggs','shield','crit','ammoHunter','ironFur'],['pigPopper','acornNova','acornRocket','power','nutSentry','carrotDrone','ossiWall','eggBooger','merzEggs','turbo','specialCore','hunter','waveRenew']];
   const specialUpgradeBook={
     goldenNut:{icon:'✹',title:'GOLDENE NUSS',short:'Goldene Nuss',desc:'+55 % normaler Schaden und alle Punkte zählen doppelt.',apply:p=>{p.damage*=1.55;p.scoreRushBonus=(p.scoreRushBonus||1)*2;}},
@@ -647,12 +585,11 @@
     speed:{icon:'»',title:'BEWEGUNGSGESCHWINDIGKEIT',desc:'+10 % dauerhafte Bewegungsgeschwindigkeit.',apply:p=>p.speed*=1.10},
     fireRate:{icon:'ϟ',title:'SCHUSSGESCHWINDIGKEIT',desc:'+10 % dauerhafte Feuerrate.',apply:p=>p.fireRate/=1.10},
     dash:{icon:'↯',title:'DASH COOLDOWN',desc:'10 % kürzerer Dash-Cooldown.',apply:p=>p.dashCooldown*=.90},
-    powerLuck:{icon:'✦',title:'POWER-UP-DROPCHANCE',desc:'+10 % dauerhafte Power-up-Dropchance.',apply:p=>p.powerLuck*=1.10},
-    dodge:{icon:'◈',title:'DODGE-CHANCE',desc:'+1 % Chance, einen gegnerischen Treffer komplett auszuweichen. Jede weitere Stufe gibt erneut +1 %.',apply:p=>p.dodgeChance=Math.min(.25,(p.dodgeChance||0)+.01)}
+    powerLuck:{icon:'✦',title:'POWER-UP-DROPCHANCE',desc:'+10 % dauerhafte Power-up-Dropchance.',apply:p=>p.powerLuck*=1.10}
   };
   function queueScoreSkillMilestones(){
-    if(!player||player.scoreSkillQueue.length)return;
-    if(score>=player.scoreSkillNext)player.scoreSkillQueue.push(player.scoreSkillNext);
+    if(!player)return;
+    while(score>=player.scoreSkillNext){player.scoreSkillQueue.push(player.scoreSkillNext);player.scoreSkillNext+=50000;}
     if(mode==='playing'&&player.scoreSkillQueue.length)showScoreSkillMenu();
   }
   function showScoreSkillMenu(){
@@ -660,17 +597,17 @@
     const milestone=player.scoreSkillQueue[0];
     mode='scoreSkill';resetInput();$('announcement').classList.add('hidden');
     const entries=Object.entries(scoreSkillBook);
-    const currentLevels=scorePerkLevels(player),nextGap=scoreSkillCost(currentLevels+1),nextTarget=milestone+nextGap;
-    showOverlay(`<span class="eyebrow">${milestone.toLocaleString('de-DE')} PUNKTE · PERMANENTER BONUS</span><h2 id="overlayTitle">SNICKERS WIRD STÄRKER.</h2><p>Der Kampf ist pausiert. Diese Punkte-Upgrades werden mit jeder Wahl teurer: Start bei 50.000 Punkten, danach steigt der nötige Abstand jeweils um 25.000 Punkte. Nach dieser Wahl liegt die nächste Schwelle bei ungefähr <strong>${nextTarget.toLocaleString('de-DE')}</strong> Punkten in diesem Run.</p><div class="upgrades score-skill-upgrades">${entries.map(([id,c],i)=>`<button class="upgrade skill-upgrade score-skill-card" id="scoreSkill${i}"><small class="upgrade-kind skill-kind">PUNKTE-SKILL · STUFE ${(player.scorePerks[id]||0)+1}</small><span class="upgrade-icon">${c.icon}</span><strong>${c.title}</strong><span>${c.desc}</span><em>${id==='dodge'?'+1 % DODGE':'+10 % WÄHLEN'} ↗</em></button>`).join('')}</div>`);
+    showOverlay(`<span class="eyebrow">${milestone.toLocaleString('de-DE')} PUNKTE · PERMANENTER BONUS</span><h2 id="overlayTitle">SNICKERS WIRD STÄRKER.</h2><p>Der Kampf ist pausiert. Alle 50.000 Punkte bekommst du dieses permanente Bonus-Upgrade. Wähle eine Eigenschaft, die für den Rest dieses Runs dauerhaft um 10 % verbessert wird.</p><div class="upgrades score-skill-upgrades">${entries.map(([id,c],i)=>`<button class="upgrade skill-upgrade score-skill-card" id="scoreSkill${i}"><small class="upgrade-kind skill-kind">PUNKTE-SKILL · STUFE ${(player.scorePerks[id]||0)+1}</small><span class="upgrade-icon">${c.icon}</span><strong>${c.title}</strong><span>${c.desc}</span><em>+10 % WÄHLEN ↗</em></button>`).join('')}</div>`);
     entries.forEach(([id,c],i)=>{$(`scoreSkill${i}`).onclick=()=>{
       if(mode!=='scoreSkill')return;
-      c.apply(player);player.scorePerks[id]=(player.scorePerks[id]||0)+1;player.scoreSkillQueue.shift();player.scoreSkillNext=milestone+scoreSkillCost(scorePerkLevels(player));
+      c.apply(player);player.scorePerks[id]=(player.scorePerks[id]||0)+1;player.scoreSkillQueue.shift();
       tone(660,.24,'triangle',.08,990);updateHud();
       if(player.scoreSkillQueue.length){mode='playing';showScoreSkillMenu();return;}
       mode='playing';hideOverlay();player.invuln=Math.max(player.invuln,.75);lastFrame=performance.now();
     };});
   }
   function startWave(next,keepRetries=false){
+    if(!keepRetries)retriesLeft=3;
     wave=next;waveTime=0;spawnTimer=1;boss=null;mode='playing';ossiWalls=[];player.ossiWallTime=0;player.invuln=1.8;player.usedBombThisWave=false;player.waveHits=0;player.ammoDropsThisWave=0;player.ammoDropTarget=2+Math.floor(Math.random()*4);player.ammoDryKills=0;player.waveAmmoSnapshot=snapshotAmmo();
     hideOverlay();$('bossHud').classList.add('hidden');updateHud();
     announce(`WELLE ${String(wave+1).padStart(2,'0')} / 09`,waveNames[wave]);
@@ -732,8 +669,7 @@
     if(newGamePlus){
       const ngAvailable=Object.keys(ngPlusSkillBook).filter(id=>!player.skills[id]);
       if(ngAvailable.length&&Math.random()<.62){const id=ngAvailable[Math.floor(Math.random()*ngAvailable.length)],slot=Math.floor(Math.random()*choices.length);choices[slot]={...ngPlusSkillBook[id],id,type:'skill',ngplus:true};}
-      const ngWeaponIds=Object.keys(ngPlusWeaponUpgrades).filter(id=>!player.weapons.includes(ngPlusWeaponUpgrades[id].weapon));
-      if(ngWeaponIds.length&&Math.random()<.58){const id=ngWeaponIds[Math.floor(Math.random()*ngWeaponIds.length)],slot=Math.floor(Math.random()*choices.length);choices[slot]={...ngPlusWeaponUpgrades[id],id,type:'weapon',ngplus:true};}
+      if(!player.weapons.includes('mustardBazooka')&&Math.random()<.48){const slot=Math.floor(Math.random()*choices.length);choices[slot]={...ngPlusWeaponUpgrade,id:'mustardBazookaUnlock',type:'weapon',ngplus:true};}
     }
     const quote=waveQuotes[wave]||'Ich brauche eine größere Nuss.';
     const typeLabel=c=>c.legendary?'LEGENDARY SKILL':c.ngplus?(c.weapon?'NG+ WAFFE':'NG+ SKILL'):c.weapon?'WAFFE':'SKILL';
@@ -749,7 +685,7 @@
     choices.forEach((c,i) => { $(`upgrade${i}`).onclick = () => {
       if (mode !== 'upgrade') return;
       const wasOwned=Boolean(player.skills[c.id]);
-      c.apply(player);if(!c.weapon)player.skills[c.id]=(player.skills[c.id]||0)+1;
+      c.apply(player);if(c.id!=='mustardBazookaUnlock')player.skills[c.id]=(player.skills[c.id]||0)+1;
       if(newGamePlus&&c.ngplus&&!c.weapon&&!wasOwned){addAchievementProgress('ngplus_first_skill');addAchievementProgress('ngplus_all_skills');}
       if(c.id==='crownNut')addAchievementProgress('crown_found');
       if(c.id==='ghostFur')addAchievementProgress('ghosted');
@@ -766,18 +702,18 @@
   function finish(won) {
     if(!won&&mode==='playing'&&retriesLeft>0){
       retryWave=wave;retryBossKind=boss&&!boss.dead?{cyber:Boolean(boss.cyber),karnil:Boolean(boss.karnil),phaseTwo:Boolean(boss.phaseTwo)}:null;mode='retry';resetInput();$('announcement').classList.add('hidden');
-      showOverlay(`<span class="eyebrow">SNICKERS IST NOCH NICHT FERTIG</span><h2 id="overlayTitle">NOCH EIN RETRY?</h2><p>Die aktuelle ${retryBossKind?(retryBossKind.karnil?'Bosskampf':'Bossphase'):'Welle'} ist verloren, aber du hast noch <strong>${retriesLeft}</strong> von 3 Retries für diesen gesamten Run. Skills und Punkte bleiben erhalten.</p><div class="retry-badge">RETRY-MARKEN ÜBRIG: ${retriesLeft}</div><div class="overlay-actions"><button id="retryWaveButton" class="primary-button">AKTUELLE ${retryBossKind?(retryBossKind.karnil?'BOSS-KAMPF':'BOSS-PHASE'):'WELLE'} RETRY <span>↗</span></button><button id="retryMenuButton" class="secondary-button">HAUPTMENÜ</button></div>`);
+      showOverlay(`<span class="eyebrow">SNICKERS IST NOCH NICHT FERTIG</span><h2 id="overlayTitle">NOCH EIN RETRY?</h2><p>Die aktuelle ${retryBossKind?(retryBossKind.karnil?'Bosskampf':'Bossphase'):'Welle'} ist verloren, aber du hast noch <strong>${retriesLeft}</strong> von 3 Retries ${retryBossKind?'für diesen Bosskampf':'für diese Welle'}. Skills und Punkte bleiben erhalten.</p><div class="retry-badge">RETRY-MARKEN ÜBRIG: ${retriesLeft}</div><div class="overlay-actions"><button id="retryWaveButton" class="primary-button">AKTUELLE ${retryBossKind?(retryBossKind.karnil?'BOSS-KAMPF':'BOSS-PHASE'):'WELLE'} RETRY <span>↗</span></button><button id="retryMenuButton" class="secondary-button">HAUPTMENÜ</button></div>`);
       $('retryWaveButton').onclick=retryCurrentWave;$('retryMenuButton').onclick=goMenu;tone(210,.4,'triangle',.08,90);return;
     }
     if (mode !== 'playing') return;
     mode = won ? 'won' : 'lost'; resetInput(); $('announcement').classList.add('hidden');
-    if (won) { score += 5000 + player.hp * 250 + Math.max(0, Math.round((620 - runTime) * 15)); addAchievementProgress('wave_runner',9);if(lastDefeatedBoss==='karnil')addAchievementProgress('housepig');if(retriesLeft>0)addAchievementProgress('nutty_survivor');if(newGamePlus)addAchievementProgress('ngplus_clear');persistProgressionWin(); }
+    if (won) { score += 5000 + player.hp * 250 + Math.max(0, Math.round((620 - runTime) * 15)); addAchievementProgress('wave_runner',9);if(lastDefeatedBoss==='karnil')addAchievementProgress('housepig');if(retriesLeft>0)addAchievementProgress('nutty_survivor');if(newGamePlus)addAchievementProgress('ngplus_clear');saveNGPlusBuild(); }
     const isRecord = score > record;
     if (isRecord) { record = score; try { localStorage.setItem('snickers3-best-v4', String(record)); } catch {} }
     updateHud();
     const epilogue=won&&lastDefeatedBoss==='karnil';
-    showOverlay(`<span class="eyebrow">${won ? 'MISSION ERFÜLLT · NUSS GESICHERT' : retriesLeft<=0 ? 'GAME OVER · ALLE RETRIES VERBRAUCHT' : 'MISSION GESCHEITERT · EGO LEICHT ANGEKNABBERT'}</span><h2 id="overlayTitle">${epilogue ? 'DER GARTEN HAT JETZT SCHWEIN.' : won ? 'DIE NUSS GEHÖRT DIR.' : retriesLeft<=0 ? 'DAS WAR’S, SNICKERS.' : 'KARNIL LACHT NOCH.'}</h2><p>${epilogue ? 'Snickers gönnt sich zur Feier des Tages einen gewaltigen Nussberg. Karnil steht derweil als ausgesprochen unwilliges Hausschwein im Garten. An der Wand hängt das Fell von Hasenbein. Es passt erstaunlich gut zur Tapete.' : won ? 'Neun Wellen. Drei Bosse. Eine Nuss. Snickers: „Ich hätte gern eine Belohnung, die nicht versucht, mich zu fressen.“' : retriesLeft<=0 ? 'Alle drei Retry-Marken dieses Runs sind verbraucht. Die Hasenjagd endet hier — aber der nächste Lauf wartet schon.' : ['Diese Ferkel spielen unfair. Zum Glück gibt es noch einen Versuch.', 'Auch Helden brauchen mal einen zweiten Anlauf. Die Nuss wartet auf dich.', 'Zu viele Schweine. Zu wenig Deckung. Du weißt jetzt, wie der Hase läuft.'][Math.floor(Math.random()*3)]}</p>${epilogue ? '<div class="ending-gag-art" aria-label="Snickers sitzt auf einem Nussberg, Karnil trägt einen Partyhut und Hasenbein hängt als Teppich an der Wand"><svg viewBox="0 0 640 230" role="img"><rect width="640" height="230" rx="18" fill="#17241f"/><rect y="170" width="640" height="60" fill="#26372d"/><g fill="#bd8b4a"><circle cx="250" cy="172" r="18"/><circle cx="280" cy="165" r="20"/><circle cx="310" cy="176" r="17"/><circle cx="335" cy="160" r="19"/><circle cx="365" cy="174" r="18"/></g><g transform="translate(306 105)"><ellipse cx="0" cy="27" rx="38" ry="33" fill="#d99b50"/><circle cx="-24" cy="0" r="15" fill="#c47c3e"/><circle cx="24" cy="0" r="15" fill="#c47c3e"/><circle cx="-12" cy="22" r="4" fill="#1b2820"/><circle cx="12" cy="22" r="4" fill="#1b2820"/><path d="M-7 33 Q0 40 7 33" stroke="#6d3f2e" stroke-width="4" fill="none"/></g><g transform="translate(490 130)"><ellipse cx="0" cy="32" rx="50" ry="35" fill="#b96d64"/><circle cx="0" cy="2" r="34" fill="#d48479"/><ellipse cx="0" cy="15" rx="15" ry="10" fill="#e3a095"/><circle cx="-12" cy="-4" r="4"/><circle cx="12" cy="-4" r="4"/><path d="M-26 -27 L0 -75 L26 -27 Z" fill="#f0cf54"/><circle cx="0" cy="-75" r="7" fill="#ff726d"/></g><g transform="translate(95 70)"><rect x="-45" y="-35" width="90" height="90" rx="12" fill="#36483d" stroke="#758e7a" stroke-width="4"/><path d="M-18 -4 C-30 -35 -4 -42 0 -13 C4 -42 30 -35 18 -4 C35 13 26 42 0 42 C-26 42 -35 13 -18 -4Z" fill="#b8c5b2"/><circle cx="-10" cy="8" r="4"/><circle cx="10" cy="8" r="4"/><text x="0" y="72" fill="#c7f36b" font-size="12" text-anchor="middle" font-family="Arial">HASENBEIN · WANDMODELL</text></g><text x="320" y="215" fill="#e7efdc" font-size="13" text-anchor="middle" font-family="Arial">SNICKERS FEIERT. KARNIL BEREUT ALLES.</text></svg></div><blockquote class="snickers-quote"><b>ABSPANN</b>Snickers isst Nüsse. Karnil grunzt. Die Nachbarschaft beschwert sich über beides.</blockquote>' : ''}${isRecord ? '<div class="new-record">NEUER LOKALER REKORD</div>' : ''}<div class="stats"><div><strong>${score.toLocaleString('de-DE')}</strong><span>PUNKTE</span></div><div><strong>${kills}</strong><span>GEGNER BESIEGT</span></div><div><strong>${formatTime(runTime)}</strong><span>ÜBERLEBT</span></div></div><div class="overlay-actions"><button id="retryButton" class="primary-button">${won ? (newGamePlus?'NEW GAME+ NOCHMAL':'NEW GAME+ STARTEN') : retriesLeft<=0 ? 'NEUER LAUF' : 'REVANCHE'} <span>↗</span></button><button id="endMenuButton" class="secondary-button">Hauptmenü</button></div>`);
-    if(won){const nextLevel=gamePlusLevel===0?1:gamePlusLevel===1?2:0;$('retryButton').textContent=gamePlusLevel===0?'NEW GAME+ STARTEN ↗':gamePlusLevel===1?'NEW GAME+2 STARTEN ↗':'KOMPLETT NEUER RUN ↗';$('retryButton').onclick=()=>startGame(nextLevel);}else $('retryButton').onclick=()=>startGame(0); $('endMenuButton').onclick = goMenu;
+    showOverlay(`<span class="eyebrow">${won ? 'MISSION ERFÜLLT · NUSS GESICHERT' : retriesLeft<=0 ? 'GAME OVER · ALLE RETRIES VERBRAUCHT' : 'MISSION GESCHEITERT · EGO LEICHT ANGEKNABBERT'}</span><h2 id="overlayTitle">${epilogue ? 'DER GARTEN HAT JETZT SCHWEIN.' : won ? 'DIE NUSS GEHÖRT DIR.' : retriesLeft<=0 ? 'DAS WAR’S, SNICKERS.' : 'KARNIL LACHT NOCH.'}</h2><p>${epilogue ? 'Snickers gönnt sich zur Feier des Tages einen gewaltigen Nussberg. Karnil steht derweil als ausgesprochen unwilliges Hausschwein im Garten. An der Wand hängt das Fell von Hasenbein. Es passt erstaunlich gut zur Tapete.' : won ? 'Neun Wellen. Drei Bosse. Eine Nuss. Snickers: „Ich hätte gern eine Belohnung, die nicht versucht, mich zu fressen.“' : retriesLeft<=0 ? 'Alle drei Retry-Marken dieser Welle bzw. dieses Bosskampfs sind verbraucht. Die Hasenjagd endet hier — aber der nächste Lauf wartet schon.' : ['Diese Ferkel spielen unfair. Zum Glück gibt es noch einen Versuch.', 'Auch Helden brauchen mal einen zweiten Anlauf. Die Nuss wartet auf dich.', 'Zu viele Schweine. Zu wenig Deckung. Du weißt jetzt, wie der Hase läuft.'][Math.floor(Math.random()*3)]}</p>${epilogue ? '<div class="ending-gag-art" aria-label="Snickers sitzt auf einem Nussberg, Karnil trägt einen Partyhut und Hasenbein hängt als Teppich an der Wand"><svg viewBox="0 0 640 230" role="img"><rect width="640" height="230" rx="18" fill="#17241f"/><rect y="170" width="640" height="60" fill="#26372d"/><g fill="#bd8b4a"><circle cx="250" cy="172" r="18"/><circle cx="280" cy="165" r="20"/><circle cx="310" cy="176" r="17"/><circle cx="335" cy="160" r="19"/><circle cx="365" cy="174" r="18"/></g><g transform="translate(306 105)"><ellipse cx="0" cy="27" rx="38" ry="33" fill="#d99b50"/><circle cx="-24" cy="0" r="15" fill="#c47c3e"/><circle cx="24" cy="0" r="15" fill="#c47c3e"/><circle cx="-12" cy="22" r="4" fill="#1b2820"/><circle cx="12" cy="22" r="4" fill="#1b2820"/><path d="M-7 33 Q0 40 7 33" stroke="#6d3f2e" stroke-width="4" fill="none"/></g><g transform="translate(490 130)"><ellipse cx="0" cy="32" rx="50" ry="35" fill="#b96d64"/><circle cx="0" cy="2" r="34" fill="#d48479"/><ellipse cx="0" cy="15" rx="15" ry="10" fill="#e3a095"/><circle cx="-12" cy="-4" r="4"/><circle cx="12" cy="-4" r="4"/><path d="M-26 -27 L0 -75 L26 -27 Z" fill="#f0cf54"/><circle cx="0" cy="-75" r="7" fill="#ff726d"/></g><g transform="translate(95 70)"><rect x="-45" y="-35" width="90" height="90" rx="12" fill="#36483d" stroke="#758e7a" stroke-width="4"/><path d="M-18 -4 C-30 -35 -4 -42 0 -13 C4 -42 30 -35 18 -4 C35 13 26 42 0 42 C-26 42 -35 13 -18 -4Z" fill="#b8c5b2"/><circle cx="-10" cy="8" r="4"/><circle cx="10" cy="8" r="4"/><text x="0" y="72" fill="#c7f36b" font-size="12" text-anchor="middle" font-family="Arial">HASENBEIN · WANDMODELL</text></g><text x="320" y="215" fill="#e7efdc" font-size="13" text-anchor="middle" font-family="Arial">SNICKERS FEIERT. KARNIL BEREUT ALLES.</text></svg></div><blockquote class="snickers-quote"><b>ABSPANN</b>Snickers isst Nüsse. Karnil grunzt. Die Nachbarschaft beschwert sich über beides.</blockquote>' : ''}${isRecord ? '<div class="new-record">NEUER LOKALER REKORD</div>' : ''}<div class="stats"><div><strong>${score.toLocaleString('de-DE')}</strong><span>PUNKTE</span></div><div><strong>${kills}</strong><span>GEGNER BESIEGT</span></div><div><strong>${formatTime(runTime)}</strong><span>ÜBERLEBT</span></div></div><div class="overlay-actions"><button id="retryButton" class="primary-button">${won ? (newGamePlus?'NEW GAME+ NOCHMAL':'NEW GAME+ STARTEN') : retriesLeft<=0 ? 'NEUER LAUF' : 'REVANCHE'} <span>↗</span></button><button id="endMenuButton" class="secondary-button">Hauptmenü</button></div>`);
+    $('retryButton').onclick = won?()=>startGame(true):()=>startGame(false); $('endMenuButton').onclick = goMenu;
     if (won) { tone(523,.3,'triangle',.1); setTimeout(() => tone(659,.3,'triangle',.1),150); setTimeout(() => tone(1046,.5,'triangle',.1),300); }
     else tone(180,.55,'triangle',.1,50);
   }
@@ -795,7 +731,7 @@
     $('healthBar').innerHTML = Array.from({length:player.maxHp},(_,i)=>`<i class="health-segment${i < player.hp ? '' : ' empty'}"></i>`).join('');
     $('healthText').textContent = `${player.hp}/${player.maxHp}`;
     $('scoreValue').textContent = String(score).padStart(6,'0');
-    $('waveLabel').textContent = boss ? `${gamePlusLevel===2?'NG+2 · ':newGamePlus?'NG+ · ':''}${boss.karnil?'BOSS 03 / 03':boss.cyber?'BOSS 02 / 03':'BOSS 01 / 03'}` : `${gamePlusLevel===2?'NG+2 · ':newGamePlus?'NG+ · ':''}WELLE ${String(wave+1).padStart(2,'0')} / 09`;
+    $('waveLabel').textContent = boss ? `${newGamePlus?'NG+ · ':''}${boss.karnil?'BOSS 03 / 03':boss.cyber?'BOSS 02 / 03':'BOSS 01 / 03'}` : `${newGamePlus?'NG+ · ':''}WELLE ${String(wave+1).padStart(2,'0')} / 09`;
     $('waveFill').style.width = boss ? '100%' : `${clamp(waveTime / waveLengths[wave] * 100, 0, 100)}%`;
     const alive=livingEnemyCount();
     $('waveObjective').textContent = boss ? (boss.karnil?(boss.phaseThree?'Überlebe Karnils dritte Phase und Cyber-Hasenbein':boss.phaseTwo?'Besiege Karnil und Zombie-Hasenbein':'Leere Karnils erste Lebensleiste'):boss.cyber?'Beende seine zweite Karriere':'Besiege General Hasenbein') : waveSpawningComplete() ? `RESTLICHE GEGNER: ${alive}` : `NACHSCHUB ${Math.max(0,Math.ceil(waveLengths[wave]-waveTime))} s · ${wave<3?'AKT I':wave<6?'AKT II':'STEINBRUCH'}`;
@@ -849,7 +785,7 @@
       if(newGamePlus&&e.phaseThree&&!e.paftiHealed&&e.hp<=e.maxHp*.5){triggerPaftiIntervention();return;}
     }
     if (e.hp > 0) return;
-    e.dead = true; kills++; score += Math.round(e.points*((player.powerups.scoreRush>0?2:1)*(player.scoreRushBonus||1)));if(player.deathBurst&&!isBoss(e)&&!e.miniBoss){player.deathBurstKills=(player.deathBurstKills||0)+1;if(player.deathBurstKills>=5){player.deathBurstKills=0;hazards.push({type:'friendlyMortar',x:e.x,y:e.y,r:125,wait:.08,life:.32,hit:false,damage:22*(player.damage||1),friendly:true});}}addAchievementProgress('first_crunch');addAchievementProgress('score_hog',Math.max(0,e.points));if(e.type.startsWith('pig'))addAchievementProgress('pigsty');if(e.type==='gatling')addAchievementProgress('veggie_fear');if(newGamePlus&&e.type==='voidBunny')addAchievementProgress('ngplus_void');if(newGamePlus&&e.type==='rocketHare')addAchievementProgress('ngplus_rocket');if(newGamePlus&&e.type==='pigJuggernaut')addAchievementProgress('ngplus_juggernaut');
+    e.dead = true; kills++; score += Math.round(e.points*((player.powerups.scoreRush>0?2:1)*(player.scoreRushBonus||1)));addAchievementProgress('first_crunch');addAchievementProgress('score_hog',Math.max(0,e.points));if(e.type.startsWith('pig'))addAchievementProgress('pigsty');if(e.type==='gatling')addAchievementProgress('veggie_fear');if(newGamePlus&&e.type==='voidBunny')addAchievementProgress('ngplus_void');if(newGamePlus&&e.type==='rocketHare')addAchievementProgress('ngplus_rocket');if(newGamePlus&&e.type==='pigJuggernaut')addAchievementProgress('ngplus_juggernaut');
     burst(e.x,e.y, e.type === 'boss' ? '#c7f36b' : '#91ba70', e.type==='boss'?85:16,180);
     floater(e.x,e.y-22,`+${e.points}`);
     if(e.miniBoss){toast('ZOMBIE-HASENBEIN ERLEDIGT');updateHud();}
@@ -875,13 +811,12 @@
   function hurtPlayer(damage = 1) {
     if (player.invuln > 0 || mode !== 'playing') return;
     if(player.powerups.overdrive>0){floater(player.x,player.y-36,'ROTER BLICK',accent());return;}
-    if(player.dodgeChance&&Math.random()<player.dodgeChance){player.invuln=.35;burst(player.x,player.y,'#d8f5ff',12,120);floater(player.x,player.y-36,'DODGE!', '#d8f5ff');tone(920,.08,'triangle',.04,1180);return;}
     if(player.damageGuard&&Math.random()<player.damageGuard){player.invuln=.45;burst(player.x,player.y,accent(),18,150);floater(player.x,player.y-36,'EISENFELL!',accent());tone(760,.12,'triangle',.05,420);return;}
     if(player.powerups.phase>0){floater(player.x,player.y-36,'PHASENFELL',accent());return;}
     if(player.powerups.barrier>0){player.powerups.barrier=0;player.invuln=.7;burst(player.x,player.y,accent(),25,180);floater(player.x,player.y-36,'ABGEBLOCKT',accent());tone(840,.2,'sine',.06,320);return;}
     if(player.shieldReady){player.shieldReady=false;player.shieldCd=15;player.invuln=.7;burst(player.x,player.y,accent(),25,180);floater(player.x,player.y-36,'ABGEBLOCKT',accent());tone(840,.2,'sine',.06,320);return;}
     if(player.powerups.thorns>0){for(const e of enemies)if(!e.dead&&dist(player,e)<150)damageEnemy(e,12,true);if(boss&&!boss.dead&&dist(player,boss)<160)damageEnemy(boss,14,true);}
-    if(gamePlusLevel===1)damage*=2;else if(gamePlusLevel===2)damage*=4;
+    if(newGamePlus)damage*=2;
     player.waveHits++;
     player.hp = Math.max(0,player.hp-damage); player.invuln = 1.15; shake = reducedMotion ? 0 : 7;
     burst(player.x,player.y,'#ff9d71',18,180); floater(player.x,player.y-36,`−${damage} ♥`,'#ff9d71');
@@ -1036,7 +971,7 @@
   function updateBoss(dt) {
     if (!boss || boss.dead) return;
     boss.phase += dt * 4; boss.hit = Math.max(0,boss.hit-dt);boss.slow=Math.max(0,boss.slow-dt);
-    if (!boss.karnil && boss.hp < boss.maxHp * .48 && !boss.enraged) { boss.enraged=true; boss.speed=(boss.cyber?92:76)*(gamePlusLevel===2?1.32:newGamePlus?1.1:1); announce(boss.cyber?'ÜBERTAKTUNG AKTIV.':'OH OH.', boss.cyber?'CYBER-WUTMODUS':'HASENBEIN DREHT DURCH'); }
+    if (!boss.karnil && boss.hp < boss.maxHp * .48 && !boss.enraged) { boss.enraged=true; boss.speed=boss.cyber?92:76; announce(boss.cyber?'ÜBERTAKTUNG AKTIV.':'OH OH.', boss.cyber?'CYBER-WUTMODUS':'HASENBEIN DREHT DURCH'); }
     const dx=player.x-boss.x,dy=player.y-boss.y,d=Math.hypot(dx,dy)||1;
     const slow=(boss.slow>0?.88:1)*(player.powerups.freeze>0?.7:1);
     if(boss.windup>0){boss.windup-=dt;if(boss.windup<=0){if(boss.windupMode==='beam'){const count=boss.enraged?5:3;for(let i=0;i<count;i++)enemyShot(boss.x,boss.y,boss.aim+(i-(count-1)/2)*.1,boss.enraged?330:290,true);}else boss.charge=boss.windupMode==='ram'?.68:.5;}}
@@ -1046,16 +981,8 @@
     boss.actionCd-=dt;boss.summonCd-=dt;
     if(boss.burstLeft>0){boss.burstCd-=dt;if(boss.burstCd<=0){enemyShot(boss.x,boss.y,boss.aim+(boss.burstCount-boss.burstLeft)*.075,boss.enraged?285:245,true);boss.burstLeft--;boss.burstCd=.1;}}
     if (boss.actionCd <= 0 && boss.windup<=0 && boss.charge<=0 && boss.burstLeft<=0) {
-      boss.attack++;const pattern=boss.phaseThree?(gamePlusLevel===2?boss.attack%8:boss.attack%6):(newGamePlus?boss.attack%7:boss.attack%5),offset=Math.atan2(dy,dx);
-      if(boss.karnil&&boss.phaseThree&&gamePlusLevel===2&&pattern===6){for(let i=0;i<8;i++)hazards.push({type:'rockfall',x:clamp(player.x+Math.cos(TAU*i/8)*rnd(90,300),80,W-80),y:clamp(player.y+Math.sin(TAU*i/8)*rnd(80,220),150,H-60),r:95,wait:.45+i*.07,life:.35,hit:false,damage:3});for(let i=0;i<12;i++)enemyShot(boss.x,boss.y,TAU*i/12,365,true);}
-      else if(boss.karnil&&boss.phaseThree&&gamePlusLevel===2&&pattern===7){for(let ring=0;ring<3;ring++)for(let i=0;i<12;i++)enemyShot(boss.x,boss.y,TAU*i/12+ring*.09,330+ring*35,true);for(let i=0;i<5;i++)hazards.push({type:'shock',x:clamp(player.x+rnd(-260,260),70,W-70),y:clamp(player.y+rnd(-180,180),145,H-60),r:100,wait:.65+i*.1,life:.35,hit:false,damage:3});}
-      else if(newGamePlus&&!boss.phaseThree&&!boss.karnil&&!boss.cyber&&pattern===5){for(let ring=0;ring<2;ring++)for(let i=0;i<16;i++)enemyShot(boss.x,boss.y,TAU*i/16+ring*.1,230+ring*70,true);burst(boss.x,boss.y,'#ffb36f',24,160);}
-      else if(newGamePlus&&!boss.phaseThree&&!boss.karnil&&!boss.cyber&&pattern===6){for(let i=0;i<3;i++)hazards.push({type:'shock',x:clamp(player.x+rnd(-190,190),65,W-65),y:clamp(player.y+rnd(-140,140),140,H-55),r:105,wait:.55+i*.18,life:.35,hit:false,damage:3});boss.aim=offset;boss.burstLeft=7;boss.burstCount=7;boss.burstCd=.09;}
-      else if(newGamePlus&&!boss.phaseThree&&boss.cyber&&!boss.karnil&&pattern===5){for(let lane=-2;lane<=2;lane++)for(let i=0;i<3;i++)enemyShot(boss.x,boss.y,offset+lane*.18+i*.025,330+i*45,true);tone(520,.25,'sawtooth',.07,880);}
-      else if(newGamePlus&&!boss.phaseThree&&boss.cyber&&!boss.karnil&&pattern===6){for(let i=0;i<24;i++)enemyShot(boss.x,boss.y,TAU*i/24+(boss.attack%2)*.08,300+(i%2)*70,true);hazards.push({type:'shock',x:player.x,y:player.y,r:155,wait:.75,life:.35,hit:false,damage:3});}
-      else if(newGamePlus&&!boss.phaseThree&&boss.karnil&&pattern===5){for(let i=0;i<7;i++)hazards.push({type:'rockfall',x:clamp(player.x-300+i*100,80,W-80),y:clamp(player.y+rnd(-130,130),150,H-60),r:92,wait:.55+i*.09,life:.35,hit:false,damage:3});}
-      else if(newGamePlus&&!boss.phaseThree&&boss.karnil&&pattern===6){for(let ring=0;ring<2;ring++)for(let i=0;i<18;i++)enemyShot(boss.x,boss.y,TAU*i/18+ring*.1,280+ring*55,true);hazards.push({type:'shock',x:player.x,y:player.y,r:175,wait:.8,life:.35,hit:false,damage:3});}
-      else if(boss.karnil&&boss.phaseThree&&pattern===0){for(let ring=0;ring<2;ring++)for(let i=0;i<14;i++)enemyShot(boss.x,boss.y,TAU*i/14+ring*.12,300-ring*35,true);tone(55,.35,'sawtooth',.08,25);}
+      boss.attack++;const pattern=boss.phaseThree?boss.attack%6:boss.attack%5,offset=Math.atan2(dy,dx);
+      if(boss.karnil&&boss.phaseThree&&pattern===0){for(let ring=0;ring<2;ring++)for(let i=0;i<14;i++)enemyShot(boss.x,boss.y,TAU*i/14+ring*.12,300-ring*35,true);tone(55,.35,'sawtooth',.08,25);}
       else if(boss.karnil&&boss.phaseThree&&pattern===1){for(let i=0;i<6;i++)hazards.push({type:'rockfall',x:clamp(player.x+rnd(-310,310),80,W-80),y:clamp(player.y+rnd(-220,220),150,H-60),r:105,wait:.55+i*.11,life:.35,hit:false,damage:3});}
       else if(boss.karnil&&boss.phaseThree&&pattern===2){boss.aim=offset;boss.windup=.48;boss.windupMode='ram';hazards.push({type:'shock',x:player.x,y:player.y,r:175,wait:.8,life:.35,hit:false,damage:3});}
       else if(boss.karnil&&boss.phaseThree&&pattern===3){boss.aim=offset;boss.burstLeft=13;boss.burstCount=13;boss.burstCd=.08;}
@@ -1075,9 +1002,9 @@
       else if(pattern===1){const count=boss.enraged?18:13;for(let i=0;i<count;i++)enemyShot(boss.x,boss.y,offset+TAU*i/count,boss.enraged?225:185,false);burst(boss.x,boss.y,'#ff9b67',18,110);}
       else if(pattern===2){hazards.push({x:player.x,y:player.y,r:boss.enraged?138:112,wait:1.05,life:.35,hit:false,damage:2});hazards.push({x:clamp(player.x+rnd(-180,180),65,W-65),y:clamp(player.y+rnd(-150,150),140,H-55),r:88,wait:1.45,life:.35,hit:false,damage:2});}
       else {const count=boss.enraged?7:5;for(let i=0;i<count;i++)enemyShot(boss.x,boss.y,offset+(i-(count-1)/2)*.14,boss.enraged?275:220,false);}
-      boss.actionCd=(boss.karnil?(boss.phaseThree?.82:(boss.enraged?1.18:1.55)):boss.cyber?(boss.enraged?1.48:1.82):(boss.enraged?1.3:1.7))*(gamePlusLevel===2?.78:newGamePlus?.9:1);
+      boss.actionCd=boss.karnil?(boss.phaseThree?.82:(boss.enraged?1.18:1.55)):boss.cyber?(boss.enraged?1.48:1.82):(boss.enraged?1.3:1.7);
     }
-    if (boss.summonCd <= 0 && enemies.length < (gamePlusLevel===2?36:newGamePlus?24:12)) { const baseCount=boss.enraged?4:3,count=baseCount*(gamePlusLevel===2?3:newGamePlus?2:1);for(let i=0;i<count;i++){let type;if(boss.karnil){const pigTypes=boss.phaseThree?['pigJuggernaut','rocketHare','pigCannon','voidBunny']:boss.enraged?['pigHowler','pigRammer','pigCannon','pigDrone']:['pigRammer','pigMortar','pigDrone'];type=pigTypes[i%pigTypes.length];}else type=newGamePlus&&i%4===3?'voidBunny':boss.cyber?(i%3===2?'rabid':'runner'):(i%3===2?'runner':'bunny');spawnEnemy(type);} boss.summonCd=boss.enraged?6.5:9; }
+    if (boss.summonCd <= 0 && enemies.length < (newGamePlus?24:12)) { const baseCount=boss.enraged?4:3,count=baseCount*(newGamePlus?2:1);for(let i=0;i<count;i++){let type;if(boss.karnil){const pigTypes=boss.phaseThree?['pigJuggernaut','rocketHare','pigCannon','voidBunny']:boss.enraged?['pigHowler','pigRammer','pigCannon','pigDrone']:['pigRammer','pigMortar','pigDrone'];type=pigTypes[i%pigTypes.length];}else type=newGamePlus&&i%4===3?'voidBunny':boss.cyber?(i%3===2?'rabid':'runner'):(i%3===2?'runner':'bunny');spawnEnemy(type);} boss.summonCd=boss.enraged?6.5:9; }
     if(d < player.r + boss.r) hurtPlayer(2);
   }
   function update(dt) {
@@ -1111,7 +1038,7 @@
           if(type==='gatling'&&enemies.filter(e=>e.type==='gatling'&&!e.dead).length>=3)type='bunny';
         }else if(wave>0&&roll<.19)type='gunner';else if(wave>0&&roll<.33)type='brute';else if(waveTime>8&&roll<.64)type='runner';
         if(newGamePlus){const eliteRoll=Math.random();if(wave>=5&&eliteRoll<.09)type='pigJuggernaut';else if(wave>=2&&eliteRoll<.18)type='rocketHare';else if(eliteRoll<.27)type='voidBunny';}
-        const cap=gamePlusLevel===2?170:newGamePlus?118:62;if(enemies.length<cap){const copies=gamePlusLevel===2?3:newGamePlus?2:1;for(let c=0;c<copies&&enemies.length<cap;c++)spawnEnemy(type);if(wave===2&&Math.random()<.5)spawnEnemy('bunny');}
+        const cap=newGamePlus?118:62;if(enemies.length<cap){spawnEnemy(type);if(newGamePlus&&enemies.length<cap)spawnEnemy(type);if(wave===2&&Math.random()<.5)spawnEnemy('bunny');}
         spawnTimer=wave<3?Math.max(.31,.82-wave*.16-waveTime*.009):wave<6?Math.max(.38,.69-(wave-3)*.075-waveTime*.004):Math.max(.35,.62-(wave-6)*.07-waveTime*.004);
       }
     }
@@ -1426,11 +1353,11 @@
       ambientTime+=dt; update(dt);shake=Math.max(0,shake-dt*22);bombFlash=Math.max(0,bombFlash-dt);
       for(const p of particles){p.life-=dt;p.x+=(p.vx||0)*dt;p.y+=(p.vy||0)*dt;if(p.vx!==undefined)p.vx*=.97;if(p.vy!==undefined)p.vy*=.97;}
       particles=particles.filter(p=>p.life>0);for(const f of floaters){f.life-=dt;f.y-=dt*30;}floaters=floaters.filter(f=>f.life>0);
-    } else if(mode==='menu'||mode==='help'||mode==='intro'||mode==='retry'||mode==='bossUpgrade'||mode==='interlude'||mode==='upgrade'||mode==='scoreSkill'||mode==='paftiCutscene'||mode==='hallOfFame')ambientTime+=dt;
+    } else if(mode==='menu'||mode==='help'||mode==='intro'||mode==='retry'||mode==='bossUpgrade'||mode==='interlude'||mode==='upgrade'||mode==='scoreSkill'||mode==='paftiCutscene')ambientTime+=dt;
     render(dt);requestAnimationFrame(frame);
   }
 
-  $('startButton').onclick=()=>startGame(0);$('ngPlusButton').onclick=()=>startGame(1);$('ngPlus2Button').onclick=()=>startGame(2);$('hallOfFameButton').onclick=showHallOfFame;$('helpButton').onclick=showHelp;$('achievementButton').onclick=showAchievements;$('powerupButton').onclick=showPowerups;$('pauseButton').onclick=pauseGame;$('soundButton').onclick=toggleSound;$('settingsButton').onclick=showSettings;
+  $('startButton').onclick=()=>startGame(false);$('ngPlusButton').onclick=()=>startGame(true);$('helpButton').onclick=showHelp;$('achievementButton').onclick=showAchievements;$('powerupButton').onclick=showPowerups;$('pauseButton').onclick=pauseGame;$('soundButton').onclick=toggleSound;$('settingsButton').onclick=showSettings;
   updateNGPlusMenu();
   $('fullscreenButton').onclick=async()=>{
     try{if(document.fullscreenElement)await document.exitFullscreen();else if(shell.requestFullscreen)await shell.requestFullscreen();else toast('Vollbild ist in diesem Browser nicht verfügbar.');}
@@ -1449,7 +1376,6 @@
     if(e.code==='KeyP'||e.code==='Escape'){
       if(mode==='playing'||mode==='paused'){e.preventDefault();pauseGame();}
       else if(mode==='help'){mode='menu';hideOverlay();$('startButton').focus();}
-      else if(mode==='hallOfFame'){mode='menu';hideOverlay();$('hallOfFameButton').focus();}
       else if(mode==='settings'&&e.code==='Escape'){e.preventDefault();closeSettings();}
       return;
     }

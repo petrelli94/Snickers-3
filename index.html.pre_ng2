@@ -7,10 +7,10 @@
   <meta name="description" content="Snickers 3: Neun Wellen, rasante Musik, Killerferkel, drei Bosse, Spezial-Upgrades, seltene Power-ups, Retries und 50 Achievements.">
   <title>Snickers 3: Attack from Hasenbein</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23c7f36b'/%3E%3Cpath d='M12 10h17v6l-6 4 6 4v6H12v-6h10l-7-4 7-4H12z' fill='%23101a18'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?rev=ng2balance">
-  <link rel="stylesheet" href="v2.css?rev=ng2balance">
-  <link rel="stylesheet" href="v3.css?rev=ng2balance">
-  <script src="game.js?rev=ng2balance" defer></script>
+  <link rel="stylesheet" href="styles.css?rev=eierbraten">
+  <link rel="stylesheet" href="v2.css?rev=eierbraten">
+  <link rel="stylesheet" href="v3.css?rev=eierbraten">
+  <script src="game.js?rev=eierbraten" defer></script>
 </head>
 <body>
 <div class="app">
@@ -39,13 +39,11 @@
           <p class="story">Eine Nuss. Tausend Hasen. Keine Gnade. Snickers sieht rot!!!</p>
           <button id="startButton" class="primary-button">MISSION STARTEN <span aria-hidden="true">↗</span></button>
           <button id="ngPlusButton" class="text-button ngplus-menu-button hidden"><span class="help-circle">+</span> NEW GAME+</button>
-          <button id="ngPlus2Button" class="text-button ngplus-menu-button hidden"><span class="help-circle">++</span> NEW GAME+2</button>
-          <button id="hallOfFameButton" class="text-button hidden"><span class="help-circle">♛</span> Hall of Fame</button>
           <button id="helpButton" class="text-button"><span class="help-circle">?</span> So überlebst du</button>
           <button id="achievementButton" class="text-button"><span class="help-circle">★</span> Achievements</button>
           <button id="powerupButton" class="text-button"><span class="help-circle">✦</span> Power-ups</button>
         </div>
-        <div class="start-bottom"><span>9 WELLEN <i></i> 3 BOSSE <i></i> 50 ACHIEVEMENTS <i></i> 3 RETRIES PRO RUN</span><span id="menuRecord"></span></div><div class="menu-version-tag">eierbraten version</div>
+        <div class="start-bottom"><span>9 WELLEN <i></i> 3 BOSSE <i></i> 50 ACHIEVEMENTS <i></i> 3 RETRIES JE WELLE / BOSS</span><span id="menuRecord"></span></div><div class="menu-version-tag">eierbraten version</div>
       </div>
       <div id="hud" class="hud hidden" aria-hidden="true">
         <div class="health-panel"><span class="hud-label">SNICKERS</span><div class="health-row"><span class="health-symbol">♥</span><div id="healthBar" class="health-bar"></div><span id="healthText">5/5</span></div></div>
