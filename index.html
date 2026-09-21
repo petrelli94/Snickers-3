@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101a18">
+  <meta name="description" content="Snickers 3: Neun Wellen, rasante Musik, Killerferkel, drei Bosse, Spezial-Upgrades, seltene Power-ups, Retries und 60 Achievements.">
+  <title>Snickers 3: Attack from Hasenbein</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23c7f36b'/%3E%3Cpath d='M12 10h17v6l-6 4 6 4v6H12v-6h10l-7-4 7-4H12z' fill='%23101a18'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css?rev=gartenzwerg">
+  <link rel="stylesheet" href="v2.css?rev=gartenzwerg">
+  <link rel="stylesheet" href="v3.css?rev=gartenzwerg">
+  <script src="game.js?rev=gartenzwerg" defer></script>
+</head>
+<body>
+<div class="app">
+  <header class="site-header">
+    <div class="wordmark"><span class="brand-mark" aria-hidden="true">🐹</span><span>Ottahs<span class="wordmark-sub">Nutty Games</span></span></div>
+    <div class="header-issue">KLEINER HAMSTER. NEUNMAL ÄRGER.</div>
+    <div class="issue"><span>VOL.</span> 03 <span class="issue-slash">/</span> 2026</div>
+  </header>
+  <main>
+    <div class="overline"><span><span class="crosshair" aria-hidden="true">✳</span> SNICKERS 3 <span class="muted">/ ATTACK FROM HASENBEIN</span></span><span class="genre">SINGLEPLAYER · ARCADE SURVIVAL</span></div>
+    <section class="game-shell" id="gameShell" aria-label="Snickers 3 – Spielbereich">
+      <canvas id="gameCanvas" width="1280" height="720" tabindex="-1" aria-label="Arena. Bewege Snickers mit WASD oder den Pfeiltasten. Maus zielt, Linksklick feuert sofort, Schüsse erfolgen automatisch. Leertaste zum Ausweichen, E für die Spezialwaffe."></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="game-tools">
+        <button class="icon-button hidden" id="pauseButton" title="Pause (P)" aria-label="Spiel pausieren"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg></button>
+        <button class="icon-button" id="settingsButton" title="Einstellungen und Farben" aria-label="Einstellungen und Farben öffnen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="currentColor"/><circle cx="15" cy="17" r="3" fill="currentColor"/></svg></button>
+        <button class="icon-button" id="soundButton" title="Ton einschalten" aria-label="Ton einschalten" aria-pressed="false"><svg id="soundIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path id="soundWaves" d="m16 9 6 6m0-6-6 6"/></svg></button>
+        <button class="icon-button" id="fullscreenButton" title="Vollbild" aria-label="Vollbild öffnen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+      </div>
+      <div class="screen start-screen" id="startScreen">
+        <div class="key-art" aria-hidden="true"></div>
+        <div class="art-shade" aria-hidden="true"></div>
+        <div class="start-content">
+          <div class="chapter">DIE RASANTE KNABBEREI</div>
+          <h1>SNICKERS<span class="title-three">3</span><span class="subtitle">ATTACK FROM<br>HASENBEIN</span></h1>
+          <p class="story">Eine Nuss. Tausend Hasen. Keine Gnade. Snickers sieht rot!!!</p>
+          <button id="startButton" class="primary-button">MISSION STARTEN <span aria-hidden="true">↗</span></button>
+          <button id="ngPlusButton" class="text-button ngplus-menu-button hidden"><span class="help-circle">+</span> NEW GAME+</button>
+          <button id="ngPlus2Button" class="text-button ngplus-menu-button hidden"><span class="help-circle">++</span> NEW GAME+2</button>
+          <button id="hallOfFameButton" class="text-button hidden"><span class="help-circle">♛</span> Hall of Fame</button>
+          <button id="endlessButton" class="text-button ngplus-menu-button hidden"><span class="help-circle">∞</span> Endlosmodus</button>
+          <button id="helpButton" class="text-button"><span class="help-circle">?</span> So überlebst du</button>
+          <button id="achievementButton" class="text-button"><span class="help-circle">★</span> Achievements</button>
+          <button id="powerupButton" class="text-button"><span class="help-circle">✦</span> Power-ups</button>
+        </div>
+        <div class="start-bottom"><span>9 WELLEN <i></i> 3 BOSSE <i></i> 60 ACHIEVEMENTS <i></i> 3 RETRIES PRO RUN</span><span id="menuRecord"></span></div><div class="menu-version-tag">gartenzwerg version</div>
+      </div>
+      <div id="hud" class="hud hidden" aria-hidden="true">
+        <div class="health-panel"><span class="hud-label">SNICKERS</span><div class="health-row"><span class="health-symbol">♥</span><div id="healthBar" class="health-bar"></div><span id="healthText">5/5</span></div></div>
+        <div class="wave-panel"><span id="waveLabel">WELLE 01 / 09</span><div class="wave-progress"><div id="waveFill"></div></div><span class="hud-label" id="waveObjective">Überlebe die Hasen-Armee</span></div>
+        <div class="score-panel"><span class="hud-label">PUNKTE</span><strong id="scoreValue">000000</strong></div>
+      </div>
+      <div id="bossHud" class="boss-hud hidden"><div><span id="bossName">GENERAL HASENBEIN</span><span id="bossPhase">DER NUSS-DIKTATOR</span></div><div class="boss-track"><div id="bossFill"></div></div><div id="miniBossHud" class="mini-boss-hud hidden"><div><span>ZOMBIE-HASENBEIN</span><span>MINIBOSS</span></div><div class="mini-boss-track"><div id="miniBossFill"></div></div></div></div>
+      <div id="skillHud" class="skill-hud hidden" aria-label="Gewählte Skills"></div>
+      <div id="powerHud" class="power-hud hidden" aria-label="Aktive Power-ups"></div>
+      <div id="achievementHud" class="achievement-hud hidden" aria-live="polite"></div>
+      <div id="runInfo" class="run-info hidden"><div class="ability"><kbd>SPACE</kbd><div><span id="dashLabel">AUSWEICHEN</span><div class="ability-track"><div id="dashFill"></div></div></div></div><span id="runTime">00:00</span><div class="ability weapon-ability"><kbd>Q/R</kbd><div><span id="weaponLabel">NUSSBOMBE</span><strong id="weaponCount">× 2</strong></div></div></div>
+      <div id="announcement" class="announcement hidden" aria-live="polite"><span id="announcementKicker"></span><strong id="announcementTitle"></strong></div>
+      <div id="touchControls" class="touch-controls hidden"><div id="joystick" class="joystick" aria-label="Bewegung: Finger ziehen"><div id="joystickThumb"></div></div><div class="touch-actions"><button id="touchBomb" aria-label="Nussbombe">NUSS<span>E</span></button><button id="touchDash" aria-label="Ausweichen">DASH<span>↗</span></button></div></div>
+      <div id="overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+        <div id="overlayContent" class="overlay-content"></div>
+      </div>
+      <div id="loadingNotice" class="toast hidden" role="status"></div>
+    </section>
+    <div class="controls-strip" aria-label="Spielsteuerung">
+      <div class="control-item"><span class="key-group"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>Bewegen <small>/ Pfeiltasten</small></span></div>
+      <div class="control-item"><span class="auto-icon" aria-hidden="true">⌖</span><span>Maus zielt & feuert <small>/ LMB sofort · Auto-Feuer</small></span></div>
+      <div class="control-item"><kbd>SPACE</kbd><span>Ausweichen</span></div>
+      <div class="control-item"><kbd>E</kbd><span>Waffe benutzen</span></div>
+      <div class="control-item"><kbd>Q / R</kbd><span>Waffe wechseln</span></div>
+      <div class="control-item pause-legend"><kbd>P</kbd><span>Pause</span></div>
+    </div>
+    <div class="mobile-hint">Mit dem linken Daumen bewegen. Rechts ausweichen und Nussbomben werfen.</div>
+  </main>
+  <footer><span>KEINE NUSS WIRD ZURÜCKGELASSEN.</span><span>Am besten mit Tastatur <span class="footer-star">✳</span> Auch mit Touch spielbar</span></footer>
+</div>
+</body>
+</html>
