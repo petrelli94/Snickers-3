@@ -244,7 +244,7 @@
     keys.clear(); touch.x = touch.y = 0; touch.id = null;
     $('joystickThumb').style.transform = 'translate(0,0)';
   }
-  const ngPlusCarryKeys=['maxHp','speed','dashCooldown','damage','fireRate','spread','pierce','magnet','frost','chain','orbit','nutSentry','carrotDrone','eggBooger','merzEggs','shield','vampire','powerLuck','ammoBonus','ammoDropLuck','specialDamage','damageGuard','pickupLifeBonus','bossDamage','homing','crit','shockDash','ammoRefillBonus','scoreRushBonus','powerDuration','nutstorm','waveRenew','turretVolley','mustardTrail','dashNova','executioner','powerFrenzy','dodgeChance','deathBurst','deathBurstKills','ammoAlchemy'];
+  const ngPlusCarryKeys=['maxHp','speed','dashCooldown','damage','fireRate','spread','pierce','magnet','frost','chain','orbit','nutSentry','carrotDrone','eggBooger','merzEggs','shield','vampire','powerLuck','ammoBonus','ammoDropLuck','specialDamage','damageGuard','pickupLifeBonus','bossDamage','homing','crit','shockDash','ammoRefillBonus','scoreRushBonus','powerDuration','nutstorm','waveRenew','turretVolley','mustardTrail','dashNova','executioner','powerFrenzy','dodgeChance','deathBurst','deathBurstKills','ammoAlchemy','sniebelPlate'];
   function captureNGPlusBuild(p){
     const build={};for(const k of ngPlusCarryKeys)if(p[k]!==undefined)build[k]=p[k];
     build.skills={...(p.skills||{})};build.specials={...(p.specials||{})};build.weapons=[...(p.weapons||['nutBomb'])];build.scorePerks={...(p.scorePerks||{})};return build;
@@ -295,7 +295,7 @@
     const carryBuild=gamePlusLevel===2?ngPlus2Build:gamePlusLevel===1?ngPlusBuild:null;
     if(gamePlusLevel===1&&!(ngPlusUnlocked&&carryBuild))return;
     if(gamePlusLevel===2&&!(ngPlus2Unlocked&&carryBuild))return;
-    player = { x: W / 2, y: H / 2 + 25, r: 18, hp: 5, maxHp: 5, speed: 264, invuln: 1.8, dashCd: 0, dashCooldown:2.25, dashTime: 0, dashX: 1, dashY: 0, face: 1, moving: false, angle: 0, bombs: 2, damage: 1, fireRate: .32, spread: 0, pierce: 0, magnet: 90, trail: [], skills:{}, frost:false, chain:false, orbit:false, orbitCd:0, nutSentry:false, nutSentryCd:0, carrotDrone:false, carrotDroneCd:0, shield:false, shieldReady:false, shieldCd:0, vampire:false, vampireKills:0, shotCount:0, weapons:['nutBomb'],weaponIndex:0,weaponUses:{nutBomb:3},usedWeapons:new Set(),powerups:{},powerLuck:1,powerDryKills:0,ammoBonus:0,ammoDropLuck:1,ammoDropsThisWave:0,ammoDropTarget:0,ammoDryKills:0,waveAmmoSnapshot:null,bossAmmoSnapshot:null,bossPhaseAmmoSnapshot:null,specialDamage:1,damageGuard:0,dodgeChance:0,powerSeen:new Set(),moveDistance:0,dashCount:0,weaponShots:0,usedBombThisWave:false,lastWaveKills:0,waveHits:0,scoreSkillNext:50000,scoreSkillQueue:[],scorePerks:{damage:0,speed:0,fireRate:0,dash:0,powerLuck:0,dodge:0} };
+    player = { x: W / 2, y: H / 2 + 25, r: 18, hp: 5, maxHp: 5, speed: 264, invuln: 1.8, dashCd: 0, dashCooldown:2.25, dashTime: 0, dashX: 1, dashY: 0, face: 1, moving: false, angle: 0, bombs: 2, damage: 1, fireRate: .32, spread: 0, pierce: 0, magnet: 90, trail: [], skills:{}, frost:false, chain:false, orbit:false, orbitCd:0, nutSentry:false, nutSentryCd:0, carrotDrone:false, carrotDroneCd:0, shield:false, shieldReady:false, shieldCd:0, vampire:false, vampireKills:0, shotCount:0, weapons:['nutBomb'],weaponIndex:0,weaponUses:{nutBomb:3},usedWeapons:new Set(),powerups:{},powerLuck:1,powerDryKills:0,ammoBonus:0,ammoDropLuck:1,ammoDropsThisWave:0,ammoDropTarget:0,ammoDryKills:0,waveAmmoSnapshot:null,bossAmmoSnapshot:null,bossPhaseAmmoSnapshot:null,specialDamage:1,damageGuard:0,dodgeChance:0,sniebelPlate:false,powerSeen:new Set(),moveDistance:0,dashCount:0,weaponShots:0,usedBombThisWave:false,lastWaveKills:0,waveHits:0,scoreSkillNext:50000,scoreSkillQueue:[],scorePerks:{damage:0,speed:0,fireRate:0,dash:0,powerLuck:0,dodge:0} };
     if(newGamePlus){
       applyNGPlusBuild(player,carryBuild);initializeScoreSkillProgress(player);
       const ownedNgSkills=Object.keys(ngPlusSkillBook).filter(id=>player.skills[id]).length;
@@ -575,6 +575,7 @@
     carrotDrone:{icon:'⌁',title:'MÖHREN-DROHNE',short:'Auto-Mörser',desc:'Eine kleine Drohne bombardiert automatisch alle paar Sekunden einen Gegner mit einer Mini-Möhrenexplosion.',apply:p=>{p.carrotDrone=true;p.carrotDroneCd=0;}},
     eggBooger:{icon:'●',title:'EIERPOPEL',short:'Eierpopel',desc:'Ein widerlicher Eierpopel springt automatisch von Gegner zu Gegner und bohrt sich in ihre Nasen. Verursacht regelmäßig mäßigen Schaden.',apply:p=>{p.eggBooger=true;p.eggBoogerCd=0;p.eggBoogerAnim=0;}},
     merzEggs:{icon:'🥚',title:'FRIEDRICH MERZ EIER',short:'Explosiv-Eier',desc:'Alle 5 Sekunden erscheinen automatisch zwei Hühnereier bei Gegnern und explodieren kurz darauf.',apply:p=>{p.merzEggs=true;p.merzEggCd=1;}},
+    sniebelPlate:{icon:'▤',title:'SNIEBEL SCHNITTPLATTE',short:'Schnittplatte',desc:'Snickers schnallt sich Sniebels Schnittplatte auf den Rücken. Angriffe aus dem hinteren Halbkreis haben 50 % Chance, komplett an der Platte abzuprallen.',apply:p=>{p.sniebelPlate=true;}},
     reflex:{icon:'↯',title:'FLUMMI-REFLEX',short:'Schneller Dash',desc:'Ausweichen alle 1,6 s und 8 % schneller laufen.',apply:p=>{p.dashCooldown=1.6;p.speed*=1.08;}},
     vampire:{icon:'♥',title:'SNACK-VAMPIR',short:'Snack-Vampir',desc:'Alle 22 besiegten Gegner: 1 Herz. Doppelte Sammelreichweite.',apply:p=>{p.vampire=true;p.magnet=180;}},
     shield:{icon:'◇',title:'NOTFALL-SCHALE',short:'Schutzschale',desc:'Fängt einen Treffer ab. Lädt nach 15 Sekunden wieder auf.',apply:p=>{p.shield=true;p.shieldReady=true;p.shieldCd=0;}},
@@ -624,7 +625,7 @@
     nutTeslaUnlock:{icon:'ϟ',title:'NUSS-TESLA',short:'Nuss-Tesla',desc:'NG+-Waffe: Kettenblitz durch bis zu acht Ziele. 3 Ladungen.',weapon:'nutTesla',ngplus:true,apply:p=>{if(!p.weapons.includes('nutTesla'))p.weapons.push('nutTesla');p.weaponUses.nutTesla=maxWeaponAmmo('nutTesla');}},
     pickleMortarUnlock:{icon:'◉',title:'GURKEN-MÖRSER',short:'Gurken-Mörser',desc:'NG+-Waffe: großer Flächenschaden plus Verlangsamung. 3 Ladungen.',weapon:'pickleMortar',ngplus:true,apply:p=>{if(!p.weapons.includes('pickleMortar'))p.weapons.push('pickleMortar');p.weaponUses.pickleMortar=maxWeaponAmmo('pickleMortar');}}
   };
-  const upgradePools=[['spread','rapid','health','walnutCannon','nutSentry','eggBooger','homing','hotPaws','specialCore','waveRenew'],['frost','carrotMine','hazelnutShotgun','carrotDrone','merzEggs','shield','turbo','ammoHunter','ironFur'],['orbit','power','peanutBoomerang','carrotLaser','nutSentry','ossiWall','crit','specialCore','hunter','waveRenew'],['reflex','vampire','acornNova','acornRocket','carrotDrone','eggBooger','fortified','ammoScrounger','hotPaws'],['chain','frost','ammo','nutDrill','nutSentry','merzEggs','scavenger','ammoHunter','ironFur','waveRenew'],['power','orbit','pigPopper','walnutCannon','carrotDrone','ossiWall','shockDash','specialCore','hunter'],['peanutBoomerang','hazelnutShotgun','powerLuck','health','nutSentry','eggBooger','homing','ammoScrounger','hotPaws','waveRenew'],['carrotMine','carrotLaser','nutDrill','ammo','carrotDrone','merzEggs','shield','crit','ammoHunter','ironFur'],['pigPopper','acornNova','acornRocket','power','nutSentry','carrotDrone','ossiWall','eggBooger','merzEggs','turbo','specialCore','hunter','waveRenew']];
+  const upgradePools=[['spread','rapid','health','walnutCannon','nutSentry','eggBooger','sniebelPlate','homing','hotPaws','specialCore','waveRenew'],['frost','carrotMine','hazelnutShotgun','carrotDrone','merzEggs','shield','turbo','ammoHunter','ironFur'],['orbit','power','peanutBoomerang','carrotLaser','nutSentry','ossiWall','crit','specialCore','hunter','waveRenew'],['reflex','vampire','acornNova','acornRocket','carrotDrone','eggBooger','sniebelPlate','fortified','ammoScrounger','hotPaws'],['chain','frost','ammo','nutDrill','nutSentry','merzEggs','scavenger','ammoHunter','ironFur','waveRenew'],['power','orbit','pigPopper','walnutCannon','carrotDrone','ossiWall','shockDash','specialCore','hunter'],['peanutBoomerang','hazelnutShotgun','powerLuck','health','nutSentry','eggBooger','sniebelPlate','homing','ammoScrounger','hotPaws','waveRenew'],['carrotMine','carrotLaser','nutDrill','ammo','carrotDrone','merzEggs','shield','crit','ammoHunter','ironFur'],['pigPopper','acornNova','acornRocket','power','nutSentry','carrotDrone','ossiWall','eggBooger','merzEggs','sniebelPlate','turbo','specialCore','hunter','waveRenew']];
   const specialUpgradeBook={
     goldenNut:{icon:'✹',title:'GOLDENE NUSS',short:'Goldene Nuss',desc:'+55 % normaler Schaden und alle Punkte zählen doppelt.',apply:p=>{p.damage*=1.55;p.scoreRushBonus=(p.scoreRushBonus||1)*2;}},
     chronoFur:{icon:'◌',title:'CHRONO-FELL',short:'Chrono-Fell',desc:'Dash lädt 45 % schneller und Snickers läuft 18 % schneller.',apply:p=>{p.dashCooldown*=.55;p.speed*=1.18;}},
@@ -872,9 +873,14 @@
     }
     if (Math.random()<.12) tone(400,.055,'triangle',.02,700);
   }
-  function hurtPlayer(damage = 1) {
+  function hurtPlayer(damage = 1, source = null) {
     if (player.invuln > 0 || mode !== 'playing') return;
     if(player.powerups.overdrive>0){floater(player.x,player.y-36,'ROTER BLICK',accent());return;}
+    if(player.sniebelPlate&&source&&Number.isFinite(source.x)&&Number.isFinite(source.y)){
+      const sourceAngle=Math.atan2(source.y-player.y,source.x-player.x);
+      const rear=Math.abs(angleDelta(sourceAngle,player.angle))>Math.PI/2;
+      if(rear&&Math.random()<.5){player.invuln=.28;burst(player.x,player.y,'#d9c89b',13,105);floater(player.x,player.y-36,'SNIEBEL-PLATTE!', '#ead9ad');tone(420,.1,'square',.045,220);return;}
+    }
     if(player.dodgeChance&&Math.random()<player.dodgeChance){player.invuln=.35;burst(player.x,player.y,'#d8f5ff',12,120);floater(player.x,player.y-36,'DODGE!', '#d8f5ff');tone(920,.08,'triangle',.04,1180);return;}
     if(player.damageGuard&&Math.random()<player.damageGuard){player.invuln=.45;burst(player.x,player.y,accent(),18,150);floater(player.x,player.y-36,'EISENFELL!',accent());tone(760,.12,'triangle',.05,420);return;}
     if(player.powerups.phase>0){floater(player.x,player.y-36,'PHASENFELL',accent());return;}
@@ -1078,7 +1084,7 @@
       boss.actionCd=(boss.karnil?(boss.phaseThree?.82:(boss.enraged?1.18:1.55)):boss.cyber?(boss.enraged?1.48:1.82):(boss.enraged?1.3:1.7))*(gamePlusLevel===2?.78:newGamePlus?.9:1);
     }
     if (boss.summonCd <= 0 && enemies.length < (gamePlusLevel===2?36:newGamePlus?24:12)) { const baseCount=boss.enraged?4:3,count=baseCount*(gamePlusLevel===2?3:newGamePlus?2:1);for(let i=0;i<count;i++){let type;if(boss.karnil){const pigTypes=boss.phaseThree?['pigJuggernaut','rocketHare','pigCannon','voidBunny']:boss.enraged?['pigHowler','pigRammer','pigCannon','pigDrone']:['pigRammer','pigMortar','pigDrone'];type=pigTypes[i%pigTypes.length];}else type=newGamePlus&&i%4===3?'voidBunny':boss.cyber?(i%3===2?'rabid':'runner'):(i%3===2?'runner':'bunny');spawnEnemy(type);} boss.summonCd=boss.enraged?6.5:9; }
-    if(d < player.r + boss.r) hurtPlayer(2);
+    if(d < player.r + boss.r) hurtPlayer(2,boss);
   }
   function update(dt) {
     if(mode!=='playing')return;
@@ -1129,7 +1135,7 @@
       }
       if(e.type==='gunner'&&e.fireCd<=0&&d<650){enemyShot(e.x,e.y,Math.atan2(dy,dx),184);e.fireCd=2.15;}
       if(e.type==='pigMortar'&&e.mortarCd<=0&&d<760){hazards.push({type:'mortar',x:clamp(player.x+rnd(-110,110),55,W-55),y:clamp(player.y+rnd(-100,100),125,H-50),r:67,wait:1.05,life:.35,hit:false,damage:2});e.mortarCd=3.2;}
-      if(dist(player,e)<e.r+player.r-3)hurtPlayer(e.type==='brute'||e.type==='pigRammer'||e.type==='pigHowler'?2:1);
+      if(dist(player,e)<e.r+player.r-3)hurtPlayer(e.type==='brute'||e.type==='pigRammer'||e.type==='pigHowler'?2:1,e);
       if(mode!=='playing')return;
     }
     // A small separation force keeps the rabbit horde readable.
@@ -1156,7 +1162,7 @@
       }
     }
     bullets=bullets.filter(b=>b.life>0&&b.x>-60&&b.x<W+60&&b.y>-60&&b.y<H+60);
-    for(const b of enemyBullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;if(dist(player,b)<player.r+b.r-3){hurtPlayer();b.life=0;}if(mode!=='playing')return;}
+    for(const b of enemyBullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;if(dist(player,b)<player.r+b.r-3){hurtPlayer(1,b);b.life=0;}if(mode!=='playing')return;}
     enemyBullets=enemyBullets.filter(b=>b.life>0&&b.x>-50&&b.x<W+50&&b.y>-50&&b.y<H+50);
     for(const h of hazards){
       h.wait-=dt;
@@ -1165,7 +1171,7 @@
         if(!h.hit){h.hit=true;shake=reducedMotion?0:9;burst(h.x,h.y,h.type==='friendlyEgg'?'#fff1b2':h.type==='shock'?'#ffb3e4':h.type==='mine'?'#f4b25e':'#ffa65e',h.type==='mine'?45:35,260);tone(h.type==='rockfall'?55:90,.25,'sawtooth',.06,30);
           if(h.type==='mine'||h.type==='sapperMine'||h.type==='shock'||h.type==='friendlyMortar'||h.type==='friendlyEgg'){for(const e of enemies)if(dist(h,e)<h.r+e.r){const pigMult=h.pigBonus&&e.type.startsWith('pig')?h.pigBonus:1;damageEnemy(e,(h.damage||36)*pigMult,true);}if(boss&&dist(h,boss)<h.r+boss.r)damageEnemy(boss,(h.damage||36)*(h.bossBonus||.8),true);h.life=.3;if(h.type==='sapperMine')addAchievementProgress('mine_sweeper');}
         }
-        if(!h.friendly&&dist(player,h)<h.r+player.r*.5&&!h.playerHit){h.playerHit=true;hurtPlayer(h.damage||2);}
+        if(!h.friendly&&dist(player,h)<h.r+player.r*.5&&!h.playerHit){h.playerHit=true;hurtPlayer(h.damage||2,h);}
       }
       if(mode!=='playing')return;
     }
@@ -1236,6 +1242,9 @@
     ellipse(c,0,13,23,8,'#051b176b');
     if(p.invuln>0&&Math.floor(ambientTime*14)%2===0&&p.dashTime<=0)c.globalAlpha=alpha*.6;
     if(p.dashTime>0||p.shieldReady){c.strokeStyle=accent();c.lineWidth=p.shieldReady?2.5:2;c.setLineDash(p.shieldReady?[9,4]:[]);c.beginPath();c.arc(0,0,31,0,TAU);c.stroke();c.setLineDash([]);}
+    if(p.sniebelPlate){
+      c.save();const bx=-Math.cos(p.angle)*16,by=-Math.sin(p.angle)*16+4;c.translate(bx,by);c.rotate(p.angle);c.fillStyle='#bda56f';c.strokeStyle='#5c4c32';c.lineWidth=2;c.beginPath();c.roundRect(-12,-15,24,30,4);c.fill();c.stroke();c.strokeStyle='#806c48';c.lineWidth=1;c.beginPath();c.moveTo(-8,-8);c.lineTo(8,-8);c.moveTo(-8,0);c.lineTo(8,0);c.moveTo(-8,8);c.lineTo(8,8);c.stroke();c.restore();
+    }
     c.translate(0,bob);c.scale(p.face,1);
     ellipse(c,-9,14,9,5,'#965e35');ellipse(c,10,14,9,5,'#965e35');
     ellipse(c,0,1,19,19,'#9c5d31');ellipse(c,-2,-1,18,18,'#ce8f43');ellipse(c,0,7,12,10,'#edd19b');
