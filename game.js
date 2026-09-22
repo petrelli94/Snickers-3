@@ -186,6 +186,11 @@
   ];
   let achievementData={};
   try { achievementData=JSON.parse(localStorage.getItem('snickers3-achievements-v4')||localStorage.getItem('snickers3-achievements-v3')||'{}')||{}; } catch {}
+  // Remove progress belonging to the retired achievement from older local saves.
+  if(achievementData.nutless){
+    delete achievementData.nutless;
+    try{localStorage.setItem('snickers3-achievements-v4',JSON.stringify(achievementData));}catch{}
+  }
   const achievementValue=id=>Number(achievementData[id]?.progress||0);
   const achievementUnlocked=id=>Boolean(achievementData[id]?.unlocked);
   try { record = Math.max(0, Number(localStorage.getItem('snickers3-best-v4')||localStorage.getItem('snickers3-best-v3')) || 0); } catch {}
