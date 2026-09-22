@@ -216,8 +216,5 @@ body{background-image:radial-gradient(rgb(var(--accent-rgb)/.045) 1px,transparen
 @media(max-width:430px){.build-nav{gap:4px}.build-nav button{font-size:9px;padding:7px 8px}}
 
 /* Knollenbrot UI clarity: settings are visible in the main menu and leaving a paused run is unmistakable. */
-.menu-links .settings-menu-button{grid-column:1/-1;position:relative;z-index:3;pointer-events:auto;width:max-content;min-width:175px;margin-top:4px!important;padding:6px 10px!important;border:1px solid color-mix(in srgb,var(--lime),transparent 48%)!important;background:color-mix(in srgb,var(--panel),var(--lime) 9%)!important;color:var(--ink);font-weight:800}
-.menu-links .settings-menu-button:hover{background:color-mix(in srgb,var(--panel),var(--lime) 18%)!important;border-color:var(--lime)!important;color:#fff}
-.menu-links .settings-menu-button .help-circle{border-color:var(--lime);color:var(--lime)}
 .pause-menu-button{border-color:#dca889!important;color:#ffe5d2!important;background:rgba(111,55,34,.30)!important}
 .pause-menu-button:hover{background:rgba(145,70,42,.46)!important;border-color:#ffc09b!important}
