@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101a18">
-  <meta name="description" content="Snickers 3: Neun Wellen, rasante Musik, Killerferkel, drei Bosse, Spezial-Upgrades, seltene Power-ups, Retries und 60 Achievements.">
+  <meta name="description" content="Snickers 3 – Weißwurst Version: Hasenjagd, New Game+2, vollständige Hall-of-Fame-Builds und Endlosmodus mit wechselnden Stages.">
   <title>Snickers 3: Attack from Hasenbein</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23c7f36b'/%3E%3Cpath d='M12 10h17v6l-6 4 6 4v6H12v-6h10l-7-4 7-4H12z' fill='%23101a18'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?rev=gartenzwerg">
-  <link rel="stylesheet" href="v2.css?rev=gartenzwerg">
-  <link rel="stylesheet" href="v3.css?rev=gartenzwerg">
-  <script src="game.js?rev=gartenzwerg" defer></script>
+  <link rel="stylesheet" href="styles.css?rev=weisswurst">
+  <link rel="stylesheet" href="v2.css?rev=weisswurst">
+  <link rel="stylesheet" href="v3.css?rev=weisswurst">
+  <script src="game.js?rev=weisswurst" defer></script>
 </head>
 <body>
 <div class="app">
@@ -38,6 +38,7 @@
           <h1>SNICKERS<span class="title-three">3</span><span class="subtitle">ATTACK FROM<br>HASENBEIN</span></h1>
           <p class="story">Eine Nuss. Tausend Hasen. Keine Gnade. Snickers sieht rot!!!</p>
           <button id="startButton" class="primary-button">MISSION STARTEN <span aria-hidden="true">↗</span></button>
+          <nav class="menu-links" aria-label="Spielmodi und Extras">
           <button id="ngPlusButton" class="text-button ngplus-menu-button hidden"><span class="help-circle">+</span> NEW GAME+</button>
           <button id="ngPlus2Button" class="text-button ngplus-menu-button hidden"><span class="help-circle">++</span> NEW GAME+2</button>
           <button id="hallOfFameButton" class="text-button hidden"><span class="help-circle">♛</span> Hall of Fame</button>
@@ -45,8 +46,9 @@
           <button id="helpButton" class="text-button"><span class="help-circle">?</span> So überlebst du</button>
           <button id="achievementButton" class="text-button"><span class="help-circle">★</span> Achievements</button>
           <button id="powerupButton" class="text-button"><span class="help-circle">✦</span> Power-ups</button>
+          </nav>
         </div>
-        <div class="start-bottom"><span>9 WELLEN <i></i> 3 BOSSE <i></i> 60 ACHIEVEMENTS <i></i> 3 RETRIES PRO RUN</span><span id="menuRecord"></span></div><div class="menu-version-tag">gartenzwerg version</div>
+        <div class="start-bottom"><span>9 WELLEN <i></i> 3 BOSSE <i></i> 60 ACHIEVEMENTS <i></i> 3 RETRIES PRO RUN</span><span id="menuRecord"></span></div><div class="menu-version-tag">Weißwurst Version</div>
       </div>
       <div id="hud" class="hud hidden" aria-hidden="true">
         <div class="health-panel"><span class="hud-label">SNICKERS</span><div class="health-row"><span class="health-symbol">♥</span><div id="healthBar" class="health-bar"></div><span id="healthText">5/5</span></div></div>

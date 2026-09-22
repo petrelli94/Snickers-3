@@ -23,6 +23,38 @@
     'Dieser Steinbruch hat eindeutig zu viel Schwein gehabt.',
     'Karnil? Klingt wie Knuspern, nur mit deutlich mehr Lebenspunkten.'
   ];
+  const bossQuotes=[
+    'Chef besiegt. Bekomme ich jetzt endlich eine Mittagspause?',
+    'Große Lebensleiste. Kleine Ausbeute. Typisch Management.',
+    'Ich habe keine Aggressionsprobleme. Ich habe ein Nussproblem.',
+    'Der wollte drei Phasen. Ich wollte drei Weißwürste.',
+    'Noch so ein Boss und ich verlange Kilometergeld.',
+    'Im Lebenslauf steht jetzt: Führungskräfte entfernt.',
+    'Die nächste Nuss kaufe ich einfach im Supermarkt.',
+    'So. Wer räumt das jetzt alles auf? Ich jedenfalls nicht.',
+    'Meine Backentaschen sind voll. Meine Geduld war es zuerst.',
+    'War das der Endgegner oder nur der Abteilungsleiter?',
+    'Ich bin klein. Meine Beschwerden sind es nicht.',
+    'Ab jetzt wird Gemüse nur noch gedünstet.',
+    'Da hätte selbst mein Hamsterrad Überstunden angemeldet.',
+    'Ich habe den Boss gefragt. Er hatte keine Einwände mehr.',
+    'Ist das hier noch ein Garten oder schon ein Bewerbungsgespräch?',
+    'Einer weniger auf der Gästeliste für meine Nussfeier.',
+    'Für den Stress hätte ich mindestens zwei Erdnüsse erwartet.',
+    'Mein Fell sitzt. Seine Rüstung nicht mehr.',
+    'Das war kein Kampf. Das war eine sehr laute Snackpause.',
+    'Bitte den nächsten Boss ohne Knochen und mit Senf.',
+    'Wenn das so weitergeht, brauche ich einen Betriebsrat.',
+    'Ich kam, ich knabberte, ich stellte die Rechnung.',
+    'Hoffentlich ist im nächsten Raum wenigstens eine Sitzgelegenheit.',
+    'Unendliche Wellen? Mein Urlaub war anders geplant.'
+  ];
+  let bossQuoteBag=[];
+  function shuffled(items){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  function bossQuoteMarkup(){if(!bossQuoteBag.length)bossQuoteBag=shuffled(bossQuotes);return `<blockquote class="snickers-quote"><b>SNICKERS</b>„${bossQuoteBag.pop()}“</blockquote>`;}
+  const stageNames=['NACHTGARTEN','MÖHRENLABOR','FERKEL-STEINBRUCH','SAHNEKÜCHE','ZWERGENPORTAL'];
+  function randomStage(previous=-1){return shuffled(stageNames.map((_,i)=>i).filter(i=>i!==previous))[0];}
+  function stageAfterBoss(kind){stageVisual=endlessMode?randomStage(stageVisual):({general:1,cyber:2,karnil:3,ottah:4}[kind]??stageVisual);stagePrepared=endlessMode;makeGround();}
   const waveTracks = [
     {bpm:168,notes:[220,277,330,440,330,277,247,330]},
     {bpm:174,notes:[196,247,294,392,294,247,220,294]},
@@ -43,7 +75,7 @@
   const accents = {lime:{name:'Limette',hex:'#c7f36b',rgb:'199 243 107'}, cyan:{name:'Eisblau',hex:'#7ee5f5',rgb:'126 229 245'}, violet:{name:'Flieder',hex:'#d1afff',rgb:'209 175 255'}, amber:{name:'Gold',hex:'#ffd17a',rgb:'255 209 122'}, pink:{name:'Pink',hex:'#ffa9ca',rgb:'255 169 202'}};
   let settings = {theme:'forest',accent:'lime'}, settingsReturn = 'menu', generalDefeated = false, cyberDefeated = false, lastDefeatedBoss = '';
   let gamePlusLevel=0, newGamePlus=false, newGamePlus2=false, ngPlusUnlocked=false, ngPlusBuild=null, ngPlus2Unlocked=false, ngPlus2Build=null, ngPlusEverUnlocked=false, ngPlus2EverUnlocked=false, hallOfFame=[];
-  let endlessMode=false,endlessSelectedBuild=null,endlessFromHall=false,endlessBossesDefeated=0,stageVisual=0;
+  let endlessMode=false,endlessSelectedBuild=null,endlessFromHall=false,endlessBossesDefeated=0,stageVisual=0,stagePrepared=false;
   try{
     ngPlusUnlocked=localStorage.getItem('snickers3-ngplus-unlocked-v1')==='1';
     ngPlusBuild=JSON.parse(localStorage.getItem('snickers3-ngplus-build-v1')||'null');
@@ -52,6 +84,8 @@
     ngPlusEverUnlocked=localStorage.getItem('snickers3-ngplus-ever-v1')==='1'||ngPlusUnlocked||ngPlus2Unlocked;
     ngPlus2EverUnlocked=localStorage.getItem('snickers3-ngplus2-ever-v1')==='1'||ngPlus2Unlocked;
     hallOfFame=JSON.parse(localStorage.getItem('snickers3-hall-of-fame-v1')||'[]')||[];
+    if(!Array.isArray(hallOfFame))hallOfFame=[];
+    hallOfFame=hallOfFame.filter(r=>r&&typeof r==='object'&&(r.gamePlusLevel===undefined||r.gamePlusLevel===2));
   }catch{}
   try { const saved=JSON.parse(localStorage.getItem('snickers3-settings-v4')||localStorage.getItem('snickers3-settings-v3')||localStorage.getItem('snickers3-settings-v2')||'{}'); if(themes[saved.theme])settings.theme=saved.theme;if(accents[saved.accent])settings.accent=saved.accent; } catch {}
   const accent = () => accents[settings.accent].hex;
@@ -112,7 +146,7 @@
     {id:'ngplus_juggernaut',title:'SCHWEINEPANZER',desc:'Besiege 5 Juggernaut-Ferkel in New Game+.',goal:5,kind:'progress',ngplus:true,secret:true},
     {id:'ngplus_mustard',title:'MIT SENF, BITTE',desc:'Feuere die NUSS-BAZOOKA MIT SENF ab.',goal:1,kind:'gag',ngplus:true,secret:true},
     {id:'ngplus_first_skill',title:'PLUS ULTRA',desc:'Wähle dein erstes exklusives New-Game+-Upgrade.',goal:1,kind:'gag',ngplus:true,secret:true},
-    {id:'ngplus_all_skills',title:'ACHT PLUS',desc:'Sammle alle acht exklusiven New-Game+-Skills.',goal:8,kind:'progress',ngplus:true,secret:true},
+    {id:'ngplus_all_skills',title:'ACHT PLUS',desc:'Sammle acht verschiedene exklusive New-Game+-Skills.',goal:8,kind:'progress',ngplus:true,secret:true},
     {id:'ngplus_phase3',title:'DRITTE RUNDE',desc:'Erreiche Karnils dritte Phase in New Game+.',goal:1,kind:'gag',ngplus:true,secret:true},
     {id:'ngplus_pafti',title:'PAFTI WAR HIER',desc:'Erlebe Paftis Eingriff in Karnils dritte Phase.',goal:1,kind:'gag',ngplus:true,secret:true},
     {id:'ngplus_clear',title:'PLUS DURCHGESPIELT',desc:'Schließe New Game+ vollständig ab.',goal:1,kind:'gag',ngplus:true,secret:true},
@@ -208,8 +242,8 @@
     clearTimeout(announcementTimer); announcementTimer = setTimeout(() => el.classList.add('hidden'), 2800);
   }
   function showOverlay(html) {
-    $('overlayContent').innerHTML = html; $('overlay').classList.remove('hidden');
-    requestAnimationFrame(() => $('overlayContent').querySelector('button')?.focus());
+    $('overlayContent').innerHTML = html; $('overlay').classList.remove('hidden');$('overlay').scrollTop=0;
+    requestAnimationFrame(() => $('overlayContent').querySelector('button')?.focus({preventScroll:true}));
   }
   function hideOverlay() { $('overlay').classList.add('hidden'); $('overlayContent').innerHTML = ''; canvas.focus({ preventScroll: true }); }
   function applySettings(persist=true) {
@@ -257,15 +291,42 @@
     keys.clear(); touch.x = touch.y = 0; touch.id = null;
     $('joystickThumb').style.transform = 'translate(0,0)';
   }
-  const ngPlusCarryKeys=['maxHp','speed','dashCooldown','damage','fireRate','spread','pierce','magnet','frost','chain','orbit','nutSentry','carrotDrone','eggBooger','merzEggs','shield','vampire','powerLuck','ammoBonus','ammoDropLuck','specialDamage','damageGuard','pickupLifeBonus','bossDamage','homing','crit','shockDash','ammoRefillBonus','scoreRushBonus','powerDuration','nutstorm','waveRenew','turretVolley','mustardTrail','dashNova','executioner','powerFrenzy','dodgeChance','deathBurst','deathBurstKills','ammoAlchemy','sniebelPlate','lominarWorm','ng2Reactor','ng2TimeField','ng2Turret','lominarX','lominarY','lominarDir'];
+  const ngPlusCarryKeys=['maxHp','speed','dashCooldown','damage','fireRate','spread','pierce','magnet','frost','chain','orbit','nutSentry','carrotDrone','eggBooger','merzEggs','shield','vampire','powerLuck','ammoBonus','ammoDropLuck','specialDamage','damageGuard','pickupLifeBonus','bossDamage','homing','crit','shockDash','ammoRefillBonus','scoreRushBonus','powerDuration','nutstorm','waveRenew','turretVolley','mustardTrail','dashNova','executioner','powerFrenzy','dodgeChance','deathBurst','deathBurstKills','ammoAlchemy','sniebelPlate','lominarWorm','ng2Reactor','ng2TimeField','ng2Turret','lominarX','lominarY','lominarDir','rabbitDamage','brothBox','hunnaExpert','breadHalo','creamHeart','thunderCrumbs'];
   function captureNGPlusBuild(p){
-    const build={};for(const k of ngPlusCarryKeys)if(p[k]!==undefined)build[k]=p[k];
+    const build={schemaVersion:2};for(const k of ngPlusCarryKeys)if(p[k]!==undefined)build[k]=p[k];
     build.skills={...(p.skills||{})};build.specials={...(p.specials||{})};build.weapons=[...(p.weapons||['nutBomb'])];build.scorePerks={...(p.scorePerks||{})};return build;
   }
+  function levelMap(value){
+    if(Array.isArray(value))return Object.fromEntries(value.map(id=>[id,1]));
+    return Object.fromEntries(Object.entries(value||{}).filter(([,n])=>Number(n)>0).map(([id,n])=>[id,Math.floor(Number(n))]));
+  }
+  function hallBuild(entry){
+    const b=entry.build||{};
+    return {...b,maxHp:b.maxHp??entry.maxHp,skills:levelMap(b.skills??entry.skills),specials:levelMap(b.specials??entry.specials),weapons:[...new Set(b.weapons??entry.weapons??['nutBomb'])],scorePerks:{...(entry.scorePerks||{}),...(b.scorePerks||{})}};
+  }
+  function restoreBuildValues(build){
+    const p=createPlayer(),skills=levelMap(build.skills),specials=levelMap(build.specials);
+    const books={...skillBook,...legendarySkillBook,...ngPlusSkillBook,...ngPlus2SkillBook};
+    // Legacy records sometimes contain names/levels only. Reconstruct missing values.
+    for(const id of Object.keys(skills)){const c=books[id];if(c&&!c.weapon)c.apply(p);}
+    for(const id of Object.keys(specials))specialUpgradeBook[id]?.apply(p);
+    const perks={...p.scorePerks,...levelMap(build.scorePerks)};
+    p.damage*=Math.pow(1.1,perks.damage);p.speed*=Math.pow(1.1,perks.speed);
+    p.fireRate/=Math.pow(1.1,perks.fireRate);p.dashCooldown*=Math.pow(.9,perks.dash);
+    p.powerLuck*=Math.pow(1.1,perks.powerLuck);p.dodgeChance=Math.min(.4,p.dodgeChance+perks.dodge*.02);
+    // Saved final values already include perks. Use them exactly, never multiply twice.
+    for(const k of ngPlusCarryKeys)if(build[k]!==undefined)p[k]=build[k];
+    p.skills=skills;p.specials=specials;p.scorePerks=perks;
+    p.weapons=[...new Set(['nutBomb',...(build.weapons||[])])].filter(id=>weaponBook[id]);
+    return p;
+  }
   function applyNGPlusBuild(p,build){
-    if(!build)return;for(const k of ngPlusCarryKeys)if(build[k]!==undefined)p[k]=build[k];
-    p.skills={...(build.skills||{})};p.specials={...(build.specials||{})};p.weapons=[...(build.weapons||['nutBomb'])];p.scorePerks={damage:0,speed:0,fireRate:0,dash:0,powerLuck:0,dodge:0,...(build.scorePerks||{})};
-    p.weaponUses={};for(const id of p.weapons)p.weaponUses[id]=(weaponBook[id]?.max||0)+(p.ammoBonus||0);p.weaponIndex=0;p.hp=p.maxHp;p.shieldReady=Boolean(p.shield);p.shieldCd=0;p.nutSentryCd=0;p.carrotDroneCd=0;p.eggBoogerCd=0;p.eggBoogerAnim=0;p.eggBoogerFrom=null;p.eggBoogerTo=null;p.merzEggCd=0;p.ossiWallTime=0;
+    if(!build)return;
+    const restored=restoreBuildValues(build);
+    for(const k of ngPlusCarryKeys)if(restored[k]!==undefined)p[k]=restored[k];
+    p.skills={...restored.skills};p.specials={...restored.specials};p.weapons=[...restored.weapons];p.scorePerks={...restored.scorePerks};
+    p.weaponUses={};for(const id of p.weapons)p.weaponUses[id]=(weaponBook[id]?.max||0)+(p.ammoBonus||0);
+    p.weaponIndex=0;p.hp=p.maxHp;p.shieldReady=Boolean(p.shield);p.shieldCd=0;p.nutSentryCd=0;p.carrotDroneCd=0;p.eggBoogerCd=0;p.eggBoogerAnim=0;p.eggBoogerFrom=null;p.eggBoogerTo=null;p.merzEggCd=0;p.ossiWallTime=0;
   }
   function scorePerkLevels(p){return Object.values(p?.scorePerks||{}).reduce((a,b)=>a+Number(b||0),0);}
   function scoreSkillCost(level){return 50000+level*25000;}
@@ -279,9 +340,9 @@
     }else if(gamePlusLevel===1){
       ngPlus2Unlocked=true;ngPlus2Build=build;ngPlusEverUnlocked=true;ngPlus2EverUnlocked=true;
       try{localStorage.setItem('snickers3-ngplus2-unlocked-v1','1');localStorage.setItem('snickers3-ngplus2-build-v1',JSON.stringify(build));localStorage.setItem('snickers3-ngplus-ever-v1','1');localStorage.setItem('snickers3-ngplus2-ever-v1','1');}catch{}
-    }else{
-      const entry={completedAt:new Date().toISOString(),score,kills,time:Math.floor(runTime),maxHp:player.maxHp,retriesLeft,skills:Object.keys(player.skills||{}),specials:Object.keys(player.specials||{}),weapons:[...(player.weapons||[])],scorePerks:{...(player.scorePerks||{})},build:captureNGPlusBuild(player)};
-      hallOfFame=[entry,...hallOfFame].slice(0,8);
+    }else if(gamePlusLevel===2){
+      const entry={gamePlusLevel:2,completedAt:new Date().toISOString(),score,kills,time:Math.floor(runTime),maxHp:player.maxHp,retriesLeft,skills:Object.keys(player.skills||{}),specials:Object.keys(player.specials||{}),weapons:[...(player.weapons||[])],scorePerks:{...(player.scorePerks||{})},build:captureNGPlusBuild(player)};
+      hallOfFame=[entry,...hallOfFame];
       ngPlusUnlocked=false;ngPlusBuild=null;ngPlus2Unlocked=false;ngPlus2Build=null;
       try{localStorage.setItem('snickers3-hall-of-fame-v1',JSON.stringify(hallOfFame));localStorage.removeItem('snickers3-ngplus-unlocked-v1');localStorage.removeItem('snickers3-ngplus-build-v1');localStorage.removeItem('snickers3-ngplus2-unlocked-v1');localStorage.removeItem('snickers3-ngplus2-build-v1');}catch{}
     }
@@ -294,22 +355,52 @@
     if(hall)hall.classList.toggle('hidden',!hallOfFame.length);
     if(endless)endless.classList.toggle('hidden',!hallOfFame.length);
   }
+  const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const displayNumber=value=>Number(value||0).toLocaleString('de-DE',{maximumFractionDigits:2});
+  const allSkillInfo=id=>skillBook[id]||legendarySkillBook[id]||ngPlusSkillBook[id]||ngPlus2SkillBook[id];
+  function runDate(r){const date=new Date(r.completedAt);return Number.isNaN(date.getTime())?'Datum unbekannt':date.toLocaleString('de-DE',{dateStyle:'medium',timeStyle:'short'});}
+  function runSummary(r,i,source){
+    const b=hallBuild(r),skillCount=Object.keys(b.skills).filter(id=>!allSkillInfo(id)?.weapon).length;
+    return `<button class="run-card" id="${source}Run${i}"><span class="run-card-medal" aria-hidden="true">♛</span><span class="run-card-main"><span class="run-card-heading"><strong>RUN ${hallOfFame.length-i}</strong><small>NG+2 ABGESCHLOSSEN</small></span><span class="run-card-date">${escapeHTML(runDate(r))}</span><span class="run-card-score">${displayNumber(r.score)} <small>PUNKTE</small></span><span class="run-card-tags"><span>${skillCount} Skills</span><span>${b.weapons.length} Waffen</span><span>${Object.keys(b.specials).length} Boss-Upgrades</span><span>${scorePerkLevels(b)} Punkte-Boni</span></span></span><span class="run-card-arrow" aria-hidden="true">↗</span></button>`;
+  }
   function showHallOfFame(){
-    if(mode!=='menu'||!hallOfFame.length)return;mode='hallOfFame';
-    const skillName=id=>(skillBook[id]||legendarySkillBook[id]||ngPlusSkillBook[id]||ngPlus2SkillBook[id])?.title||id;
-    const specialName=id=>specialUpgradeBook[id]?.title||id;
-    const weaponName=id=>weaponBook[id]?.name||id;
-    const rows=hallOfFame.map((r,i)=>`<article class="hall-entry"><div class="hall-entry-head"><strong>♛ RUN ${hallOfFame.length-i} · NEW GAME+2</strong><span>${new Date(r.completedAt).toLocaleDateString('de-DE')}</span></div><div class="hall-stats"><b>${Number(r.score||0).toLocaleString('de-DE')} Punkte</b><b>${r.kills||0} Gegner</b><b>${formatTime(r.time||0)}</b><b>${r.maxHp||0} Max-♥</b></div><small><b>Skills:</b> ${(r.skills||[]).map(skillName).join(' · ')||'—'}</small><small><b>Boss-Upgrades:</b> ${(r.specials||[]).map(specialName).join(' · ')||'—'}</small><small><b>Waffen:</b> ${(r.weapons||[]).map(weaponName).join(' · ')||'—'}</small><small><b>10%-Boni:</b> Schaden ${r.scorePerks?.damage||0} · Tempo ${r.scorePerks?.speed||0} · Feuer ${r.scorePerks?.fireRate||0} · Dash ${r.scorePerks?.dash||0} · Drops ${r.scorePerks?.powerLuck||0} · Dodge ${(r.scorePerks?.dodge||0)*2}%</small></article>`).join('');
-    showOverlay(`<span class="eyebrow">DIE UNSTERBLICHEN KNABBERLÄUFE</span><h2 id="overlayTitle">HALL OF FAME</h2><p>Hier landen vollständig abgeschlossene Runs nach New Game+2 – inklusive Build und Upgrades.</p><div class="hall-list">${rows}</div><button class="primary-button" id="hallClose">ZURÜCK <span>↗</span></button>`);
+    if(!['menu','hallDetail'].includes(mode)||!hallOfFame.length)return;mode='hallOfFame';
+    showOverlay(`<span class="eyebrow">DIE UNSTERBLICHEN KNABBERLÄUFE</span><h2 id="overlayTitle">HALL OF FAME</h2><p>${hallOfFame.length} abgeschlossene NG+2-Runs. Klicke auf einen Run, um seinen vollständigen Build und alle Werte anzusehen.</p><div class="hall-run-list">${hallOfFame.map((r,i)=>runSummary(r,i,'hall')).join('')}</div><button class="secondary-button" id="hallClose">ZURÜCK ZUM MENÜ</button>`);
+    hallOfFame.forEach((r,i)=>{$(`hallRun${i}`).onclick=()=>showRunDetail(i,'hall');});
     $('hallClose').onclick=()=>{mode='menu';hideOverlay();$('hallOfFameButton').focus();};
   }
+  function startHallRun(index){
+    endlessSelectedBuild=hallBuild(hallOfFame[index]);endlessFromHall=true;startGame(3);
+  }
   function showEndlessSelect(){
-    if(mode!=='menu'||!hallOfFame.length)return;mode='endlessSelect';
-    const hallRows=hallOfFame.map((r,i)=>`<button class="endless-build-card" id="endlessHall${i}"><strong>♛ HALL-RUN ${hallOfFame.length-i}</strong><small>${Number(r.score||0).toLocaleString('de-DE')} Punkte · ${(r.skills||[]).length} Skills · ${(r.weapons||[]).length} Waffen</small><span>Start auf NG+2-Niveau ↗</span></button>`).join('');
-    showOverlay(`<span class="eyebrow">ENDLOSMODUS · BUILD WÄHLEN</span><h2 id="overlayTitle">WIE LANGE HÄLT SNICKERS?</h2><p>Mit einem frischen Build startet Welle 1 auf Normal-Niveau. Ein Hall-of-Fame-Build übernimmt deine gespeicherten Upgrades und startet auf dem Niveau der ersten NG+2-Welle.</p><div class="endless-build-list"><button class="endless-build-card fresh" id="endlessFresh"><strong>◌ KOMPLETT FRISCH</strong><small>Keine Skills, keine übernommenen Waffen.</small><span>Normal-Niveau ↗</span></button>${hallRows}</div><button class="secondary-button" id="endlessBack">ZURÜCK</button>`);
+    if(!['menu','hallDetail'].includes(mode)||!hallOfFame.length)return;mode='endlessSelect';
+    showOverlay(`<span class="eyebrow">ENDLOSMODUS · BUILD WÄHLEN</span><h2 id="overlayTitle">KEIN FEIERABEND.</h2><p>Starte frisch oder wähle einen deiner ${hallOfFame.length} abgeschlossenen NG+2-Runs. Hall-Builds übernehmen alle Waffen, Skills und permanenten Werte inklusive Punkte-Boni.</p><button class="endless-build-card fresh" id="endlessFresh"><strong>◌ KOMPLETT FRISCH STARTEN</strong><small>Normal-Niveau · ohne übernommene Upgrades</small></button><div class="hall-run-list endless-run-list">${hallOfFame.map((r,i)=>runSummary(r,i,'endless')).join('')}</div><button class="secondary-button" id="endlessBack">ZURÜCK ZUM MENÜ</button>`);
     $('endlessFresh').onclick=()=>{endlessSelectedBuild=null;endlessFromHall=false;startGame(3);};
-    hallOfFame.forEach((r,i)=>{$(`endlessHall${i}`).onclick=()=>{endlessSelectedBuild=r.build||{maxHp:r.maxHp||5,skills:Object.fromEntries((r.skills||[]).map(id=>[id,1])),specials:Object.fromEntries((r.specials||[]).map(id=>[id,1])),weapons:[...(r.weapons||['nutBomb'])],scorePerks:{damage:0,speed:0,fireRate:0,dash:0,powerLuck:0,dodge:0,...(r.scorePerks||{})}};endlessFromHall=true;startGame(3);};});
+    hallOfFame.forEach((r,i)=>{$(`endlessRun${i}`).onclick=()=>showRunDetail(i,'endless');});
     $('endlessBack').onclick=()=>{mode='menu';hideOverlay();$('endlessButton').focus();};
+  }
+  function buildCards(ids,lookup,kind){
+    if(!ids.length)return '<p class="build-empty">Keine gewählt.</p>';
+    return `<div class="build-card-grid">${ids.map(id=>{const c=lookup(id);return `<article class="build-item ${kind}"><span class="build-item-icon" aria-hidden="true">${escapeHTML(c?.icon||'•')}</span><div><strong>${escapeHTML(c?.title||c?.name||id)}</strong><small>${escapeHTML(c?.desc||'Aus einem früheren Run übernommen.')}</small></div></article>`;}).join('')}</div>`;
+  }
+  function perkEffect(id,n){
+    if(id==='dodge')return '+'+displayNumber(Math.min(40,n*2))+' %-Punkte';
+    if(id==='dash')return '−'+displayNumber((1-Math.pow(.9,n))*100)+' % Cooldown';
+    return '+'+displayNumber((Math.pow(1.1,n)-1)*100)+' %';
+  }
+  function showRunDetail(index,source='hall'){
+    const r=hallOfFame[index];if(!r)return;mode='hallDetail';
+    const b=restoreBuildValues(hallBuild(r)),skills=Object.keys(b.skills).filter(id=>!allSkillInfo(id)?.weapon),specials=Object.keys(b.specials);
+    const stats=[['MAX. HERZEN',displayNumber(b.maxHp),`+${displayNumber(b.maxHp-5)} zum Start`],['NUSS-SCHADEN',displayNumber(b.damage)+'×','Basisschaden'],['SPEZIAL-SCHADEN',displayNumber(b.specialDamage)+'×','Waffenfaktor'],['FEUERRATE',displayNumber(1/b.fireRate)+'/s','normale Salven'],['LAUFTEMPO','+'+displayNumber((b.speed/264-1)*100)+' %','gegenüber Start'],['DASH',displayNumber(b.dashCooldown)+' s','Cooldown'],['POWER-UP-DROPS',displayNumber(b.powerLuck)+'×','Chancenfaktor'],['DODGE',displayNumber(b.dodgeChance*100)+' %','maximal 40 %'],['BOSS-SCHADEN',displayNumber(b.bossDamage||1)+'×','zusätzlicher Faktor'],['KRIT-CHANCE',displayNumber((b.crit||0)*100)+' %','pro normalem Schuss'],['BLOCKCHANCE',displayNumber((b.damageGuard||0)*100)+' %','zusätzlich zu Dodge'],['MUNITIONSBONUS','+'+displayNumber(b.ammoBonus),'je Spezialwaffe'],['DURCHSCHLAG','+'+displayNumber(b.pierce),'weitere Gegner'],['SAMMELRADIUS',displayNumber(b.magnet),'Arena-Einheiten'],['MUNITIONS-DROPS',displayNumber(b.ammoDropLuck)+'×','Chancenfaktor'],['POWER-UP-DAUER',displayNumber(b.powerDuration||1)+'×','Dauerfaktor']];
+    const perks=Object.entries(scoreSkillBook).map(([id,c])=>{const n=b.scorePerks[id]||0;return `<article class="perk-detail ${n?'active':''}"><span>${c.icon}</span><div><strong>${c.title}</strong><small>${n}× gewählt</small></div><b>${n?perkEffect(id,n):'—'}</b></article>`;}).join('');
+    showOverlay(`<div class="run-detail-header"><span class="eyebrow">HALL OF FAME · NEW GAME+2 ABGESCHLOSSEN</span><h2 id="overlayTitle">RUN ${hallOfFame.length-index}</h2><p>${escapeHTML(runDate(r))} · ${displayNumber(r.score)} Punkte · ${displayNumber(r.kills)} Gegner · ${formatTime(r.time||0)}</p></div><div class="run-detail-actions"><button class="secondary-button" id="runDetailBack">← ALLE RUNS</button><button class="primary-button" id="runDetailStart">DIESEN BUILD IM ENDLOSMODUS SPIELEN <span>↗</span></button></div><nav class="build-nav" aria-label="Build-Bereiche"><button data-build-section="buildStats">WERTE</button><button data-build-section="buildPerks">PUNKTE-BONI</button><button data-build-section="buildWeapons">WAFFEN</button><button data-build-section="buildSkills">SKILLS</button><button data-build-section="buildSpecials">BOSS-UPGRADES</button></nav><section class="build-section" id="buildStats"><h3>Gesamtwerte <span>Alle permanenten Verbesserungen enthalten</span></h3><div class="build-stat-grid">${stats.map(([name,value,note])=>`<div class="build-stat"><small>${name}</small><strong>${value}</strong><span>${note}</span></div>`).join('')}</div></section><section class="build-section" id="buildPerks"><h3>Punkte-Upgrades <span>${scorePerkLevels(b)} gewählte Boni</span></h3><p class="build-note">Die 10%-Boni werden pro Wahl multipliziert. Dodge gibt +2 Prozentpunkte pro Wahl, bis maximal 40 %. Diese Effekte sind bereits in den Gesamtwerten enthalten und werden beim Start übernommen.</p><div class="perk-detail-grid">${perks}</div></section><section class="build-section" id="buildWeapons"><h3>Waffen <span>${b.weapons.length} freigeschaltet</span></h3>${buildCards(b.weapons,id=>({...weaponBook[id],desc:(weaponBook[id]?.desc||'')+' Max. Munition: '+((weaponBook[id]?.max||0)+b.ammoBonus)+'.'}),'weapon')}</section><section class="build-section" id="buildSkills"><h3>Skills <span>${skills.length} gewählt</span></h3>${buildCards(skills,allSkillInfo,'skill')}</section><section class="build-section" id="buildSpecials"><h3>Boss-Upgrades <span>${specials.length} gewählt</span></h3>${buildCards(specials,id=>specialUpgradeBook[id],'special')}</section><div class="run-detail-nav"><button class="secondary-button" id="runPrev" ${index===0?'disabled':''}>← NEUERER RUN</button><button class="secondary-button" id="runNext" ${index===hallOfFame.length-1?'disabled':''}>ÄLTERER RUN →</button></div>`);
+    $('runDetailBack').onclick=()=>source==='endless'?showEndlessSelect():showHallOfFame();
+    $('runDetailStart').onclick=()=>startHallRun(index);
+    document.querySelectorAll('[data-build-section]').forEach(button=>{button.onclick=()=>{const panel=$('overlay'),target=$(button.dataset.buildSection),nav=document.querySelector('.build-nav');panel.scrollTop+=target.getBoundingClientRect().top-panel.getBoundingClientRect().top-nav.offsetHeight-(parseFloat(getComputedStyle(panel).paddingTop)||0)-16;};});
+    $('runPrev').onclick=()=>showRunDetail(index-1,source);$('runNext').onclick=()=>showRunDetail(index+1,source);
+  }
+  function createPlayer(){
+    return { x: W / 2, y: H / 2 + 25, r: 18, hp: 5, maxHp: 5, speed: 264, invuln: 1.8, dashCd: 0, dashCooldown:2.25, dashTime: 0, dashX: 1, dashY: 0, face: 1, moving: false, angle: 0, bombs: 2, damage: 1, fireRate: .32, spread: 0, pierce: 0, magnet: 90, trail: [], skills:{}, frost:false, chain:false, orbit:false, orbitCd:0, nutSentry:false, nutSentryCd:0, carrotDrone:false, carrotDroneCd:0, shield:false, shieldReady:false, shieldCd:0, vampire:false, vampireKills:0, shotCount:0, weapons:['nutBomb'],weaponIndex:0,weaponUses:{nutBomb:3},usedWeapons:new Set(),powerups:{},powerLuck:1,powerDryKills:0,ammoBonus:0,ammoDropLuck:1,ammoDropsThisWave:0,ammoDropTarget:0,ammoDryKills:0,waveAmmoSnapshot:null,bossAmmoSnapshot:null,bossPhaseAmmoSnapshot:null,specialDamage:1,damageGuard:0,dodgeChance:0,sniebelPlate:false,lominarWorm:false,lominarX:-80,lominarY:360,lominarDir:1,lominarHitCd:0,ng2Reactor:false,ng2TimeField:false,ng2Turret:false,powerSeen:new Set(),moveDistance:0,dashCount:0,weaponShots:0,usedBombThisWave:false,lastWaveKills:0,waveHits:0,scoreSkillNext:50000,scoreSkillQueue:[],scorePerks:{damage:0,speed:0,fireRate:0,dash:0,powerLuck:0,dodge:0} };
   }
   function startGame(level=0) {
     clearTimeout(announcementTimer); clearTimeout(noticeTimer); resetInput();
@@ -317,7 +408,7 @@
     const carryBuild=endlessMode?endlessSelectedBuild:(gamePlusLevel===2?ngPlus2Build:gamePlusLevel===1?ngPlusBuild:null);
     if(gamePlusLevel===1&&!(ngPlusUnlocked&&carryBuild))return;
     if(gamePlusLevel===2&&!(ngPlus2Unlocked&&carryBuild))return;
-    player = { x: W / 2, y: H / 2 + 25, r: 18, hp: 5, maxHp: 5, speed: 264, invuln: 1.8, dashCd: 0, dashCooldown:2.25, dashTime: 0, dashX: 1, dashY: 0, face: 1, moving: false, angle: 0, bombs: 2, damage: 1, fireRate: .32, spread: 0, pierce: 0, magnet: 90, trail: [], skills:{}, frost:false, chain:false, orbit:false, orbitCd:0, nutSentry:false, nutSentryCd:0, carrotDrone:false, carrotDroneCd:0, shield:false, shieldReady:false, shieldCd:0, vampire:false, vampireKills:0, shotCount:0, weapons:['nutBomb'],weaponIndex:0,weaponUses:{nutBomb:3},usedWeapons:new Set(),powerups:{},powerLuck:1,powerDryKills:0,ammoBonus:0,ammoDropLuck:1,ammoDropsThisWave:0,ammoDropTarget:0,ammoDryKills:0,waveAmmoSnapshot:null,bossAmmoSnapshot:null,bossPhaseAmmoSnapshot:null,specialDamage:1,damageGuard:0,dodgeChance:0,sniebelPlate:false,lominarWorm:false,lominarX:-80,lominarY:360,lominarDir:1,lominarHitCd:0,ng2Reactor:false,ng2TimeField:false,ng2Turret:false,powerSeen:new Set(),moveDistance:0,dashCount:0,weaponShots:0,usedBombThisWave:false,lastWaveKills:0,waveHits:0,scoreSkillNext:50000,scoreSkillQueue:[],scorePerks:{damage:0,speed:0,fireRate:0,dash:0,powerLuck:0,dodge:0} };
+    player = createPlayer();
     if(newGamePlus||endlessMode&&carryBuild){
       applyNGPlusBuild(player,carryBuild);initializeScoreSkillProgress(player);
       const ownedNgSkills=Object.keys(ngPlusSkillBook).filter(id=>player.skills[id]).length;
@@ -325,7 +416,7 @@
     }else initializeScoreSkillProgress(player);
     enemies = []; bullets = []; enemyBullets = []; particles = []; pickups = []; hazards = []; floaters = []; thrownWeapons = []; ossiWalls = [];
     wave = 0; waveTime = 0; runTime = 0; score = 0; kills = 0; boss = null; generalDefeated=false; cyberDefeated=false; lastDefeatedBoss=''; retriesLeft=3;retryWave=0;retryBossKind=null; spawnTimer = .65; shotTimer = .2; shake = 0; bombFlash = 0; musicStep = 0; musicTrack=-1; pointer.x=W/2;pointer.y=H/2;pointer.active=false;
-    endlessBossesDefeated=0;stageVisual=0;makeGround();
+    endlessBossesDefeated=0;stageVisual=endlessMode?randomStage():0;stagePrepared=endlessMode;makeGround();
     mode = 'intro';
     $('startScreen').classList.add('hidden'); $('hud').classList.remove('hidden'); $('hud').setAttribute('aria-hidden', 'false');
     $('runInfo').classList.remove('hidden'); $('pauseButton').classList.remove('hidden'); $('touchControls').classList.remove('hidden'); $('bossHud').classList.add('hidden'); $('loadingNotice').classList.add('hidden');$('powerHud').classList.add('hidden');$('achievementHud').classList.add('hidden');
@@ -380,11 +471,13 @@
     burst(player.x, player.y, accent(), 14, 110); tone(250, .18, 'sine', .05, 650);
   }
   const weaponBook={
+    pretzelSling:{name:'BREZELSCHLEUDER',icon:'∞',desc:'Drei breite Brezelgeschosse mit je 12 Basisschaden und drei zusätzlichen Durchschlägen.',max:6},
+    sausageMortar:{name:'WEISSWURST-WERFER',icon:'☄',desc:'Drei Weißwurst-Einschläge mit je 32 Basisschaden und großem Explosionsradius rund um dein Ziel.',max:2},
     nutBomb:{name:'NUSSBOMBE',icon:'◎',desc:'Defensiver Notfallknopf: starker Rundumschaden und löscht Geschosse sowie Gefahren in deiner Nähe.',max:3},
     carrotMine:{name:'MÖHRENMINE',icon:'◇',desc:'Große verzögerte Sprengfalle. Hoher Flächenschaden für wenig wertvolle Munition.',max:6},
     peanutBoomerang:{name:'NUSS-BOOMERANG',icon:'↩',desc:'Munitionsstarker Linienräumer. Trifft Gegner auf Hin- UND Rückflug erneut.',max:7},
     acornNova:{name:'EICHEL-NOVA',icon:'✹',desc:'Panikknopf gegen Umzingelung: 20 durchschlagende Eicheln in alle Richtungen.',max:5},
-    pigPopper:{name:'SCHWEINEPOPFER',icon:'✦',desc:'Extremer Anti-Schwein-Schockstoß mit massivem Schaden gegen Ferkel und sehr hohem Boss-Schaden.',max:4},
+    pigPopper:{name:'SCHWEINEOPFER',icon:'✦',desc:'Extremer Anti-Schwein-Schockstoß mit massivem Schaden gegen Ferkel und sehr hohem Boss-Schaden.',max:4},
     walnutCannon:{name:'WALLNUSS-KANONE',icon:'◉',desc:'Extrem schweres Geschoss mit sehr hohem Schaden und starkem Durchschlag.',max:2},
     hazelnutShotgun:{name:'HASELNUSS-SCHROT',icon:'⋰',desc:'Elf schwere Pellets. Auf kurze Distanz eine der höchsten Schadensspitzen.',max:5},
     carrotLaser:{name:'MÖHRENLASER',icon:'━',desc:'Sofortiger breiter Strahl mit hohem Schaden durch die komplette Gegnerlinie.',max:2},
@@ -458,6 +551,13 @@
       for(let i=0;i<20;i++){const a=TAU*i/20;bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*525,vy:Math.sin(a)*525,life:1.22,damage:7*(player.specialDamage||1),pierce:2,hitIds:new Set(),r:8,a,frost:player.frost});}burst(player.x,player.y,'#f5d278',32,220);tone(220,.4,'sawtooth',.08,880);
     }else if(id==='pigPopper'){
       hazards.push({type:'shock',x:player.x,y:player.y,r:255,wait:.1,life:.3,hit:false,damage:55*(player.specialDamage||1),pigBonus:2.6,bossBonus:2.1,friendly:true});burst(player.x,player.y,'#ffb3e4',30,260);tone(360,.33,'square',.09,80);
+    }else if(id==='pretzelSling'){
+      for(const off of [-.18,0,.18]){const a=player.angle+off;bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*590,vy:Math.sin(a)*590,life:1.4,damage:12*(player.specialDamage||1),pierce:3,hitIds:new Set(),r:11,a,frost:false,pretzel:true});}
+      burst(player.x,player.y,'#eab87a',18,150);tone(330,.2,'triangle',.07,170);
+    }else if(id==='sausageMortar'){
+      const tx=clamp(pointer.active?pointer.x:player.x+Math.cos(player.angle)*350,70,W-70),ty=clamp(pointer.active?pointer.y:player.y+Math.sin(player.angle)*350,125,H-60);
+      for(let i=0;i<3;i++){const a=TAU*i/3;hazards.push({type:'friendlyMortar',x:clamp(tx+Math.cos(a)*62,50,W-50),y:clamp(ty+Math.sin(a)*62,110,H-45),r:115,wait:.5+i*.2,life:.35,hit:false,damage:32*(player.specialDamage||1),bossBonus:1,friendly:true,sausage:true});}
+      tone(110,.38,'square',.08,48);
     }else if(id==='walnutCannon'){
       const a=player.angle,sm=player.specialDamage||1;
       bullets.push({x:player.x+Math.cos(a)*24,y:player.y+Math.sin(a)*24,vx:Math.cos(a)*610,vy:Math.sin(a)*610,life:1.55,damage:46*sm,pierce:7,hitIds:new Set(),r:16,a,frost:false,heavy:true});
@@ -662,6 +762,13 @@
     $('paftiContinue').onclick=()=>{if(mode!=='paftiCutscene')return;mode='playing';hideOverlay();player.invuln=2.5;lastFrame=performance.now();announce('PAFTI HAT IHN VOLLGEHEILT.','KARNIL · PHASE 3 GEHT WEITER');};
   }
   const skillBook = {
+    rabbitCleft:{icon:'⋎',title:'HASENSCHARTE',short:'Hasenscharte',desc:'30 % mehr Schaden gegen Hasen, inklusive Hasen-Bosse und Zombie-Hasenbein.',apply:p=>p.rabbitDamage=(p.rabbitDamage||1)*1.3},
+    corffelsBag:{icon:'♧',title:'CORFFELS SACK',short:'Corffels Sack',desc:'+65 Sammelradius, Drops bleiben 5 Sekunden länger liegen und 20 % mehr Munitions-Dropchance.',apply:p=>{p.magnet+=65;p.pickupLifeBonus=(p.pickupLifeBonus||0)+5;p.ammoDropLuck*=1.2;}},
+    brothBox:{icon:'▣',title:'BROTKASTEN',short:'Brotkasten',desc:'+1 permanentes Herz. Alle 35 Kills gibt es automatisch ein weiteres Herz Heilung.',apply:p=>{p.brothBox=true;p.maxHp++;p.hp=Math.min(p.maxHp,p.hp+1);}},
+    hunnaExpert:{icon:'⌖',title:'HUNNA EXPERTE',short:'Hunna Experte',desc:'Jede zehnte normale Salve verursacht dreifachen Schaden und durchschlägt 2 zusätzliche Gegner.',apply:p=>p.hunnaExpert=true},
+    crumbCompass:{icon:'✥',title:'KRÜMELKOMPASS',short:'Krümelkompass',desc:'8 % mehr Lauftempo und 20 % mehr Power-up-Dropchance. Für Hamster mit Orientierungssinn.',apply:p=>{p.speed*=1.08;p.powerLuck*=1.2;}},
+    pretzelSling:{icon:'∞',title:'BREZELSCHLEUDER',short:'Brezelschleuder',desc:'Drei breite, durchschlagende Brezelgeschosse. Solider Linienschaden, 6 Ladungen.',weapon:'pretzelSling',apply:p=>{if(!p.weapons.includes('pretzelSling'))p.weapons.push('pretzelSling');p.weaponUses.pretzelSling=6+(p.ammoBonus||0);}},
+    sausageMortar:{icon:'☄',title:'WEISSWURST-WERFER',short:'Weißwurst-Werfer',desc:'Drei schwere Weißwurst-Einschläge rund um dein Ziel. Hoher Flächenschaden, 2 Ladungen.',weapon:'sausageMortar',apply:p=>{if(!p.weapons.includes('sausageMortar'))p.weapons.push('sausageMortar');p.weaponUses.sausageMortar=2+(p.ammoBonus||0);}},
     spread:{icon:'⋔',title:'DOPPELT HÄLT BESSER',short:'Dreifachschuss',desc:'Zwei zusätzliche Nüsse pro Schuss.',apply:p=>p.spread=1},
     rapid:{icon:'»',title:'ESPRESSO-NÜSSE',short:'Schnellfeuer',desc:'35 % schneller feuern. Mehr Nuss pro Sekunde.',apply:p=>p.fireRate/=1.35},
     health:{icon:'♡',title:'DICKE BACKEN',short:'Extra-Herzen',desc:'2 zusätzliche Herzen und volle Heilung.',apply:p=>{p.maxHp+=2;p.hp=p.maxHp;}},
@@ -677,14 +784,14 @@
     merzEggs:{icon:'🥚',title:'FRIEDRICH MERZ EIER',short:'Explosiv-Eier',desc:'Alle 5 Sekunden erscheinen automatisch zwei Hühnereier bei Gegnern und explodieren kurz darauf.',apply:p=>{p.merzEggs=true;p.merzEggCd=1;}},
     sniebelPlate:{icon:'▤',title:'SNIEBEL SCHNITTPLATTE',short:'Schnittplatte',desc:'Snickers schnallt sich Sniebels Schnittplatte auf den Rücken. Angriffe aus dem hinteren Halbkreis haben 50 % Chance, komplett an der Platte abzuprallen.',apply:p=>{p.sniebelPlate=true;}},
     lominarWorm:{icon:'〰',title:'DER LOMINARWURM',short:'Lominarwurm',desc:'Ein hektischer Wurm rast selbstständig durch die Arena. Berührte Gegner werden für kurze Zeit um etwa 30 % verlangsamt.',apply:p=>{p.lominarWorm=true;p.lominarX=-60;p.lominarY=rnd(150,H-80);p.lominarDir=1;}},
-    reflex:{icon:'↯',title:'FLUMMI-REFLEX',short:'Schneller Dash',desc:'Ausweichen alle 1,6 s und 8 % schneller laufen.',apply:p=>{p.dashCooldown=1.6;p.speed*=1.08;}},
-    vampire:{icon:'♥',title:'SNACK-VAMPIR',short:'Snack-Vampir',desc:'Alle 22 besiegten Gegner: 1 Herz. Doppelte Sammelreichweite.',apply:p=>{p.vampire=true;p.magnet=180;}},
+    reflex:{icon:'↯',title:'FLUMMI-REFLEX',short:'Schneller Dash',desc:'Dash-Cooldown um 29 % kürzer und 8 % schneller laufen.',apply:p=>{p.dashCooldown*=1.6/2.25;p.speed*=1.08;}},
+    vampire:{icon:'♥',title:'SNACK-VAMPIR',short:'Snack-Vampir',desc:'Alle 22 besiegten Gegner: 1 Herz. Doppelte Sammelreichweite.',apply:p=>{p.vampire=true;p.magnet*=2;}},
     shield:{icon:'◇',title:'NOTFALL-SCHALE',short:'Schutzschale',desc:'Fängt einen Treffer ab. Lädt nach 15 Sekunden wieder auf.',apply:p=>{p.shield=true;p.shieldReady=true;p.shieldCd=0;}},
     waveRenew:{icon:'✚',title:'REGENERATIONSFELL',short:'Wellenheilung',desc:'Nach jeder künftig abgeschlossenen normalen Welle werden deine Leben vollständig geheilt.',apply:p=>{p.waveRenew=true;}},
     carrotMine:{icon:'◇',title:'MÖHRENMACHER',short:'Möhrenmine',desc:'Große verzögerte Sprengfalle mit starkem Flächenschaden.',weapon:'carrotMine',apply:p=>{if(!p.weapons.includes('carrotMine'))p.weapons.push('carrotMine');p.weaponUses.carrotMine=(p.weaponUses.carrotMine||0)+6;}},
     peanutBoomerang:{icon:'↩',title:'RÜCKKEHR-NUSS',short:'Boomerang',desc:'Linienräumer: trifft Gegner auf dem Hin- und Rückflug erneut.',weapon:'peanutBoomerang',apply:p=>{if(!p.weapons.includes('peanutBoomerang'))p.weapons.push('peanutBoomerang');p.weaponUses.peanutBoomerang=(p.weaponUses.peanutBoomerang||0)+7;}},
     acornNova:{icon:'✹',title:'EICHEL-NOVA',short:'Eichel-Nova',desc:'20 durchschlagende Eicheln räumen Gegner rund um Snickers ab.',weapon:'acornNova',apply:p=>{if(!p.weapons.includes('acornNova'))p.weapons.push('acornNova');p.weaponUses.acornNova=(p.weaponUses.acornNova||0)+5;}},
-    pigPopper:{icon:'✦',title:'SCHWEINEPOPFER',short:'Pig Popper',desc:'Extremer Schockstoß: massiver Schaden gegen Schweine und sehr hoher Boss-Schaden.',weapon:'pigPopper',apply:p=>{if(!p.weapons.includes('pigPopper'))p.weapons.push('pigPopper');p.weaponUses.pigPopper=(p.weaponUses.pigPopper||0)+4;}},
+    pigPopper:{icon:'✦',title:'SCHWEINEOPFER',short:'Schweineopfer',desc:'Extremer Schockstoß: massiver Schaden gegen Schweine und sehr hoher Boss-Schaden.',weapon:'pigPopper',apply:p=>{if(!p.weapons.includes('pigPopper'))p.weapons.push('pigPopper');p.weaponUses.pigPopper=(p.weaponUses.pigPopper||0)+4;}},
     ossiWall:{icon:'▥',title:'OSSI MAUER',short:'Ossi Mauer',desc:'Riegelt die Hälfte der Gegner kurz ab; im Bosskampf blockt sie ungefähr die Hälfte der Schüsse. 3 Ladungen.',weapon:'ossiWall',apply:p=>{if(!p.weapons.includes('ossiWall'))p.weapons.push('ossiWall');p.weaponUses.ossiWall=Math.min(maxWeaponAmmo('ossiWall'),(p.weaponUses.ossiWall||0)+3);}},
     ammo:{icon:'⊕',title:'MUNITIONSKISTE',short:'Mehr Munition',desc:'+1 maximale Ladung je Spezialwaffe und sofort +1 Ladung für jede freigeschaltete Waffe.',apply:p=>{p.ammoBonus=(p.ammoBonus||0)+1;for(const id of p.weapons)p.weaponUses[id]=Math.min((weaponBook[id].max+p.ammoBonus),(p.weaponUses[id]||0)+1);}},
     powerLuck:{icon:'✦',title:'POWER-GLÜCK',short:'Power-Glück',desc:'Gegner lassen etwas öfter Power-ups fallen.',apply:p=>p.powerLuck=(p.powerLuck||1)*1.45},
@@ -712,6 +819,11 @@
     arsenalRelic:{icon:'◆',title:'ARSENAL-RELIKT',short:'Arsenal-Relikt',desc:'+45 % Spezialschaden, +1 maximale Ladung je Waffe und Munitionskisten füllen 65 % statt 50 %.',legendary:true,apply:p=>{p.specialDamage=(p.specialDamage||1)*1.45;p.ammoBonus=(p.ammoBonus||0)+1;p.ammoRefillBonus=Math.min(.35,(p.ammoRefillBonus||0)+.15);}}
   };
   const ngPlusSkillBook={
+    breadHalo:{icon:'◉',title:'BROTKRUSTEN-AURA',short:'Brotkrusten-Aura',desc:'NG+: Alle 4 Sekunden trifft eine Krustenwelle sämtliche Gegner im Umkreis. Skaliert mit deinem Schaden.',ngplus:true,apply:p=>p.breadHalo=true},
+    creamHeart:{icon:'♡',title:'SAHNEHERZ',short:'Sahneherz',desc:'NG+: +3 permanente Herzen und volle Heilung. Heilt anschließend alle 18 Sekunden 1 Herz.',ngplus:true,apply:p=>{p.creamHeart=true;p.maxHp+=3;p.hp=p.maxHp;}},
+    thunderCrumbs:{icon:'ϟ',title:'DONNERKRÜMEL',short:'Donnerkrümel',desc:'NG+: Jede sechste Salve löst zusätzlich zwei starke, durchschlagende Blitznüsse aus.',ngplus:true,apply:p=>p.thunderCrumbs=true},
+    pocketDimension:{icon:'⊞',title:'TASCHENDIMENSION',short:'Taschendimension',desc:'NG+: +1 maximale Ladung je Spezialwaffe und +35 Sammelradius. Munition wird regulär nachgeladen.',ngplus:true,apply:p=>{p.ammoBonus++;p.magnet+=35;}},
+    afterHours:{icon:'☕',title:'FEIERABENDKAFFEE',short:'Feierabendkaffee',desc:'NG+: 12 % höhere Feuerrate und 8 % kürzerer Dash-Cooldown. Noch eine Runde geht immer.',ngplus:true,apply:p=>{p.fireRate/=1.12;p.dashCooldown*=.92;}},
     annihilator:{icon:'☠',title:'NUSS-ANNIHILATOR',short:'Annihilator',desc:'NG+: +35 % normaler Schaden und +20 % Spezialwaffen-Schaden.',ngplus:true,apply:p=>{p.damage*=1.35;p.specialDamage=(p.specialDamage||1)*1.2;}},
     hyperFur:{icon:'⚡',title:'HYPERFELL',short:'Hyperfell',desc:'NG+: +20 % Bewegungstempo und 20 % kürzerer Dash-Cooldown.',ngplus:true,apply:p=>{p.speed*=1.2;p.dashCooldown*=.8;}},
     turretVolley:{icon:'♜',title:'WACHEN-SCHWARM',short:'Wachen-Schwarm',desc:'NG+: Der Knabber-Turm feuert eine Doppelsalve und deutlich schneller.',ngplus:true,apply:p=>{p.nutSentry=true;p.turretVolley=true;}},
@@ -736,6 +848,8 @@
     pickleMortarUnlock:{icon:'◉',title:'GURKEN-MÖRSER',short:'Gurken-Mörser',desc:'NG+-Waffe: großer Flächenschaden plus Verlangsamung. 3 Ladungen.',weapon:'pickleMortar',ngplus:true,apply:p=>{if(!p.weapons.includes('pickleMortar'))p.weapons.push('pickleMortar');p.weaponUses.pickleMortar=maxWeaponAmmo('pickleMortar');}}
   };
   const upgradePools=[['spread','rapid','health','walnutCannon','nutSentry','eggBooger','sniebelPlate','lominarWorm','homing','hotPaws','specialCore','waveRenew'],['frost','carrotMine','hazelnutShotgun','carrotDrone','merzEggs','shield','turbo','ammoHunter','ironFur'],['orbit','power','peanutBoomerang','carrotLaser','nutSentry','ossiWall','crit','specialCore','hunter','waveRenew'],['reflex','vampire','acornNova','acornRocket','carrotDrone','eggBooger','sniebelPlate','lominarWorm','fortified','ammoScrounger','hotPaws'],['chain','frost','ammo','nutDrill','nutSentry','merzEggs','scavenger','ammoHunter','ironFur','waveRenew'],['power','orbit','pigPopper','walnutCannon','carrotDrone','ossiWall','shockDash','specialCore','hunter'],['peanutBoomerang','hazelnutShotgun','powerLuck','health','nutSentry','eggBooger','sniebelPlate','lominarWorm','homing','ammoScrounger','hotPaws','waveRenew'],['carrotMine','carrotLaser','nutDrill','ammo','carrotDrone','merzEggs','shield','crit','ammoHunter','ironFur'],['pigPopper','acornNova','acornRocket','power','nutSentry','carrotDrone','ossiWall','eggBooger','merzEggs','sniebelPlate','lominarWorm','turbo','specialCore','hunter','waveRenew']];
+  const newNormalRewards=['rabbitCleft','corffelsBag','brothBox','hunnaExpert','crumbCompass','pretzelSling','sausageMortar'];
+  upgradePools.forEach((pool,i)=>pool.push(newNormalRewards[i%7],newNormalRewards[(i+3)%7],newNormalRewards[(i+5)%7]));
   const specialUpgradeBook={
     goldenNut:{icon:'✹',title:'GOLDENE NUSS',short:'Goldene Nuss',desc:'+55 % normaler Schaden und alle Punkte zählen doppelt.',apply:p=>{p.damage*=1.55;p.scoreRushBonus=(p.scoreRushBonus||1)*2;}},
     chronoFur:{icon:'◌',title:'CHRONO-FELL',short:'Chrono-Fell',desc:'Dash lädt 45 % schneller und Snickers läuft 18 % schneller.',apply:p=>{p.dashCooldown*=.55;p.speed*=1.18;}},
@@ -749,6 +863,38 @@
     graniteFur:{icon:'▣',title:'GRANITFELL',short:'Granitfell',desc:'+4 permanente Herzen, volle Heilung und zusätzliche 15 % Blockchance.',apply:p=>{p.maxHp+=4;p.hp=p.maxHp;p.damageGuard=Math.min(.5,(p.damageGuard||0)+.15);}}
   };
   const specialUpgradePools=[['goldenNut','chronoFur','nutstorm','ammoForge'],['bossBane','shellArmor','powerCondenser','savageCore'],['boomerangMaster','goldenNut','nutstorm','graniteFur','ammoForge','savageCore']];
+  function availableRewards(includeSpecial=false){
+    const books=[skillBook,legendarySkillBook];
+    if(newGamePlus||endlessMode)books.push(ngPlusSkillBook,ngPlusWeaponUpgrades);
+    if(gamePlusLevel===2||endlessMode)books.push(ngPlus2SkillBook,ngPlus2WeaponUpgrades);
+    const rewards=books.flatMap(book=>Object.entries(book).map(([id,c])=>({...c,id})));
+    if(includeSpecial)rewards.push(...Object.entries(specialUpgradeBook).map(([id,c])=>({...c,id,special:true})));
+    return rewards.filter(c=>c.special?!player.specials?.[c.id]:!player.skills[c.id]&&(!c.weapon||!player.weapons.includes(c.weapon)));
+  }
+  function rewardChoices(){
+    const available=availableRewards(),base=available.filter(c=>!c.legendary&&!c.ngplus&&!c.ngplus2);
+    const preferred=base.filter(c=>endlessMode||upgradePools[wave]?.includes(c.id));
+    let choices=shuffled(preferred).slice(0,3);
+    for(const c of shuffled(base)){if(choices.length>=3)break;if(!choices.some(item=>item.id===c.id))choices.push(c);}
+    const offer=(pool,chance)=>{if(pool.length&&Math.random()<chance){const c=shuffled(pool)[0];if(!choices.some(item=>item.id===c.id)){if(choices.length<3)choices.push(c);else choices[Math.floor(Math.random()*choices.length)]=c;}}};
+    if(!choices.some(c=>c.weapon))offer(base.filter(c=>c.weapon),.68);
+    offer(available.filter(c=>c.ngplus&&!c.weapon),.62);offer(available.filter(c=>c.ngplus&&c.weapon),.58);
+    offer(available.filter(c=>c.ngplus2&&!c.weapon),.58);offer(available.filter(c=>c.ngplus2&&c.weapon),.52);
+    offer(available.filter(c=>c.legendary),.03);
+    // Never leave a reward slot empty while any unowned reward remains, even a rare one.
+    for(const c of shuffled(available)){if(choices.length>=3)break;if(!choices.some(item=>item.id===c.id))choices.push(c);}
+    if(!choices.length&&endlessMode)choices=shuffled(availableRewards(true)).slice(0,3);
+    return choices;
+  }
+  function grantReward(c){
+    c.apply(player);
+    if(c.special){player.specials??={};player.specials[c.id]=1;}
+    else if(!c.weapon)player.skills[c.id]=1;
+    if(newGamePlus&&c.ngplus&&!c.weapon){addAchievementProgress('ngplus_first_skill');addAchievementProgress('ngplus_all_skills');}
+    if(c.ngplus2&&!c.weapon)addAchievementProgress('ng2_skill');if(c.ngplus2&&c.weapon)addAchievementProgress('ng2_weapon');
+    if(c.id==='crownNut')addAchievementProgress('crown_found');if(c.id==='ghostFur')addAchievementProgress('ghosted');if(c.id==='arsenalRelic')addAchievementProgress('relic_run');
+    updateHud();updateWeaponHud();updateSkills();
+  }
   function updateSkills(){
     const ids=Object.keys(player.skills);$('skillHud').innerHTML=ids.map(id=>{const info=skillBook[id]||legendarySkillBook[id]||ngPlusSkillBook[id]||ngPlus2SkillBook[id];return info?`<span class="${info.legendary?'legendary-skill-chip':''}" title="${info.title}">${info.icon}<span>${info.short}</span>${player.skills[id]>1?` ×${player.skills[id]}`:''}</span>`:'';}).join('');
     $('skillHud').classList.toggle('hidden',!ids.length);
@@ -762,47 +908,56 @@
     dodge:{icon:'◈',title:'DODGE-CHANCE',desc:'+2 % Chance, einen gegnerischen Treffer komplett auszuweichen. Jede weitere Stufe gibt erneut +2 %.',apply:p=>p.dodgeChance=Math.min(.40,(p.dodgeChance||0)+.02)}
   };
   function queueScoreSkillMilestones(){
-    if(!player||player.scoreSkillQueue.length)return;
-    if(score>=player.scoreSkillNext)player.scoreSkillQueue.push(player.scoreSkillNext);
+    if(!player)return;
+    if(!player.scoreSkillQueue.length&&score>=player.scoreSkillNext)player.scoreSkillQueue.push(player.scoreSkillNext);
     if(mode==='playing'&&player.scoreSkillQueue.length)showScoreSkillMenu();
   }
-  function showScoreSkillMenu(){
-    if(!player||!player.scoreSkillQueue.length||mode!=='playing')return;
+  function showScoreSkillMenu(afterReward=null){
+    const fallback=typeof afterReward==='function';
+    if(!player||(!fallback&&(!player.scoreSkillQueue.length||mode!=='playing')))return;
+    // The replacement reward is legal only after every unique endless reward is owned.
+    if(fallback&&(!endlessMode||availableRewards(true).length))return;
     const milestone=player.scoreSkillQueue[0];
     mode='scoreSkill';resetInput();$('announcement').classList.add('hidden');
-    const entries=Object.entries(scoreSkillBook);
-    const currentLevels=scorePerkLevels(player),nextGap=scoreSkillCost(currentLevels+1),nextTarget=milestone+nextGap;
-    showOverlay(`<span class="eyebrow">${milestone.toLocaleString('de-DE')} PUNKTE · PERMANENTER BONUS</span><h2 id="overlayTitle">SNICKERS WIRD STÄRKER.</h2><p>Der Kampf ist pausiert. Diese Punkte-Upgrades werden mit jeder Wahl teurer: Start bei 50.000 Punkten, danach steigt der nötige Abstand jeweils um 25.000 Punkte. Nach dieser Wahl liegt die nächste Schwelle bei ungefähr <strong>${nextTarget.toLocaleString('de-DE')}</strong> Punkten in diesem Run.</p><div class="upgrades score-skill-upgrades">${entries.map(([id,c],i)=>`<button class="upgrade skill-upgrade score-skill-card" id="scoreSkill${i}"><small class="upgrade-kind skill-kind">PUNKTE-SKILL · STUFE ${(player.scorePerks[id]||0)+1}</small><span class="upgrade-icon">${c.icon}</span><strong>${c.title}</strong><span>${c.desc}</span><em>${id==='dodge'?'+2 % DODGE':'+10 % WÄHLEN'} ↗</em></button>`).join('')}</div>`);
+    const entries=Object.entries(scoreSkillBook).filter(([id])=>id!=='dodge'||player.dodgeChance<.4-1e-9);
+    const nextTarget=milestone+scoreSkillCost(scorePerkLevels(player)+1);
+    const kicker=fallback?'ALLE SKILLS UND WAFFEN GESAMMELT':`${milestone.toLocaleString('de-DE')} PUNKTE · PERMANENTER BONUS`;
+    const description=fallback?'Dein einzigartiger Build ist komplett: Alle Skills, Waffen und Boss-Upgrades sind bereits gewählt. Als Ersatz darfst du jetzt einen permanenten Punkte-Bonus wählen. Es erscheinen keine doppelten Skills.':`Der Kampf ist pausiert. Die nächste Punkte-Schwelle liegt nach dieser Wahl bei <strong>${nextTarget.toLocaleString('de-DE')}</strong> Punkten in diesem Run. Der Abstand steigt pro gewähltem Bonus um 25.000 Punkte.`;
+    showOverlay(`<span class="eyebrow">${kicker}</span><h2 id="overlayTitle">SNICKERS WIRD STÄRKER.</h2><p>${description}</p><div class="upgrades score-skill-upgrades">${entries.map(([id,c],i)=>`<button class="upgrade skill-upgrade score-skill-card" id="scoreSkill${i}" data-perk="${id}"><small class="upgrade-kind skill-kind">${fallback?'ERSATZ-BONUS':'PUNKTE-SKILL'} · STUFE ${(player.scorePerks[id]||0)+1}</small><span class="upgrade-icon">${c.icon}</span><strong>${c.title}</strong><span>${c.desc}</span><em>${id==='dodge'?'+2 % DODGE':id==='dash'?'−10 % COOLDOWN':'+10 % WÄHLEN'} ↗</em></button>`).join('')}</div>`);
     entries.forEach(([id,c],i)=>{$(`scoreSkill${i}`).onclick=()=>{
       if(mode!=='scoreSkill')return;
-      c.apply(player);player.scorePerks[id]=(player.scorePerks[id]||0)+1;player.scoreSkillQueue.shift();player.scoreSkillNext=milestone+scoreSkillCost(scorePerkLevels(player));
-      tone(660,.24,'triangle',.08,990);updateHud();
-      if(player.scoreSkillQueue.length){mode='playing';showScoreSkillMenu();return;}
-      mode='playing';hideOverlay();player.invuln=Math.max(player.invuln,.75);lastFrame=performance.now();
+      c.apply(player);player.scorePerks[id]=(player.scorePerks[id]||0)+1;
+      if(!fallback){player.scoreSkillQueue.shift();player.scoreSkillNext=milestone+scoreSkillCost(scorePerkLevels(player));}
+      tone(660,.24,'triangle',.08,990);updateHud();hideOverlay();
+      if(fallback){afterReward();return;}
+      mode='playing';player.invuln=Math.max(player.invuln,.75);lastFrame=performance.now();
+      if(player.scoreSkillQueue.length)showScoreSkillMenu();
     };});
   }
   function startWave(next,keepRetries=false){
     wave=next;waveTime=0;spawnTimer=1;boss=null;mode='playing';ossiWalls=[];player.ossiWallTime=0;player.invuln=1.8;player.usedBombThisWave=false;player.waveHits=0;player.ammoDropsThisWave=0;player.ammoDropTarget=2+Math.floor(Math.random()*4);player.ammoDryKills=0;player.waveAmmoSnapshot=snapshotAmmo();
-    stageVisual=endlessMode?(Math.floor(wave/5)%3):wave<3?0:wave<6?1:2;makeGround();
+    if(endlessMode){if(!keepRetries&&!stagePrepared)stageVisual=randomStage(stageVisual);stagePrepared=false;}
+    else stageVisual=wave<3?0:wave<6?1:2;
+    makeGround();
     hideOverlay();$('bossHud').classList.add('hidden');updateHud();
-    announce(endlessMode?`ENDLOS-WELLE ${String(wave+1).padStart(2,'0')}`:`WELLE ${String(wave+1).padStart(2,'0')} / 09`,endlessMode?'ALLE GEGNERTYPEN · KEIN ENDE':waveNames[wave]);
+    announce(endlessMode?`ENDLOS-WELLE ${String(wave+1).padStart(2,'0')}`:`WELLE ${String(wave+1).padStart(2,'0')} / 09`,endlessMode?stageNames[stageVisual]+' · ALLE GEGNERTYPEN':stageNames[stageVisual]+' · '+waveNames[wave]);
     if(endlessMode&&wave+1>=10)addAchievementProgress('endless_10');if(endlessMode&&wave+1>=25)addAchievementProgress('endless_25');
     musicTrack=-1;
   }
   function showGeneralInterlude(){
     generalDefeated=true;mode='interlude';resetInput();enemies=[];bullets=[];enemyBullets=[];hazards=[];pickups=[];boss=null;
     $('bossHud').classList.add('hidden');$('announcement').classList.add('hidden');
-    showOverlay('<span class="eyebrow">AKT I GESCHAFFT · AKT II WARTET</span><h2 id="overlayTitle">TOTGESAGTE HOPPELN LÄNGER.</h2><p>Hasenbein ist gefallen. Doch unter dem Möhrenfeld fährt ein geheimes Labor hoch. Seine Terror-Kaninchen sammeln die Reste ein. Ein neuer Körper wartet schon.</p><blockquote class="snickers-quote"><b>SNICKERS</b>„Reanimation? Ich hätte einfach eine schlechte Bewertung dagelassen.“</blockquote><p>Wellen 4–6 bringen dich zu Cyber-Hasenbein. Danach beginnt der Steinbruch-Abschnitt.</p><button class="primary-button" id="actTwoButton">WEITER MIT WELLE 4 <span>↗</span></button>');
+    showOverlay(`<span class="eyebrow">AKT I GESCHAFFT · AKT II WARTET</span><h2 id="overlayTitle">TOTGESAGTE HOPPELN LÄNGER.</h2><p>Hasenbein ist gefallen. Doch unter dem Möhrenfeld fährt ein geheimes Labor hoch. Seine Terror-Kaninchen sammeln die Reste ein. Ein neuer Körper wartet schon.</p>${bossQuoteMarkup()}<p>Wellen 4–6 bringen dich zu Cyber-Hasenbein. Danach beginnt der Steinbruch-Abschnitt.</p><button class="primary-button" id="actTwoButton">WEITER MIT WELLE 4 <span>↗</span></button>`);
     $('actTwoButton').onclick=()=>{if(mode!=='interlude')return;player.hp=player.maxHp;player.x=W/2;player.y=H/2+25;startWave(3);};
     tone(85,.7,'sawtooth',.07,200);
   }
   function showCyberInterlude(){
     cyberDefeated=true;mode='interlude';resetInput();enemies=[];bullets=[];enemyBullets=[];hazards=[];pickups=[];boss=null;$('bossHud').classList.add('hidden');$('announcement').classList.add('hidden');
-    showOverlay('<span class="eyebrow">AKT II GESCHAFFT · DER STEINBRUCH RUFT</span><h2 id="overlayTitle">DAS WAR SEIN LETZTES UPDATE.</h2><p>Cyber-Hasenbein ist endgültig ausgeschaltet. Hinter der eingestürzten Felswand rumpelt es trotzdem weiter. Etwas Großes hat dort sehr lange auf seine Rückkehr gewartet.</p><blockquote class="snickers-quote"><b>SNICKERS</b>„Ich hoffe, das ist kein dritter Hase. Ich habe nur zwei Ohren.“</blockquote><button class="primary-button" id="actThreeButton">IN DEN STEINBRUCH <span>↗</span></button>');
+    showOverlay(`<span class="eyebrow">AKT II GESCHAFFT · DER STEINBRUCH RUFT</span><h2 id="overlayTitle">DAS WAR SEIN LETZTES UPDATE.</h2><p>Cyber-Hasenbein ist endgültig ausgeschaltet. Hinter der eingestürzten Felswand rumpelt es trotzdem weiter. Etwas Großes hat dort sehr lange auf seine Rückkehr gewartet.</p>${bossQuoteMarkup()}<button class="primary-button" id="actThreeButton">IN DEN STEINBRUCH <span>↗</span></button>`);
     $('actThreeButton').onclick=()=>{if(mode!=='interlude')return;player.hp=player.maxHp;startWave(6);};tone(72,.8,'sawtooth',.08,190);
   }
   function bossUpgradeScreen(kind){
-    refillWeaponsAfterWave();
+    stageAfterBoss(kind);refillWeaponsAfterWave();
     mode='bossUpgrade';resetInput();enemies=[];bullets=[];enemyBullets=[];hazards=[];pickups=[];$('bossHud').classList.add('hidden');$('announcement').classList.add('hidden');
     const afterBoss=()=>{
       if(kind==='general')showGeneralInterlude();
@@ -810,24 +965,31 @@
       else if(kind==='endless'){boss=null;mode='playing';startWave(wave+1);}
       else if(kind==='karnil'&&gamePlusLevel===2){
         boss=null;mode='interlude';player.hp=player.maxHp;stageVisual=3;makeGround();
-        showOverlay('<span class="eyebrow">NG+2 · EINE LETZTE STAGE</span><h2 id="overlayTitle">DA GRUNZT NOCH WAS.</h2><p>Karnil ist erledigt. Snickers heilt vollständig und nimmt das Boss-Upgrade mit. Hinter der Sahneküche wartet Ottah – ein Warzenschwein mit drei Phasen und bemerkenswert schlechter Laune.</p><blockquote class="snickers-quote"><b>SNICKERS</b>„Wenn der auch meine Nuss will, koche ich ihn ein.“</blockquote><button class="primary-button" id="ottahStart">ZU OTTAH <span>↗</span></button>');
+        showOverlay(`<span class="eyebrow">NG+2 · EINE LETZTE STAGE</span><h2 id="overlayTitle">DA GRUNZT NOCH WAS.</h2><p>Karnil ist erledigt. Snickers heilt vollständig und nimmt das Boss-Upgrade mit. Hinter der Sahneküche wartet Ottah – ein Warzenschwein mit drei Phasen und bemerkenswert schlechter Laune.</p>${bossQuoteMarkup()}<button class="primary-button" id="ottahStart">ZU OTTAH <span>↗</span></button>`);
         $('ottahStart').onclick=()=>{if(mode!=='interlude')return;hideOverlay();mode='playing';spawnOttah();};
       }else{boss=null;mode='playing';finish(true);}
     };
     const index=kind==='general'?0:kind==='cyber'?1:2;
-    let bossIds=[...specialUpgradePools[index]].filter(id=>!player.specials?.[id]).sort(()=>Math.random()-.5);
-    for(const id of Object.keys(specialUpgradeBook).sort(()=>Math.random()-.5)){if(bossIds.length>=3)break;if(!player.specials?.[id]&&!bossIds.includes(id))bossIds.push(id);}
-    const choices=bossIds.slice(0,3).map(id=>({...specialUpgradeBook[id],id}));
-    const label=kind==='endless'?'ENDLOS-BOSS GEFÄLLT · SPEZIAL-UPGRADE':kind==='karnil'?'KARNIL GEFÄLLT · SPEZIAL-UPGRADE':kind==='cyber'?'CYBER-HASENBEIN GEFÄLLT · SPEZIAL-UPGRADE':'GENERAL HASENBEIN GEFÄLLT · SPEZIAL-UPGRADE';
+    const unowned=availableRewards(true).filter(c=>c.special);
+    let choices=shuffled(unowned.filter(c=>specialUpgradePools[index].includes(c.id))).slice(0,3);
+    for(const c of shuffled(unowned)){if(choices.length>=3)break;if(!choices.some(item=>item.id===c.id))choices.push(c);}
+    if(!choices.length&&endlessMode)choices=shuffled(availableRewards(true)).slice(0,3);
+    const label=kind==='endless'?'ENDLOS-BOSS GEFÄLLT':kind==='karnil'?'KARNIL GEFÄLLT':kind==='cyber'?'CYBER-HASENBEIN GEFÄLLT':'GENERAL HASENBEIN GEFÄLLT';
     if(!choices.length){
-      showOverlay(`<span class="eyebrow">${label}</span><h2 id="overlayTitle">BOSS-BEUTE LEERGEKNABBERT.</h2><p>Du besitzt bereits jedes Boss-Upgrade. Statt eines doppelten Skills erhältst du Vorräte: +1 permanentes Herz, volle Heilung und die normale Boss-Munitionsauffüllung.</p><button class="primary-button" id="bossSupplyReward">VORRÄTE NEHMEN <span>↗</span></button>`);
+      if(endlessMode){showScoreSkillMenu(afterBoss);return;}
+      showOverlay(`<span class="eyebrow">${label}</span><h2 id="overlayTitle">BOSS-BEUTE LEERGEKNABBERT.</h2>${bossQuoteMarkup()}<p>Du besitzt bereits jedes Boss-Upgrade. Du erhältst +1 permanentes Herz, volle Heilung und die normale Boss-Munitionsauffüllung.</p><button class="primary-button" id="bossSupplyReward">VORRÄTE NEHMEN <span>↗</span></button>`);
       $('bossSupplyReward').onclick=()=>{if(mode!=='bossUpgrade')return;player.maxHp++;player.hp=player.maxHp;updateHud();afterBoss();};return;
     }
-    showOverlay(`<span class="eyebrow">${label}</span><h2 id="overlayTitle">BEUTE AUS DEM BOSS.</h2><p>Wähle eines von drei Boss-Upgrades. Bereits gewählte Boss-Upgrades erscheinen nicht erneut. Nach dem Boss wurden deine Spezialwaffen wie nach einer Welle teilweise nachgeladen; die Nussbombe ist voll.</p><div class="upgrades special-upgrades">${choices.map((c,i)=>`<button class="upgrade special-upgrade" id="specialUpgrade${i}" data-skill="${c.id}"><small class="upgrade-kind special-kind">BOSS-UPGRADE</small><span class="upgrade-icon">${c.icon}</span><strong>${c.title}</strong><span>${c.desc}</span><em>SPEZIAL WÄHLEN ↗</em></button>`).join('')}</div>`);
-    choices.forEach((c,i)=>{$(`specialUpgrade${i}`).onclick=()=>{if(mode!=='bossUpgrade')return;c.apply(player);player.specials??={};player.specials[c.id]=1;player.weaponUses.nutBomb=maxWeaponAmmo('nutBomb');updateWeaponHud();updateSkills();tone(620,.25,'triangle',.08,1240);afterBoss();};});
+    showOverlay(`<span class="eyebrow">${label} · ${stageNames[stageVisual]}</span><h2 id="overlayTitle">BEUTE AUS DEM BOSS.</h2>${bossQuoteMarkup()}<p>Wähle ein neues Upgrade. Bereits gewählte Skills und Waffen erscheinen nicht erneut. Deine Spezialwaffen wurden teilweise nachgeladen; die Nussbombe ist voll.</p><div class="upgrades special-upgrades">${choices.map((c,i)=>`<button class="upgrade ${c.special?'special-upgrade':c.weapon?'weapon-upgrade':'skill-upgrade'}" id="specialUpgrade${i}" data-skill="${c.id}"><small class="upgrade-kind special-kind">${c.special?'BOSS-UPGRADE':c.weapon?'WAFFE':'SKILL'}</small><span class="upgrade-icon">${c.icon}</span><strong>${c.title}</strong><span>${c.desc}</span><em>WÄHLEN ↗</em></button>`).join('')}</div>`);
+    choices.forEach((c,i)=>{$(`specialUpgrade${i}`).onclick=()=>{if(mode!=='bossUpgrade')return;grantReward(c);player.weaponUses.nutBomb=maxWeaponAmmo('nutBomb');tone(620,.25,'triangle',.08,1240);afterBoss();};});
   }
   function generalDown(){lastDefeatedBoss='general';addAchievementProgress('boss_breaker');addAchievementProgress('three_bosses');addAchievementProgress('wallpaper');bossUpgradeScreen('general');}
   function cyberDown(){lastDefeatedBoss='cyber';addAchievementProgress('boss_breaker');addAchievementProgress('three_bosses');addAchievementProgress('wallpaper');bossUpgradeScreen('cyber');}
+  function continueAfterWave(){
+    player.weaponUses.nutBomb=maxWeaponAmmo('nutBomb');player.invuln=2;mode='playing';hideOverlay();
+    if(endlessMode){if((wave+1)%5===0)spawnEndlessBoss();else startWave(wave+1);}
+    else if(wave===2)spawnBoss(false);else if(wave===5)spawnBoss(true);else if(wave===8)spawnBoss(false,true);else startWave(wave+1);
+  }
   function upgradeScreen() {
     mode = 'upgrade'; resetInput(); enemies = []; enemyBullets = []; hazards = []; bullets = [];
     if(player.waveHits===0)addAchievementProgress('clean_wave');
@@ -838,63 +1000,22 @@
     // Normal waves no longer grant free healing. Only the Regenerationsfell skill does that automatically.
     if(player.waveRenew)player.hp=player.maxHp;
     updateHud();
-    // Jeder Skill ist einzigartig: bereits gewählte Skills tauchen nie erneut auf. Waffen werden ebenfalls nur angeboten, solange sie nicht freigeschaltet sind.
-    const available=id=>{const item=skillBook[id];return item?.weapon?!player.weapons.includes(item.weapon):!player.skills[id];};
-    let ids=(endlessMode?Object.keys(skillBook):upgradePools[wave]).filter(available).sort(()=>Math.random()-.5);
-    for(const id of Object.keys(skillBook).sort(()=>Math.random()-.5)){if(ids.length>=7)break;if(available(id)&&!ids.includes(id))ids.push(id);}
-    let choices=ids.slice(0,3).map(id=>({...skillBook[id],id,type:skillBook[id].weapon?'weapon':'skill'}));
-    // Weapons should be discoverable, but not dominate every single screen.
-    const availableWeapons=Object.keys(skillBook).filter(id=>skillBook[id].weapon&&available(id));
-    if(availableWeapons.length&&Math.random()<.68&&!choices.some(c=>c.weapon)){
-      const wid=availableWeapons[Math.floor(Math.random()*availableWeapons.length)];
-      choices[2]={...skillBook[wid],id:wid,type:'weapon'};
-    }
-    // Legendary skills: exactly 3% total chance per cleared wave; at most one can appear.
-    const legendaryAvailable=Object.keys(legendarySkillBook).filter(id=>!player.skills[id]);
-    if(legendaryAvailable.length&&Math.random()<.03){
-      const lid=legendaryAvailable[Math.floor(Math.random()*legendaryAvailable.length)],slot=Math.floor(Math.random()*choices.length);
-      choices[slot]={...legendarySkillBook[lid],id:lid,type:'skill',legendary:true};
-    }
-    if(newGamePlus){
-      const ngAvailable=Object.keys(ngPlusSkillBook).filter(id=>!player.skills[id]);
-      if(ngAvailable.length&&Math.random()<.62){const id=ngAvailable[Math.floor(Math.random()*ngAvailable.length)],slot=Math.floor(Math.random()*choices.length);choices[slot]={...ngPlusSkillBook[id],id,type:'skill',ngplus:true};}
-      const ngWeaponIds=Object.keys(ngPlusWeaponUpgrades).filter(id=>!player.weapons.includes(ngPlusWeaponUpgrades[id].weapon));
-      if(ngWeaponIds.length&&Math.random()<.58){const id=ngWeaponIds[Math.floor(Math.random()*ngWeaponIds.length)],slot=Math.floor(Math.random()*choices.length);choices[slot]={...ngPlusWeaponUpgrades[id],id,type:'weapon',ngplus:true};}
-    }
-    if(gamePlusLevel===2){
-      const ng2Available=Object.keys(ngPlus2SkillBook).filter(id=>!player.skills[id]);
-      if(ng2Available.length&&Math.random()<.58){const id=ng2Available[Math.floor(Math.random()*ng2Available.length)],slot=Math.floor(Math.random()*choices.length);choices[slot]={...ngPlus2SkillBook[id],id,type:'skill',ngplus2:true};}
-      const ng2WeaponIds=Object.keys(ngPlus2WeaponUpgrades).filter(id=>!player.weapons.includes(ngPlus2WeaponUpgrades[id].weapon));
-      if(ng2WeaponIds.length&&Math.random()<.52){const id=ng2WeaponIds[Math.floor(Math.random()*ng2WeaponIds.length)],slot=Math.floor(Math.random()*choices.length);choices[slot]={...ngPlus2WeaponUpgrades[id],id,type:'weapon',ngplus2:true};}
-    }
+    const choices=rewardChoices();
+    if(!choices.length&&endlessMode){showScoreSkillMenu(continueAfterWave);return;}
     const quote=endlessMode?`Welle ${wave+1}. Ich fange an, Unendlich persönlich zu nehmen.`:(waveQuotes[wave]||'Ich brauche eine größere Nuss.');
-    const typeLabel=c=>c.legendary?'LEGENDARY SKILL':c.ngplus2?(c.weapon?'NG+2 WAFFE':'NG+2 SKILL'):c.ngplus?(c.weapon?'NG+ WAFFE':'NG+ SKILL'):c.weapon?'WAFFE':'SKILL';
+    const typeLabel=c=>c.special?'BOSS-UPGRADE':c.legendary?'LEGENDARY SKILL':c.ngplus2?(c.weapon?'NG+2 WAFFE':'NG+2 SKILL'):c.ngplus?(c.weapon?'NG+ WAFFE':'NG+ SKILL'):c.weapon?'WAFFE':'SKILL';
     const cardClass=c=>`upgrade${c.legendary?' legendary-upgrade':''}${c.ngplus||c.ngplus2?' ngplus-upgrade':''}${c.weapon?' weapon-upgrade':' skill-upgrade'}`;
     const healText=player.hp>=player.maxHp?'Du bist bereits voll geheilt, bekommst aber trotzdem +1 permanentes Herz.':'Verzichte auf das Upgrade, heile vollständig und erhalte +1 permanentes Herz.';
     showOverlay(`<span class="eyebrow">${endlessMode?'ENDLOS-WELLE '+String(wave+1).padStart(2,'0'):'WELLE '+String(wave+1).padStart(2,'0')+' / 09'} GESCHAFFT</span><h2 id="overlayTitle">ZEIT AUFZURÜSTEN.</h2><blockquote class="snickers-quote" aria-live="polite"><b>SNICKERS</b>„${quote}“</blockquote><p>Nach einer Welle gibt es keine kostenlose Heilung. Wähle eine Waffe oder einen Skill – oder verzichte auf das Upgrade und nimm die Verschnaufpause.</p><div class="upgrades reward-upgrades">${choices.map((c,i) => `<button class="${cardClass(c)}" id="upgrade${i}" data-skill="${c.id}"><small class="upgrade-kind ${c.legendary?'legendary-kind':c.weapon?'weapon-kind':'skill-kind'}">${typeLabel(c)}</small><span class="upgrade-icon">${c.icon}</span><strong>${c.title}</strong><span>${c.desc}</span><em>AUSWÄHLEN ↗</em></button>`).join('')}<button class="upgrade heal-upgrade" id="healInstead"><small class="upgrade-kind heal-kind">HEILUNG STATT UPGRADE</small><span class="upgrade-icon">♥</span><strong>VERSCHNAUFPAUSE</strong><span>${healText}</span><em>+1 MAX-HERZ · VOLL HEILEN ↗</em></button></div>`);
-    const continueRun=()=>{
-      // Auch wenn ein gewähltes Upgrade die maximale Munition verändert, startet die nächste Etappe mit voller Nussbombe.
-      player.weaponUses.nutBomb=maxWeaponAmmo('nutBomb');
-      player.invuln=2;mode='playing';hideOverlay();
-      if(endlessMode){if((wave+1)%5===0)spawnEndlessBoss();else startWave(wave+1);}else if(wave===2)spawnBoss(false);else if(wave===5)spawnBoss(true);else if(wave===8)spawnBoss(false,true);else startWave(wave+1);
-    };
-    choices.forEach((c,i) => { $(`upgrade${i}`).onclick = () => {
-      if (mode !== 'upgrade') return;
-      const wasOwned=Boolean(player.skills[c.id]);
-      c.apply(player);if(!c.weapon)player.skills[c.id]=1;
-      if(newGamePlus&&c.ngplus&&!c.weapon&&!wasOwned){addAchievementProgress('ngplus_first_skill');addAchievementProgress('ngplus_all_skills');}
-      if(c.ngplus2&&!c.weapon&&!wasOwned)addAchievementProgress('ng2_skill');
-      if(c.ngplus2&&c.weapon)addAchievementProgress('ng2_weapon');
-      if(c.id==='crownNut')addAchievementProgress('crown_found');
-      if(c.id==='ghostFur')addAchievementProgress('ghosted');
-      if(c.id==='arsenalRelic')addAchievementProgress('relic_run');
-      updateWeaponHud();updateSkills();continueRun();
-      tone(c.legendary?784:523, c.legendary?.42:.25, 'triangle', c.legendary?.11:.08, c.legendary?1568:1046);
-    }; });
+    choices.forEach((c,i)=>{$(`upgrade${i}`).onclick=()=>{
+      if(mode!=='upgrade')return;
+      grantReward(c);continueAfterWave();
+      tone(c.legendary?784:523,c.legendary?.42:.25,'triangle',c.legendary?.11:.08,c.legendary?1568:1046);
+    };});
     $('healInstead').onclick=()=>{
       if(mode!=='upgrade')return;
       addAchievementProgress('breather');
-      player.maxHp+=1;player.hp=player.maxHp;updateHud();continueRun();tone(690,.35,'triangle',.1,1035);
+      player.maxHp+=1;player.hp=player.maxHp;updateHud();continueAfterWave();tone(690,.35,'triangle',.1,1035);
     };
   }
   function finish(won) {
@@ -918,7 +1039,7 @@
     const headline=ottahEnding?'SAHNEFRIEDEN.':karnilEnding?'DER GARTEN HAT JETZT SCHWEIN.':won?'DIE NUSS GEHÖRT DIR.':retriesLeft<=0?'DAS WAR’S, SNICKERS.':'KARNIL LACHT NOCH.';
     const copy=ottahEnding?'Ottah ist besiegt. Statt sich weiter zu prügeln, schließen Snickers und das Warzenschwein Frieden. Seitdem stehen beide gemeinsam am Topf und kochen Sahne. Niemand weiß warum. Niemand traut sich zu fragen.':karnilEnding?'Snickers gönnt sich zur Feier des Tages einen gewaltigen Nussberg. Karnil steht derweil als ausgesprochen unwilliges Hausschwein im Garten. An der Wand hängt das Fell von Hasenbein. Es passt erstaunlich gut zur Tapete.':won?'Neun Wellen. Drei Bosse. Eine Nuss. Snickers: „Ich hätte gern eine Belohnung, die nicht versucht, mich zu fressen.“':retriesLeft<=0?'Alle drei Retry-Marken dieses Runs sind verbraucht. Die Hasenjagd endet hier — aber der nächste Lauf wartet schon.':['Diese Ferkel spielen unfair. Zum Glück gibt es noch einen Versuch.','Auch Helden brauchen mal einen zweiten Anlauf. Die Nuss wartet auf dich.','Zu viele Schweine. Zu wenig Deckung. Du weißt jetzt, wie der Hase läuft.'][Math.floor(Math.random()*3)];
     const endingArt=epilogue?`<div class="ending-gag-art" aria-label="Lustiger Abspann"><svg viewBox="0 0 640 230" role="img"><rect width="640" height="230" rx="18" fill="#17241f"/><rect y="170" width="640" height="60" fill="#26372d"/><g fill="#bd8b4a"><circle cx="250" cy="172" r="18"/><circle cx="280" cy="165" r="20"/><circle cx="310" cy="176" r="17"/><circle cx="335" cy="160" r="19"/><circle cx="365" cy="174" r="18"/></g><g transform="translate(270 105)"><ellipse cx="0" cy="27" rx="38" ry="33" fill="#d99b50"/><circle cx="-24" cy="0" r="15" fill="#c47c3e"/><circle cx="24" cy="0" r="15" fill="#c47c3e"/><circle cx="-12" cy="22" r="4" fill="#1b2820"/><circle cx="12" cy="22" r="4" fill="#1b2820"/><path d="M-7 33 Q0 40 7 33" stroke="#6d3f2e" stroke-width="4" fill="none"/></g><g transform="translate(450 128)"><ellipse cx="0" cy="30" rx="54" ry="36" fill="${ottahEnding?'#9b6659':'#b96d64'}"/><circle cx="0" cy="0" r="35" fill="${ottahEnding?'#b97868':'#d48479'}"/><ellipse cx="0" cy="14" rx="16" ry="10" fill="#dfa08f"/><circle cx="-12" cy="-5" r="4"/><circle cx="12" cy="-5" r="4"/><path d="M-14 15 L-34 27 L-27 9" fill="#f2e1b6"/><path d="M14 15 L34 27 L27 9" fill="#f2e1b6"/>${ottahEnding?'<rect x="-42" y="52" width="84" height="8" rx="4" fill="#fff0d0"/><circle cx="0" cy="52" r="22" fill="#fff8e6"/>':'<path d="M-26 -27 L0 -75 L26 -27 Z" fill="#f0cf54"/><circle cx="0" cy="-75" r="7" fill="#ff726d"/>'}</g><g transform="translate(92 70)"><rect x="-45" y="-35" width="90" height="90" rx="12" fill="#36483d" stroke="#758e7a" stroke-width="4"/><path d="M-18 -4 C-30 -35 -4 -42 0 -13 C4 -42 30 -35 18 -4 C35 13 26 42 0 42 C-26 42 -35 13 -18 -4Z" fill="#b8c5b2"/><circle cx="-10" cy="8" r="4"/><circle cx="10" cy="8" r="4"/></g><text x="320" y="216" fill="#e7efdc" font-size="13" text-anchor="middle" font-family="Arial">${ottahEnding?'SNICKERS + OTTAH · GEMEINSAM SAHNE KOCHEN.':'SNICKERS FEIERT. KARNIL BEREUT ALLES.'}</text></svg></div><blockquote class="snickers-quote"><b>ABSPANN</b>${ottahEnding?'Snickers rührt. Ottah grunzt. Die Sahne köchelt. Freundschaften beginnen manchmal sehr merkwürdig.':'Snickers isst Nüsse. Karnil grunzt. Die Nachbarschaft beschwert sich über beides.'}</blockquote>`:'';
-    showOverlay(`<span class="eyebrow">${won?'MISSION ERFÜLLT · NUSS GESICHERT':retriesLeft<=0?'GAME OVER · ALLE RETRIES VERBRAUCHT':'MISSION GESCHEITERT · EGO LEICHT ANGEKNABBERT'}</span><h2 id="overlayTitle">${headline}</h2><p>${copy}</p>${endingArt}${isRecord?'<div class="new-record">NEUER LOKALER REKORD</div>':''}<div class="stats"><div><strong>${score.toLocaleString('de-DE')}</strong><span>PUNKTE</span></div><div><strong>${kills}</strong><span>GEGNER BESIEGT</span></div><div><strong>${formatTime(runTime)}</strong><span>ÜBERLEBT</span></div></div><div class="overlay-actions"><button id="retryButton" class="primary-button">WEITER <span>↗</span></button><button id="endMenuButton" class="secondary-button">Hauptmenü</button></div>`);
+    showOverlay(`<span class="eyebrow">${won?'MISSION ERFÜLLT · NUSS GESICHERT':retriesLeft<=0?'GAME OVER · ALLE RETRIES VERBRAUCHT':'MISSION GESCHEITERT · EGO LEICHT ANGEKNABBERT'}</span><h2 id="overlayTitle">${headline}</h2><p>${copy}</p>${endingArt}${won?bossQuoteMarkup():''}${isRecord?'<div class="new-record">NEUER LOKALER REKORD</div>':''}<div class="stats"><div><strong>${score.toLocaleString('de-DE')}</strong><span>PUNKTE</span></div><div><strong>${kills}</strong><span>GEGNER BESIEGT</span></div><div><strong>${formatTime(runTime)}</strong><span>ÜBERLEBT</span></div></div><div class="overlay-actions"><button id="retryButton" class="primary-button">WEITER <span>↗</span></button><button id="endMenuButton" class="secondary-button">Hauptmenü</button></div>`);
     if(won){const nextLevel=gamePlusLevel===0?1:gamePlusLevel===1?2:0;$('retryButton').textContent=gamePlusLevel===0?'NEW GAME+ STARTEN ↗':gamePlusLevel===1?'NEW GAME+2 STARTEN ↗':'KOMPLETT NEUER RUN ↗';$('retryButton').onclick=()=>startGame(nextLevel);}
     else $('retryButton').onclick=()=>{if(endlessMode){goMenu();setTimeout(showEndlessSelect,0);}else startGame(0);};
     $('endMenuButton').onclick=goMenu;
@@ -983,6 +1104,8 @@
   function damageEnemy(e, amount, blast = false) {
     if (e.dead) return;
     if(e.type==='boss'||e.miniBoss)amount*=player.bossDamage||1;
+    const rabbit=e.type==='boss'?(e.endlessBoss?['general','cyber'].includes(e.endlessKind):!e.karnil&&!e.ottah):!e.type.startsWith('pig')&&e.type!=='gnomePig';
+    if(rabbit)amount*=player.rabbitDamage||1;
     e.hp -= amount; e.hit = .1;
     burst(e.x,e.y, e.type === 'boss' ? '#ffa977' : '#cad8b7', blast ? 12 : 4, 110);
     if(isBoss(e))maybeDropBossSupply(e);
@@ -998,10 +1121,11 @@
     floater(e.x,e.y-22,`+${e.points}`);
     if(e.miniBoss){toast('ZOMBIE-HASENBEIN ERLEDIGT');updateHud();}
     if (isBoss(e)) {
-      if(e.ottah){lastDefeatedBoss='ottah';addAchievementProgress('ng2_sahne');mode='playing';finish(true);return;}
+      if(e.ottah){stageAfterBoss('ottah');lastDefeatedBoss='ottah';addAchievementProgress('ng2_sahne');mode='playing';finish(true);return;}
       if(e.endlessBoss){lastDefeatedBoss='endless';endlessBossesDefeated++;addAchievementProgress('endless_bosses');bossUpgradeScreen('endless');return;}
       lastDefeatedBoss=e.karnil?'karnil':e.cyber?'cyber':'general';if(e.karnil){addAchievementProgress('boss_breaker');addAchievementProgress('three_bosses');bossUpgradeScreen('karnil');}else if(e.cyber)cyberDown();else generalDown();return;
     }
+    if(player.brothBox){player.breadKills=(player.breadKills||0)+1;if(player.breadKills>=35){player.breadKills=0;player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-38,'BROTZEIT! +1 ♥','#eac997');}}
     if(player.vampire){player.vampireKills++;if(player.vampireKills>=22){player.vampireKills=0;player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-38,'SNACK! +1 ♥',accent());}}
     if(e.type==='splitter')for(let i=0;i<2;i++){const child=spawnEnemy('runner');child.x=clamp(e.x+(i?22:-22),32,W-32);child.y=clamp(e.y+12,105,H-45);child.hp=child.maxHp=1;child.speed=158;burst(child.x,child.y,'#dba7ed',10,80);}
     const dropRoll=Math.random(),powerChance=.035*(player.powerLuck||1),life=18+(player.pickupLifeBonus||0);
@@ -1056,12 +1180,15 @@
     }
     player.angle=desired;
     player.shotCount++;
+    const hunnaShot=player.hunnaExpert&&player.shotCount%10===0;
     const angles = player.nutstorm ? [-.28,-.14,0,.14,.28] : player.spread||player.powerups.doubleShot ? [-.16,0,.16] : [0];
     for (const offset of angles) {
       const a=player.angle+offset;
       const crit=player.crit&&Math.random()<player.crit;
-      bullets.push({x:player.x+Math.cos(a)*22,y:player.y+Math.sin(a)*22,vx:Math.cos(a)*755,vy:Math.sin(a)*755,life:1.2,damage:player.damage*(player.powerups.berserk>0?1.65:1)*(player.powerups.giantNut>0?1.4:1)*(player.powerups.overdrive>0?2:1)*(crit?2.2:1),pierce:player.pierce,hitIds:new Set(),r:player.powerups.giantNut>0?10:6,a,chain:player.chain&&player.shotCount%4===0,frost:player.frost});
+      bullets.push({x:player.x+Math.cos(a)*22,y:player.y+Math.sin(a)*22,vx:Math.cos(a)*755,vy:Math.sin(a)*755,life:1.2,damage:player.damage*(player.powerups.berserk>0?1.65:1)*(player.powerups.giantNut>0?1.4:1)*(player.powerups.overdrive>0?2:1)*(crit?2.2:1)*(hunnaShot?3:1),pierce:player.pierce+(hunnaShot?2:0),hitIds:new Set(),r:player.powerups.giantNut>0?10:6,a,chain:player.chain&&player.shotCount%4===0,frost:player.frost});
     }
+    if(player.thunderCrumbs&&player.shotCount%6===0){for(const off of [-.1,.1]){const a=player.angle+off;bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*820,vy:Math.sin(a)*820,life:1.15,damage:player.damage*4,pierce:3,hitIds:new Set(),r:8,a,chain:true,frost:false});}burst(player.x,player.y,'#b4eaff',8,80);}
+    if(hunnaShot)floater(player.x,player.y-40,'HUNNA!','#ffe096');
     tone(rnd(660,800),.04,'triangle',.035,280);
     return true;
   }
@@ -1072,6 +1199,8 @@
     if(target){particles.push({type:'arc',x:source.x,y:source.y,x2:target.x,y2:target.y,life:.2,maxLife:.2,color:'#c9ecff'});damageEnemy(target,damage*.8);}
   }
   function updateSkillsInPlay(dt){
+    if(player.creamHeart){player.creamHeartCd=(player.creamHeartCd??18)-dt;if(player.creamHeartCd<=0){player.creamHeartCd=18;if(player.hp<player.maxHp){player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-38,'SAHNEHERZ +1 ♥','#fff0d1');updateHud();}}}
+    if(player.breadHalo){player.breadHaloCd=(player.breadHaloCd||0)-dt;if(player.breadHaloCd<=0){player.breadHaloCd=4;const all=boss&&!boss.dead?[...enemies,boss]:[...enemies];particles.push({type:'ring',x:player.x,y:player.y,life:.55,maxLife:.55,r:0,color:'#edc786'});for(const e of all){if(!e.dead&&dist(player,e)<185+e.r)damageEnemy(e,9*player.damage,true);if(mode!=='playing')return;}}}
     for(const id of Object.keys(player.powerups)){player.powerups[id]=Math.max(0,player.powerups[id]-dt);if(player.powerups[id]<=0)delete player.powerups[id];}
     if(player.powerups.regen>0){player.regenCd=(player.regenCd||0)-dt;if(player.regenCd<=0){if(player.hp<player.maxHp){player.hp++;floater(player.x,player.y-38,'SNACK! +1 ♥',accent());tone(700,.12,'sine',.04,980);updateHud();}player.regenCd=2;}}
     if(player.shield&&!player.shieldReady){player.shieldCd=Math.max(0,player.shieldCd-dt);if(player.shieldCd<=0){player.shieldReady=true;floater(player.x,player.y-36,'SCHALE BEREIT',accent());}}
@@ -1315,7 +1444,6 @@
     // Never let a living enemy disappear outside the arena or become unfinishable through invalid coordinates.
     keepEnemiesInArena();
     updateBoss(dt); if(mode!=='playing')return;
-    if(player.lominarWorm){ctx.save();ctx.translate(player.lominarX,player.lominarY);ctx.scale(player.lominarDir||1,1);for(let i=0;i<7;i++){const yy=Math.sin(ambientTime*10-i*.7)*5;ellipse(ctx,-i*9,yy,8,6,i===0?'#d7df72':'#a9c45d');}ellipse(ctx,4,-2,2,2,'#2e3521');ctx.restore();}
     for(const b of bullets){
       const oldX=b.x,oldY=b.y;b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
       const all=boss&&!boss.dead?[...enemies,boss]:enemies;
@@ -1372,49 +1500,49 @@
   function ellipse(c,x,y,rx,ry,color,rotation=0){c.fillStyle=color;c.beginPath();c.ellipse(x,y,rx,ry,rotation,0,TAU);c.fill();if(c===ctx){cartoonInk(c);c.stroke();}}
   function path(c,points,color){c.fillStyle=color;c.beginPath();points.forEach((p,i)=>i?c.lineTo(...p):c.moveTo(...p));c.closePath();c.fill();if(c===ctx){cartoonInk(c);c.stroke();}}
   function makeGround(){
-    seed=74319;const palette=themes[settings.theme];
-    const stageGround=stageVisual===1?['#183f49','#132c38','#0b1b26']:stageVisual===2?['#6a5037','#493825','#251f1a']:stageVisual===3?['#7a6b57','#51483d','#2c2824']:stageVisual===4?['#49385d','#2b253c','#171724']:palette.ground;
-    const grad=g.createRadialGradient(640,350,70,640,350,780);grad.addColorStop(0,stageGround[0]);grad.addColorStop(.57,stageGround[1]);grad.addColorStop(1,stageGround[2]);g.fillStyle=grad;g.fillRect(0,0,W,H);
-    g.fillStyle='#5e68552a';g.beginPath();g.moveTo(410,720);g.bezierCurveTo(410,590,890,490,760,0);g.lineTo(870,0);g.bezierCurveTo(960,440,560,600,560,720);g.fill();
-    g.strokeStyle='#61705017';g.lineWidth=1;
-    for(let i=0;i<1600;i++){
-      const x=sr()*W,y=sr()*H,v=sr();
-      if(v>.2){g.strokeStyle=v>.7?'#81966630':'#071e204d';g.beginPath();g.moveTo(x,y);g.lineTo(x-2,y-3-sr()*5);g.moveTo(x,y);g.lineTo(x+3,y-5-sr()*4);g.stroke();}
-      else ellipse(g,x,y,1+sr()*3,1+sr()*2,'#aac18d19');
-    }
-    for(let i=0;i<80;i++){const x=sr()*W,y=sr()*H;ellipse(g,x,y,3+sr()*4,2+sr()*2,'#172f24');ellipse(g,x-1,y-1,2+sr()*3,1+sr()*2,'#63776140');}
-    for(const [x,y] of [[119,161],[1130,595],[1075,172],[199,599]]){
-      g.save();g.translate(x,y);g.rotate(-.18);g.strokeStyle='#89947325';g.lineWidth=3;g.strokeRect(-20,-13,40,27);g.beginPath();g.moveTo(-20,0);g.lineTo(20,0);g.moveTo(0,-13);g.lineTo(0,13);g.stroke();g.restore();
-    }
-    // Low fences and carrot beds delineate the playable garden.
-    for(let x=40;x<W;x+=52){
-      g.fillStyle='#101f1b';g.fillRect(x+2,79,7,17);g.fillStyle='#637157';g.fillRect(x,73,5,18);g.fillStyle='#344b39';g.fillRect(x,76,52,4);
-      g.fillStyle='#12271f';g.fillRect(x,685,6,22);g.fillStyle='#5a674c';g.fillRect(x,683,4,17);g.fillStyle='#324933';g.fillRect(x,687,52,4);
-    }
-    for(let i=0;i<31;i++){
-      const x=40+i*41,y=40+sr()*15;
-      ellipse(g,x,y+8,9,4,'#071a1755');ellipse(g,x,y,5,8,'#ab6c35');g.strokeStyle='#698a46';g.lineWidth=2;g.beginPath();g.moveTo(x,y-5);g.lineTo(x-5,y-17);g.moveTo(x,y-4);g.lineTo(x+5,y-14);g.stroke();
-    }
-    for(let i=0;i<50;i++){
-      const side=i%2,x=side?W-8-sr()*23:sr()*23,y=sr()*H;
-      ellipse(g,x+5,y+9,30,17,palette.shade+'66');ellipse(g,x,y,25,19,palette.plant[0]);ellipse(g,x-4,y-5,19,15,palette.plant[1]);ellipse(g,x-10,y-8,8,6,palette.plant[2]);
-    }
-    for(let i=0;i<14;i++){
-      const x=sr()*W,y=sr()>.5?sr()*17:703+sr()*17;
-      ellipse(g,x,y,55,23,palette.shade);ellipse(g,x-10,y-7,44,21,palette.plant[0]);ellipse(g,x-20,y-11,18,10,palette.plant[1]);
-    }
-    if(stageVisual===1){
-      g.strokeStyle='#6eeaff33';g.lineWidth=1;for(let x=0;x<W;x+=64){g.beginPath();g.moveTo(x,95);g.lineTo(x,H-35);g.stroke();}for(let y=105;y<H;y+=54){g.beginPath();g.moveTo(20,y);g.lineTo(W-20,y);g.stroke();}
-      for(let i=0;i<10;i++){const x=70+i*125;g.fillStyle='#173d4a';g.fillRect(x,110,72,24);g.strokeStyle='#76d8e855';g.strokeRect(x,110,72,24);g.fillStyle='#75e3ef66';g.fillRect(x+8,118,38,4);}
+    seed=74319+stageVisual*719;const palette=themes[settings.theme];
+    const colors=[palette.ground,['#21434c','#152c39','#101e2a'],['#796044','#51412f','#30291f'],['#52696a','#364b4e','#233437'],['#503853','#322b45','#1c2032']][stageVisual]||palette.ground;
+    const grad=g.createRadialGradient(640,350,70,640,350,780);grad.addColorStop(0,colors[0]);grad.addColorStop(.57,colors[1]);grad.addColorStop(1,colors[2]);g.fillStyle=grad;g.fillRect(0,0,W,H);
+    const line=(x,y,x2,y2,color,width=1)=>{g.strokeStyle=color;g.lineWidth=width;g.beginPath();g.moveTo(x,y);g.lineTo(x2,y2);g.stroke();};
+    if(stageVisual===0){
+      // Winding dirt path, flowers, carrot beds and a wooden garden fence.
+      g.fillStyle='#8e8a4930';g.beginPath();g.moveTo(410,H);g.bezierCurveTo(410,590,890,490,760,0);g.lineTo(870,0);g.bezierCurveTo(960,440,560,600,560,H);g.fill();
+      for(let i=0;i<900;i++){const x=sr()*W,y=sr()*H;line(x,y,x-3,y-5-sr()*5,'#8aaf6230');line(x,y,x+3,y-4,'#122d2680');}
+      for(let x=35;x<W;x+=52){g.fillStyle='#536443';g.fillRect(x,71,6,25);g.fillRect(x,683,6,26);g.fillStyle='#384c34';g.fillRect(x,80,52,5);g.fillRect(x,690,52,5);}
+      for(let i=0;i<30;i++){const x=45+i*41;ellipse(g,x,44,5,9,'#c48a4c');line(x,39,x-5,25,'#8eb461',2);line(x,39,x+5,26,'#8eb461',2);}
+      for(let i=0;i<60;i++){const x=i%2?W-sr()*24:sr()*24,y=sr()*H;ellipse(g,x,y,29,24,palette.plant[0]);ellipse(g,x-5,y-6,20,16,palette.plant[1]);ellipse(g,x-9,y-10,10,7,palette.plant[2]);}
+      for(let i=0;i<25;i++){const x=40+sr()*(W-80),y=110+sr()*550;ellipse(g,x,y,3,3,'#e9c87955');ellipse(g,x+4,y-2,2,2,'#e4a6ae60');}
+    }else if(stageVisual===1){
+      // Metal panels, neon conduits, coolant tanks and computer terminals.
+      for(let x=32;x<W;x+=76)for(let y=96;y<H-36;y+=64){g.fillStyle=(x+y)%3?'#27485250':'#40636b38';g.fillRect(x+2,y+2,72,60);g.strokeStyle='#81adba25';g.lineWidth=1;g.strokeRect(x+2,y+2,72,60);ellipse(g,x+8,y+8,1.5,1.5,'#8badad50');}
+      for(const y of [91,674]){line(25,y,W-25,y,'#06171e',13);line(25,y,W-25,y,'#55d6de80',3);}
+      for(let i=0;i<7;i++){const x=100+i*176;g.fillStyle='#152b36';g.fillRect(x-35,28,95,46);g.strokeStyle='#5b8495';g.strokeRect(x-35,28,95,46);g.fillStyle='#72d9b6aa';g.fillRect(x-26,37,38,24);line(x+19,44,x+47,44,'#7ab7db',3);line(x+19,56,x+42,56,'#4f777f',3);}
+      for(const x of [12,W-43])for(let i=0;i<5;i++){const y=153+i*105;g.fillStyle='#15222e';g.fillRect(x,y,30,71);g.fillStyle='#67c9cb55';g.fillRect(x+5,y+7,20,54);ellipse(g,x+15,y+31,7,13,'#cadd8980');line(x+3,y+65,x+27,y+65,'#85b8bf',3);}
+      g.strokeStyle='#74dce730';g.lineWidth=5;g.strokeRect(451,253,378,230);line(640,250,640,490,'#74dce724',2);
     }else if(stageVisual===2){
-      g.fillStyle='#bb8b4a24';for(let i=0;i<17;i++){const x=30+sr()*1220,y=110+sr()*540;g.beginPath();g.arc(x,y,18+sr()*38,0,TAU);g.fill();}
-      g.strokeStyle='#c98d5155';g.lineWidth=7;g.beginPath();g.moveTo(90,650);g.lineTo(1180,120);g.stroke();g.strokeStyle='#332a2355';g.lineWidth=2;for(let t=0;t<1;t+=.055){const x=90+(1180-90)*t,y=650+(120-650)*t;g.beginPath();g.moveTo(x-18,y-12);g.lineTo(x+18,y+12);g.stroke();}
+      // Ochre quarry rubble, fractured earth, railway sleepers and mine carts.
+      for(let i=0;i<230;i++){const x=sr()*W,y=100+sr()*570;ellipse(g,x,y,2+sr()*8,1+sr()*5,'#d2b47c24');}
+      for(let i=0;i<19;i++){const x=50+sr()*1180,y=130+sr()*510;line(x,y,x+30,y+12,'#211d2450',2);line(x+30,y+12,x+46,y+5,'#211d2450',2);line(x+30,y+12,x+37,y+33,'#211d2450',2);}
+      for(let t=0;t<=1;t+=.035){const x=68+1140*t,y=653-520*t;line(x-17,y-27,x+17,y+27,'#322b24',8);}
+      line(58,633,1198,113,'#a5a29266',5);line(80,675,1220,155,'#a5a29266',5);
+      for(let i=0;i<21;i++){const x=sr()*W,y=i%2?685+sr()*30:sr()*76;path(g,[[x-37,y+20],[x-30,y-8],[x,y-23],[x+31,y-8],[x+43,y+20]],'#4d4235');path(g,[[x-30,y-8],[x,y-23],[x+31,y-8],[x+7,y+4]],'#87735a');}
+      for(const [x,y] of [[210,65],[1050,690]]){g.fillStyle='#332e2c';g.fillRect(x-46,y-25,90,31);g.strokeStyle='#9b7a50';g.lineWidth=3;g.strokeRect(x-46,y-25,90,31);ellipse(g,x-27,y+9,9,9,'#211f23');ellipse(g,x+25,y+9,9,9,'#211f23');}
     }else if(stageVisual===3){
-      for(let i=0;i<9;i++){const x=80+i*145;g.fillStyle='#e9dfc622';g.beginPath();g.arc(x,120+(i%2)*430,54,0,TAU);g.fill();g.strokeStyle='#fff1ce33';g.lineWidth=4;g.stroke();}
-      g.fillStyle='#f1e8d020';g.fillRect(390,275,500,170);g.strokeStyle='#fff1cf44';g.lineWidth=6;g.strokeRect(390,275,500,170);
-    }else if(stageVisual===4){
-      g.strokeStyle='#b99cff2c';g.lineWidth=2;for(let i=0;i<14;i++){g.beginPath();g.arc(640,360,50+i*34,0,TAU);g.stroke();}g.fillStyle='#b784ff18';g.fillRect(0,0,W,H);
+      // Checkerboard kitchen floor, steel counters, cooking pots and cream spills.
+      for(let x=0;x<W;x+=64)for(let y=92;y<H;y+=64){g.fillStyle=((x/64+Math.floor((y-92)/64))%2)?'#acc4be20':'#092b3530';g.fillRect(x+1,y+1,62,62);}
+      for(const y of [23,682]){g.fillStyle='#213c40';g.fillRect(20,y,W-40,37);line(20,y,W-20,y,'#a9c5bc',4);for(let x=52;x<W-50;x+=145){g.fillStyle='#587572';g.fillRect(x,y+7,110,24);line(x+42,y+13,x+70,y+13,'#c1cbc0',3);}}
+      for(let i=0;i<7;i++){const x=110+i*174;ellipse(g,x,52,33,16,'#152a34');ellipse(g,x,47,28,12,'#bed0c3');ellipse(g,x,47,23,8,'#eee0b3');line(x-39,48,x-27,48,'#b2c5bb',5);line(x+28,48,x+40,48,'#b2c5bb',5);}
+      for(let i=0;i<10;i++){const x=80+sr()*1120,y=150+sr()*455;ellipse(g,x,y,18+sr()*30,7+sr()*13,'#e4deac23');ellipse(g,x+32,y+11,8,5,'#e4deac1b');}
+      g.strokeStyle='#f7e2ac26';g.lineWidth=3;g.strokeRect(445,280,390,183);g.font='bold 26px Arial';g.fillStyle='#dfdcc525';g.textAlign='center';g.fillText('SAHNEKÜCHE',640,380);
+    }else{
+      // Violet flagstones, rune circles, crystal clusters and tiny gnome monuments.
+      for(let y=95;y<H-30;y+=55)for(let x=20+(y%2)*32;x<W;x+=90){g.strokeStyle='#b7a6c31e';g.lineWidth=2;g.strokeRect(x,y,86,51);}
+      for(const radius of [100,162,236]){g.strokeStyle='#b692ee38';g.lineWidth=radius===162?5:2;g.beginPath();g.ellipse(640,370,radius*1.45,radius*.84,0,0,TAU);g.stroke();}
+      for(let i=0;i<12;i++){const a=i*TAU/12,x=640+Math.cos(a)*244,y=370+Math.sin(a)*141;g.save();g.translate(x,y);g.rotate(a);g.strokeStyle='#b7a0dc55';g.strokeRect(-4,-8,8,16);g.restore();}
+      for(let i=0;i<12;i++){const x=60+i*106,y=i%2?681:62;path(g,[[x-16,y+11],[x-11,y-23],[x,y-39],[x+15,y-16],[x+20,y+12]],'#8773ae');path(g,[[x,y-39],[x+15,y-16],[x+2,y+8]],'#b6a1d0');}
+      for(const x of [33,W-33])for(const y of [184,361,551]){ellipse(g,x,y+15,22,13,'#474058');ellipse(g,x,y,13,17,'#d1b49e');path(g,[[x-17,y-8],[x,y-51],[x+17,y-8]],'#a05f81');ellipse(g,x,y+8,12,9,'#c8c0ba');}
     }
+    g.fillStyle='#0c182070';g.fillRect(0,0,W,20);g.fillRect(0,H-18,W,18);
   }
   makeGround();
   const fireflies=Array.from({length:25},()=>({x:sr()*W,y:sr()*H,phase:sr()*TAU}));
@@ -1592,11 +1720,12 @@
     }
     for(const h of hazards){
       ctx.save();ctx.translate(h.x,h.y);ctx.strokeStyle='#ff9b65';ctx.lineWidth=3;ctx.fillStyle=h.wait>0?'#ed713524':'#ffb46677';ctx.beginPath();ctx.arc(0,0,h.r,0,TAU);ctx.fill();ctx.stroke();
-      if(h.wait>0){ctx.setLineDash([7,7]);ctx.beginPath();ctx.arc(0,0,h.r*(1-clamp(h.wait/1.3,0,1)),0,TAU);ctx.stroke();ctx.font='bold 30px Arial';ctx.fillStyle=h.type==='friendlyEgg'?'#fff4cf':'#ffb66d';ctx.textAlign='center';ctx.fillText(h.type==='friendlyEgg'?'🥚':'!',0,11);}ctx.restore();
+      if(h.wait>0){ctx.setLineDash([7,7]);ctx.beginPath();ctx.arc(0,0,h.r*(1-clamp(h.wait/1.3,0,1)),0,TAU);ctx.stroke();ctx.font='bold 30px Arial';ctx.fillStyle=h.type==='friendlyEgg'?'#fff4cf':'#ffb66d';ctx.textAlign='center';ctx.fillText(h.sausage?'🌭':h.type==='friendlyEgg'?'🥚':'!',0,11);}ctx.restore();
     }
     for(const w of ossiWalls){
       const fade=clamp(w.life/w.maxLife,0,1);ctx.save();ctx.globalAlpha=.45+.55*fade;ctx.translate(w.x,w.y);ctx.fillStyle='#958a70';ctx.strokeStyle='#3f3a31';ctx.lineWidth=3;const ww=w.boss?(w.w||228):76,hh=w.boss?(w.h||108):36;ctx.fillRect(-ww/2,-hh/2,ww,hh);ctx.strokeRect(-ww/2,-hh/2,ww,hh);ctx.strokeStyle='#c8bda4';ctx.lineWidth=2;const ww2=w.boss?(w.w||228):76,hh2=w.boss?(w.h||108):36;for(let yy=-hh2/2+6;yy<hh2/2;yy+=12){ctx.beginPath();ctx.moveTo(-ww2/2+4,yy);ctx.lineTo(ww2/2-4,yy);ctx.stroke();}for(let xx=-ww2/2+16;xx<ww2/2;xx+=22){ctx.beginPath();ctx.moveTo(xx,-hh2/2+3);ctx.lineTo(xx,hh2/2-3);ctx.stroke();}ctx.fillStyle='#efe4c7';ctx.font='bold 9px Arial';ctx.textAlign='center';ctx.fillText('OSSI MAUER',0,3);ctx.restore();
     }
+    if(player.lominarWorm){ctx.save();ctx.translate(player.lominarX,player.lominarY);ctx.scale(player.lominarDir||1,1);for(let i=0;i<7;i++){const yy=Math.sin(ambientTime*10-i*.7)*5;ellipse(ctx,-i*9,yy,8,6,i===0?'#d7df72':'#a9c45d');}ellipse(ctx,4,-2,2,2,'#2e3521');ctx.restore();}
     for(const p of pickups)drawPickup(p);
     for(const t of player.trail)drawHamster({...player,x:t.x,y:t.y},t.life*.9);
     const actors=[...enemies.filter(e=>!e.dead),...(boss&&!boss.dead?[boss]:[]),{...player,isPlayer:true}].sort((a,b)=>a.y-b.y);
@@ -1609,6 +1738,7 @@
     if(player.carrotDrone){const a=runTime*1.35+Math.PI,x=player.x+Math.cos(a)*55,y=player.y-48+Math.sin(a)*12;ctx.save();ctx.translate(x,y);path(ctx,[[-10,-4],[7,-7],[12,0],[7,7],[-10,4]],'#e78642');ctx.strokeStyle='#75a85b';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-8,-2);ctx.lineTo(-17,-10);ctx.moveTo(-8,2);ctx.lineTo(-17,10);ctx.stroke();ctx.restore();}
     if(player.eggBooger){let x=player.x,y=player.y-28;if(player.eggBoogerTo){x=player.eggBoogerTo.x;y=player.eggBoogerTo.y;if(player.eggBoogerAnim>0&&player.eggBoogerFrom){const t=1-player.eggBoogerAnim/.34;x=player.eggBoogerFrom.x+(player.eggBoogerTo.x-player.eggBoogerFrom.x)*t;y=player.eggBoogerFrom.y+(player.eggBoogerTo.y-player.eggBoogerFrom.y)*t-Math.sin(t*Math.PI)*42;}}ctx.save();ctx.translate(x,y);ellipse(ctx,0,0,9,6,'#b8d85f');ellipse(ctx,4,-2,4,3,'#e9ef96');ctx.strokeStyle='#668339';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-7,2);ctx.lineTo(-14,8);ctx.stroke();ctx.restore();}
     for(const b of bullets){
+      if(b.pretzel){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(ambientTime*8);ctx.strokeStyle='#e8ba78';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(-5,-2,6,8,-.4,0,TAU);ctx.ellipse(5,-2,6,8,.4,0,TAU);ctx.moveTo(-9,7);ctx.lineTo(9,-6);ctx.moveTo(9,7);ctx.lineTo(-9,-6);ctx.stroke();ctx.restore();continue;}
       ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.a);const rr=b.drill?18:b.heavy?14:8;ctx.fillStyle=(b.frost?'#9ee4ff':accent())+'44';ctx.fillRect(b.drill?-34:-23,b.drill?-5:-3,b.drill?36:24,b.drill?10:6);ellipse(ctx,0,0,rr,Math.max(4,rr*.55),b.frost?'#beefff':b.drill?'#d39a50':b.heavy?'#c88646':b.chain?'#e2d0ff':'#f0dc8f');ellipse(ctx,rr*.35,0,Math.max(4,rr*.55),Math.max(3,rr*.42),'#fff2cf');ctx.restore();
     }
     for(const t of thrownWeapons){
@@ -1663,6 +1793,7 @@
     if(e.code==='KeyP'||e.code==='Escape'){
       if(mode==='playing'||mode==='paused'){e.preventDefault();pauseGame();}
       else if(mode==='help'){mode='menu';hideOverlay();$('startButton').focus();}
+      else if(mode==='hallDetail'){$('runDetailBack').click();}
       else if(mode==='hallOfFame'){mode='menu';hideOverlay();$('hallOfFameButton').focus();}
       else if(mode==='endlessSelect'){mode='menu';hideOverlay();$('endlessButton').focus();}
       else if(mode==='settings'&&e.code==='Escape'){e.preventDefault();closeSettings();}
