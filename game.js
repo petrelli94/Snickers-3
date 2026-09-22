@@ -133,7 +133,7 @@
     {id:'nope_rope',title:'NEIN, DANKE',desc:'Weiche drei Tollwut-Sprints aus.',goal:3,kind:'progress'},
     {id:'wallpaper',title:'WANDDEKO',desc:'Besiege General und Cyber-Hasenbein.',goal:2,kind:'gag'},
     {id:'housepig',title:'HAUSSCHWEIN-HALTER',desc:'Erreiche das geheime Gartenfinale.',goal:1,kind:'gag'},
-    {id:'nutless',title:'TROCKENÜBUNG',desc:'Starte eine Welle ohne eine Bombe zu benutzen.',goal:1,kind:'gag'},
+    {id:'close_call',title:'KNAPPE KISTE',desc:'Beende eine Welle mit nur noch 1 Herz.',goal:1,kind:'gag'},
     {id:'comeback',title:'AUS DEM FELSEN',desc:'Erlebe Karnils zweite Phase.',goal:1,kind:'gag'},
     {id:'intro_story',title:'FELLIGE MOTIVATION',desc:'Sieh dir Snickers’ Jagdgrund an.',goal:1,kind:'gag'},
     {id:'retry_hero',title:'NOCH EINE RUNDE',desc:'Nutze einen Retry in einer Welle oder einem Bosskampf.',goal:1,kind:'gag'},
@@ -451,7 +451,7 @@
   function beginFirstWave(){
     if(mode!=='intro')return;
     if(newGamePlus)addAchievementProgress('ngplus_start');if(gamePlusLevel===2)addAchievementProgress('ng2_start');if(endlessMode){addAchievementProgress('endless_start');if(endlessFromHall)addAchievementProgress('endless_hall');}
-    tone(330,.3,'triangle',.08,660);addAchievementProgress('nutless',1);startWave(0);
+    tone(330,.3,'triangle',.08,660);startWave(0);
   }
   function goMenu() {
     mode = 'menu'; resetInput(); hideOverlay();
@@ -465,7 +465,7 @@
     if (mode !== 'playing') return;
     previousMode = mode; mode = 'paused'; resetInput(); $('announcement').classList.add('hidden');
     const powerRows=Object.values(powerBook).map(p=>`<div class="pause-power-row"><span class="power-guide-icon">${p.icon}</span><span><b>${p.name}</b><small>${p.desc} · ${p.duration}s</small></span></div>`).join('');
-    showOverlay(`<span class="eyebrow">TAKTISCHE KNABBERPAUSE</span><h2 id="overlayTitle">DIE SCHWEINE WARTEN.</h2><p>Durchatmen. Nüsse zählen. Hier steht auch noch einmal, was die einsammelbaren Power-ups machen.</p><div class="pause-power-guide">${powerRows}</div><div class="overlay-actions"><button class="primary-button" id="resumeButton">WEITERSPIELEN <span>↗</span></button><button class="secondary-button" id="pauseSettings">Einstellungen</button><button class="secondary-button" id="menuButton">Zum Hauptmenü</button></div>`);
+    showOverlay(`<span class="eyebrow">TAKTISCHE KNABBERPAUSE</span><h2 id="overlayTitle">DIE SCHWEINE WARTEN.</h2><p>Durchatmen. Nüsse zählen. Hier steht auch noch einmal, was die einsammelbaren Power-ups machen.</p><div class="pause-power-guide">${powerRows}</div><div class="overlay-actions"><button class="primary-button" id="resumeButton">WEITERSPIELEN <span>↗</span></button><button class="secondary-button" id="pauseSettings">Einstellungen</button><button class="secondary-button pause-menu-button" id="menuButton">← ZUM HAUPTMENÜ</button></div>`);
     $('resumeButton').onclick = resumeGame; $('menuButton').onclick = goMenu;$('pauseSettings').onclick=showSettings;
   }
   function resumeGame() { if (mode !== 'paused') return; mode = previousMode; hideOverlay(); lastFrame = performance.now(); }
@@ -1022,6 +1022,7 @@
   function upgradeScreen() {
     mode = 'upgrade'; resetInput(); enemies = []; enemyBullets = []; hazards = []; bullets = [];
     if(player.waveHits===0)addAchievementProgress('clean_wave');
+    if(player.hp===1)addAchievementProgress('close_call');
     for (const p of pickups) if (p.type === 'nut') score += 20;
     pickups = []; $('announcement').classList.add('hidden');
     // Nach jeder normalen Welle erhalten alle Spezialwaffen 50 % ihrer Maximalmunition zurück; die Nussbombe wird vollständig geladen.
@@ -1820,7 +1821,7 @@
     render(dt);requestAnimationFrame(frame);
   }
 
-  $('startButton').onclick=()=>startGame(0);$('ngPlusButton').onclick=()=>startGame(1);$('ngPlus2Button').onclick=()=>startGame(2);$('hallOfFameButton').onclick=showHallOfFame;$('endlessButton').onclick=showEndlessSelect;$('helpButton').onclick=showHelp;$('achievementButton').onclick=showAchievements;$('powerupButton').onclick=showPowerups;$('pauseButton').onclick=pauseGame;$('soundButton').onclick=toggleSound;$('settingsButton').onclick=showSettings;
+  $('startButton').onclick=()=>startGame(0);$('menuSettingsButton').onclick=showSettings;$('ngPlusButton').onclick=()=>startGame(1);$('ngPlus2Button').onclick=()=>startGame(2);$('hallOfFameButton').onclick=showHallOfFame;$('endlessButton').onclick=showEndlessSelect;$('helpButton').onclick=showHelp;$('achievementButton').onclick=showAchievements;$('powerupButton').onclick=showPowerups;$('pauseButton').onclick=pauseGame;$('soundButton').onclick=toggleSound;$('settingsButton').onclick=showSettings;
   updateNGPlusMenu();
   $('fullscreenButton').onclick=async()=>{
     try{if(document.fullscreenElement)await document.exitFullscreen();else if(shell.requestFullscreen)await shell.requestFullscreen();else toast('Vollbild ist in diesem Browser nicht verfügbar.');}
