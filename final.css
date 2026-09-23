@@ -77,3 +77,31 @@
 /* Schweinefäulnis: Bergtroll-Legendary-Auswahl sauber als zentrierte Dreierreihe. */
 .reward-upgrades.troll-legend-upgrades{grid-template-columns:repeat(3,minmax(0,1fr));max-width:900px;margin-left:auto;margin-right:auto}
 @media(max-width:600px){.reward-upgrades.troll-legend-upgrades{grid-template-columns:1fr;max-width:430px}}
+
+/* Fleischer des Grauens: mutually exclusive reward colors; weapons are always red. */
+.upgrade.rarity-green{border:2px solid #6dc992!important;background:linear-gradient(145deg,#234432,#1b2927)!important}
+.upgrade.rarity-green .upgrade-icon{border-color:#6dc992!important;color:#9ce8ae!important;background:#65d28c18!important}
+.upgrade.rarity-blue{border:2px solid #619de8!important;background:linear-gradient(145deg,#233a58,#1b2535)!important}
+.upgrade.rarity-blue .upgrade-kind,.upgrade.rarity-blue em{color:#b1d5ff!important}
+.upgrade.rarity-blue .upgrade-icon{border-color:#76baff!important;color:#bedfff!important;background:#5698ed20!important}
+.upgrade.rarity-purple{border:2px solid #b57ae4!important;background:linear-gradient(145deg,#3d2b52,#261f38)!important}
+.upgrade.rarity-purple .upgrade-kind,.upgrade.rarity-purple em{color:#dfb7ff!important}
+.upgrade.rarity-purple .upgrade-icon{border-color:#b57ae4!important;color:#f2ceff!important;background:#aa71e429!important}
+.upgrade.legendary-upgrade:not(.weapon-upgrade){border:3px solid #f4ad4b!important;background:linear-gradient(145deg,#584020,#2d2335 60%,#4b2e18)!important}
+.upgrade.weapon-upgrade,.upgrade.weapon-upgrade.legendary-upgrade{border:3px solid #dc5963!important;background:linear-gradient(145deg,#4d282d,#291e2e 62%,#47262d)!important;box-shadow:0 0 0 2px #973c4899,0 0 16px #d8585840!important}
+.upgrade.weapon-upgrade .upgrade-kind,.upgrade.weapon-upgrade em,.upgrade.weapon-upgrade strong{color:#ffb8b5!important}
+.upgrade.weapon-upgrade .upgrade-icon{color:#ffcac4!important;border-color:#f07579!important;background:#d8585822!important;box-shadow:none!important}
+.upgrade.weapon-upgrade.legendary-upgrade:after{color:#ff9c92;text-shadow:0 0 9px #e74949}
+.overlay-content:has(.mechanics-grid)>h2,.overlay-content:has(.mechanics-grid)>.eyebrow{text-align:center;display:block}
+.overlay-content:has(.mechanics-grid) .build-section>h3{display:block;text-align:center;width:100%;margin:0 auto 14px}
+.overlay-content:has(.mechanics-grid) .build-section>h3:after{content:'';display:block;margin:9px auto 0;width:48px;height:2px;background:var(--lime)}
+.impossible-link,.impossible-kicker{color:#ff9d9f!important}
+.impossible-card{border-color:#da6572!important;background:linear-gradient(125deg,#48212b,#231c2a)!important;color:#ffddcf!important}
+.danger-medal{position:absolute;right:25px;bottom:64px;max-width:275px;padding:11px 12px;border:2px solid #ffd979;border-radius:8px;background:#3e2a19db;color:#ffe3a2;text-align:center;font-weight:800;font-size:11px;letter-spacing:.6px;box-shadow:0 0 18px #f8cb663b}
+.pafti-hud{position:absolute;z-index:5;top:160px;left:50%;transform:translateX(-50%);width:min(480px,57%);padding:8px 11px;color:#ffe5df;background:#322339ed;border:1px solid #e2839a;border-radius:8px;font-size:10px;pointer-events:none}
+.pafti-hud strong,.pafti-hud small{display:block;text-align:center}.pafti-hud small{color:#e8c4d0;margin-top:3px}.pafti-track{height:7px;background:#121222;border-radius:6px;overflow:hidden;margin-top:6px}.pafti-track i{display:block;height:100%;background:linear-gradient(90deg,#e8799d,#ffb287);width:100%}
+.skin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:15px 0}.skin-card{min-height:96px;display:grid;grid-template-columns:45px 1fr;grid-template-rows:auto auto;gap:5px 9px;align-content:center;padding:10px;border:1px solid var(--skin);border-radius:9px;background:linear-gradient(120deg,#172824,#202738);color:#f6eadb;text-align:left}.skin-card[aria-pressed="true"]{outline:3px solid var(--skin);outline-offset:2px}.skin-card:disabled{filter:grayscale(1);opacity:.45}.skin-icon{grid-row:span 2;align-self:center;display:grid;place-items:center;width:41px;height:41px;border-radius:50%;background:var(--skin);color:#20222b;font-size:24px}.skin-card strong{font-size:12px}.skin-card small{font-size:10px;color:#c3c8c0;line-height:1.35}
+.share-input{width:100%;padding:10px;background:#141e22;color:#e5efd7;border:1px solid #7c9b83;border-radius:7px;font:12px/1.5 monospace;overflow-wrap:anywhere}.share-export{margin:18px 0;padding:14px;border:1px solid var(--line);border-radius:9px;background:#12251b99}.share-export textarea{height:95px;resize:vertical;margin:9px 0;user-select:text}.share-export label,.share-label{display:block;font-size:12px;font-weight:700;color:var(--lime);margin-bottom:7px}.share-export input[type=checkbox]{accent-color:#a7d87e}.share-export button{min-height:40px}.share-preview{margin:20px 0;padding:16px;border:1px solid var(--lime);border-radius:9px}.share-preview h3{text-align:center;color:var(--lime)}.share-error{color:#ffa7aa!important}
+.audio-section label{display:block;color:var(--ink);font-size:12px;font-weight:700}.audio-section output{float:right}.audio-section input[type=range]{display:block;width:100%;margin:16px 0;accent-color:var(--lime)}.mute-options{display:flex;flex-wrap:wrap;gap:12px 20px}.mute-options input{accent-color:var(--lime)}
+@media(max-width:760px){.skin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.danger-medal{right:10px;bottom:50px;font-size:9px;max-width:180px}.pafti-hud{top:166px;width:65%}}
+@media(max-width:430px){.skin-grid{grid-template-columns:1fr}.skin-card{min-height:72px}.pafti-hud{top:177px;width:69%;font-size:8px}.danger-medal{position:relative;bottom:auto;right:auto;margin:3px 20px;max-width:300px}.share-export textarea{height:75px}}

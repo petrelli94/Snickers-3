@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101a18">
-  <meta name="description" content="Snickers 3 – Schweinefäulnis Version: Hasenjagd, New Game+2, vollständige Hall-of-Fame-Builds und Endlosmodus mit wechselnden Stages.">
+  <meta name="description" content="Snickers 3 – Fleischer des Grauens Version: Hasenjagd, New Game+2, vollständige Hall-of-Fame-Builds und Endlosmodus mit wechselnden Stages.">
   <title>Snickers 3: Attack from Hasenbein</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23c7f36b'/%3E%3Cpath d='M12 10h17v6l-6 4 6 4v6H12v-6h10l-7-4 7-4H12z' fill='%23101a18'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?rev=schweinefaeulnis-1">
-  <link rel="stylesheet" href="v2.css?rev=schweinefaeulnis-1">
-  <link rel="stylesheet" href="v3.css?rev=schweinefaeulnis-1">
-  <link rel="stylesheet" href="final.css?rev=schweinefaeulnis-1">
-  <script src="game.js?rev=schweinefaeulnis-1" defer></script>
+  <link rel="stylesheet" href="styles.css?rev=fleischer-1">
+  <link rel="stylesheet" href="v2.css?rev=fleischer-1">
+  <link rel="stylesheet" href="v3.css?rev=fleischer-1">
+  <link rel="stylesheet" href="final.css?rev=fleischer-1">
+  <script src="game.js?rev=fleischer-1" defer></script>
 </head>
 <body>
 <div class="app">
@@ -44,19 +44,23 @@
           <button id="ngPlus2Button" class="text-button ngplus-menu-button hidden"><span class="help-circle">++</span> NEW GAME+2</button>
           <button id="hallOfFameButton" class="text-button hidden"><span class="help-circle">♛</span> Hall of Fame</button>
           <button id="hardModeButton" class="text-button hidden"><span class="help-circle">!</span> Hard Mode</button><button id="endlessButton" class="text-button ngplus-menu-button hidden"><span class="help-circle">∞</span> Endlosmodus</button>
+          <button id="impossibleButton" class="text-button impossible-link hidden"><span class="help-circle">✕</span> Impossible Mode</button>
+          <button id="skinsButton" class="text-button"><span class="help-circle">♠</span> Snickers Skins</button>
+          <button id="buildShareButton" class="text-button"><span class="help-circle">⇄</span> Build teilen</button>
           <button id="helpButton" class="text-button"><span class="help-circle">?</span> So überlebst du</button>
           <button id="achievementButton" class="text-button"><span class="help-circle">★</span> Achievements</button>
           <button id="powerupButton" class="text-button"><span class="help-circle">✦</span> Power-ups</button>
           <button id="menuSettingsButton" class="text-button"><span class="help-circle">⚙</span> Einstellungen</button>
           </nav>
         </div>
-        <div class="start-bottom"><span>9 WELLEN <i></i> 3 BOSSE <i></i> 70 ACHIEVEMENTS <i></i> 3 RETRIES PRO RUN</span><span id="menuRecord"></span></div><div class="menu-version-tag">Schweinefäulnis Version</div>
+        <div class="start-bottom"><span>9 WELLEN <i></i> 3 BOSSE <i></i> <span id="achievementCount">85 ACHIEVEMENTS</span> <i></i> 3 RETRIES PRO RUN</span><span id="menuRecord"></span></div><div id="dangerMedal" class="danger-medal hidden">♛ ORDEN DES GEFÄHRLICHSTEN HAMSTERS</div><div class="menu-version-tag">Fleischer des Grauens Version</div>
       </div>
       <div id="hud" class="hud hidden" aria-hidden="true">
         <div class="health-panel"><span class="hud-label">SNICKERS</span><div class="health-row"><span class="health-symbol">♥</span><div id="healthBar" class="health-bar"></div><span id="healthText">5/5</span></div></div>
         <div class="wave-panel"><span id="waveLabel">WELLE 01 / 09</span><div class="wave-progress"><div id="waveFill"></div></div><span class="hud-label" id="waveObjective">Überlebe die Hasen-Armee</span></div>
         <div class="score-panel"><span class="hud-label">PUNKTE</span><strong id="scoreValue">000000</strong></div>
       </div>
+      <div id="paftiHud" class="pafti-hud hidden"><strong>PAFTI · DER CONTROLLER-SCHÄDEL</strong><small id="paftiPhase">PHASE 1 / 3</small><div class="pafti-track"><i id="paftiFill"></i></div></div>
       <div id="bossHud" class="boss-hud hidden"><div><span id="bossName">GENERAL HASENBEIN</span><span id="bossPhase">DER NUSS-DIKTATOR</span></div><div class="boss-track"><div id="bossFill"></div></div><div id="miniBossHud" class="mini-boss-hud hidden"><div><span>ZOMBIE-HASENBEIN</span><span>MINIBOSS</span></div><div class="mini-boss-track"><div id="miniBossFill"></div></div></div></div>
       <div id="waveMiniBar" class="wave-mini-bar hidden"><span id="waveMiniName"></span><small>MINIBOSS · 3 POWER-UPS</small><div><i id="waveMiniFill"></i></div></div><div id="skillHud" class="skill-hud hidden" aria-label="Gewählte Skills"></div>
       <div id="powerHud" class="power-hud hidden" aria-label="Aktive Power-ups"></div>
