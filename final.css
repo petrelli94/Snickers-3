@@ -37,3 +37,39 @@
 .reward-upgrades .upgrade strong{font-size:clamp(19px,1.85cqw,26px);line-height:1.15}
 .overlay-content:focus{outline:none}
 @media(max-width:430px){.reward-upgrades .upgrade strong{font-size:19px}}
+
+/* Knochenbrot content patch */
+.continue-run-button{margin:12px 0 6px;width:100%;max-width:470px;font-size:12px;min-height:45px}
+.difficulty-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0}.hard-card{border-color:#df9877!important;background:linear-gradient(135deg,#452d2b,#202b29)!important;color:#ffe1c0!important}.hard-mode-list{display:grid;gap:12px;margin:24px 0}.hard-mode-list button:disabled{opacity:.4;cursor:default}.difficulty-options .upgrade{min-height:160px}.troll-visit{max-width:430px;margin:auto}.troll-visit svg{width:100%;height:115px}.visiting-troll{animation:troll-visit 2s ease-out forwards}.soiled-upgrades .upgrade{opacity:.6;filter:sepia(.65);min-height:190px}.soiled-upgrades .upgrade-icon{font-size:38px}.soiled-upgrades{margin-bottom:20px}.legendary-upgrade{border-color:#e6c169!important}.click-note{font-size:12px}
+@keyframes troll-visit{from{transform:translateX(-55px)}to{transform:translateX(150px)}}
+@media(prefers-reduced-motion:reduce){.visiting-troll{animation:none;transform:translateX(150px)}}
+@media(max-width:600px){.difficulty-options{grid-template-columns:1fr}.difficulty-options .upgrade{min-height:130px}.continue-run-button{font-size:10px;max-width:95%;margin:8px 0}.troll-visit svg{height:95px}}
+/* Keep complete descriptions in the wide column on narrow screens. */
+.difficulty-options .upgrade{display:flex}
+@media(max-width:430px){.upgrades .upgrade:not(.score-skill-card){grid-template-columns:38px minmax(0,1fr);align-content:start;min-height:130px}.upgrades .upgrade:not(.score-skill-card)>:not(.upgrade-icon){grid-column:2;min-width:0}.upgrades .upgrade:not(.score-skill-card)>.upgrade-icon{grid-column:1;grid-row:1 / span 3}.soiled-upgrades .upgrade{min-height:105px!important}.upgrades .upgrade-kind{max-width:100%;white-space:normal;line-height:1.3}.upgrades .upgrade strong{font-size:18px}}
+
+/* Eichelkopf: no keyboard confirmation; the existing mouse/touch guards still apply. */
+.madelpulator-note { border: 1px solid #c39bbb66; border-left: 3px solid #ddb3d1; border-radius: 9px; padding: 16px 18px; color: #e9d9e6; background: #47384a55; line-height: 1.55; }
+.madelpulator-note strong { display: block; color: #f2cbe8; margin-bottom: 5px; }
+#touchDash:disabled { opacity: .58; color: #e5b8d3; border-color: #b68eaa88; }
+.game-shell.touch-input .touch-controls { display: block; }
+.boss-celebration { position: absolute; z-index: 14; bottom: 18%; left: 50%; transform: translateX(-50%); width: min(650px, calc(100% - 32px)); box-sizing: border-box; border: 1px solid #e7d39199; border-radius: 18px; background: linear-gradient(130deg, #17362ef5, #182c38f7); padding: 23px 30px 20px; text-align: center; box-shadow: 0 12px 40px #07181366; }
+.boss-celebration .eyebrow { color: #f1d58b; font-size: 12px; letter-spacing: .15em; }
+.boss-celebration p { font-family: Barlow, Arial, sans-serif; font-size: clamp(18px, 2vw, 25px); font-weight: 700; line-height: 1.32; color: #fff0cd; margin: 12px 0 18px; }
+.boss-celebration button { min-height: 44px; padding: 9px 25px; }
+.boss-celebration button:disabled { visibility: hidden; }
+.boss-celebrating #hud, .boss-celebrating #touchControls, .boss-celebrating #skillHud, .boss-celebrating #powerHud, .boss-celebrating #bossHud, .boss-celebrating #waveMiniBar, .boss-celebrating #runInfo, .boss-celebrating #achievementHud, .boss-celebrating #announcement { visibility: hidden; }
+@media (pointer: coarse) {
+  .touch-controls { display: block; }
+  .controls-strip { display: none; }
+  .mobile-hint { display: block; }
+}
+@media (max-width: 650px) {
+  .boss-celebration { bottom: 12px; padding: 16px 17px 14px; border-radius: 14px; }
+  .boss-celebration .eyebrow { font-size: 10px; letter-spacing: .1em; }
+  .boss-celebration p { font-size: 20px; margin: 12px 0 15px; }
+}
+@media (max-height: 540px) and (min-width: 651px) {
+  .boss-celebration { bottom: 12px; left: 65%; width: 60%; padding: 10px 20px; }
+  .boss-celebration p { font-size: 18px; margin: 8px 0; }
+}

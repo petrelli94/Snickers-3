@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101a18">
-  <meta name="description" content="Snickers 3 – Knochenbrot Version: Hasenjagd, New Game+2, vollständige Hall-of-Fame-Builds und Endlosmodus mit wechselnden Stages.">
+  <meta name="description" content="Snickers 3 – Eichelkopf Version: Hasenjagd, New Game+2, vollständige Hall-of-Fame-Builds und Endlosmodus mit wechselnden Stages.">
   <title>Snickers 3: Attack from Hasenbein</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23c7f36b'/%3E%3Cpath d='M12 10h17v6l-6 4 6 4v6H12v-6h10l-7-4 7-4H12z' fill='%23101a18'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?rev=knochenbrot-1">
-  <link rel="stylesheet" href="v2.css?rev=knochenbrot-1">
-  <link rel="stylesheet" href="v3.css?rev=knochenbrot-1">
-  <link rel="stylesheet" href="final.css?rev=knochenbrot-1">
-  <script src="game.js?rev=knochenbrot-1" defer></script>
+  <link rel="stylesheet" href="styles.css?rev=eichelkopf-1">
+  <link rel="stylesheet" href="v2.css?rev=eichelkopf-1">
+  <link rel="stylesheet" href="v3.css?rev=eichelkopf-1">
+  <link rel="stylesheet" href="final.css?rev=eichelkopf-1">
+  <script src="game.js?rev=eichelkopf-1" defer></script>
 </head>
 <body>
 <div class="app">
@@ -39,18 +39,18 @@
           <h1>SNICKERS<span class="title-three">3</span><span class="subtitle">ATTACK FROM<br>HASENBEIN</span></h1>
           <p class="story">Eine Nuss. Tausend Hasen. Keine Gnade. Snickers sieht rot!!!</p>
           <button id="startButton" class="primary-button">MISSION STARTEN <span aria-hidden="true">↗</span></button>
-          <nav class="menu-links" aria-label="Spielmodi und Extras">
+          <button id="continueRunButton" class="primary-button continue-run-button hidden">RUN FORTSETZEN ↗</button><nav class="menu-links" aria-label="Spielmodi und Extras">
           <button id="ngPlusButton" class="text-button ngplus-menu-button hidden"><span class="help-circle">+</span> NEW GAME+</button>
           <button id="ngPlus2Button" class="text-button ngplus-menu-button hidden"><span class="help-circle">++</span> NEW GAME+2</button>
           <button id="hallOfFameButton" class="text-button hidden"><span class="help-circle">♛</span> Hall of Fame</button>
-          <button id="endlessButton" class="text-button ngplus-menu-button hidden"><span class="help-circle">∞</span> Endlosmodus</button>
+          <button id="hardModeButton" class="text-button hidden"><span class="help-circle">!</span> HARD MODE</button><button id="endlessButton" class="text-button ngplus-menu-button hidden"><span class="help-circle">∞</span> Endlosmodus</button>
           <button id="helpButton" class="text-button"><span class="help-circle">?</span> So überlebst du</button>
           <button id="achievementButton" class="text-button"><span class="help-circle">★</span> Achievements</button>
           <button id="powerupButton" class="text-button"><span class="help-circle">✦</span> Power-ups</button>
           <button id="menuSettingsButton" class="text-button"><span class="help-circle">⚙</span> Einstellungen</button>
           </nav>
         </div>
-        <div class="start-bottom"><span>9 WELLEN <i></i> 3 BOSSE <i></i> 65 ACHIEVEMENTS <i></i> 3 RETRIES PRO RUN</span><span id="menuRecord"></span></div><div class="menu-version-tag">Knochenbrot Version</div>
+        <div class="start-bottom"><span>9 WELLEN <i></i> 3 BOSSE <i></i> 70 ACHIEVEMENTS <i></i> 3 RETRIES PRO RUN</span><span id="menuRecord"></span></div><div class="menu-version-tag">Eichelkopf Version</div>
       </div>
       <div id="hud" class="hud hidden" aria-hidden="true">
         <div class="health-panel"><span class="hud-label">SNICKERS</span><div class="health-row"><span class="health-symbol">♥</span><div id="healthBar" class="health-bar"></div><span id="healthText">5/5</span></div></div>
@@ -64,6 +64,11 @@
       <div id="runInfo" class="run-info hidden"><div class="ability"><kbd>SPACE</kbd><div><span id="dashLabel">AUSWEICHEN</span><div class="ability-track"><div id="dashFill"></div></div></div></div><span id="runTime">00:00</span><div class="ability weapon-ability"><kbd>Q/R</kbd><div><span id="weaponLabel">NUSSBOMBE</span><strong id="weaponCount">× 2</strong></div></div></div>
       <div id="announcement" class="announcement hidden" aria-live="polite"><span id="announcementKicker"></span><strong id="announcementTitle"></strong></div>
       <div id="touchControls" class="touch-controls hidden"><div id="joystick" class="joystick" aria-label="Bewegung: Finger ziehen"><div id="joystickThumb"></div></div><div class="touch-actions"><button id="touchCycle" aria-label="Spezialwaffe wechseln">WAFFE<span>↻</span></button><button id="touchBomb" aria-label="Nussbombe">NUSS<span>E</span></button><button id="touchDash" aria-label="Ausweichen">DASH<span>↗</span></button></div></div>
+      <section id="bossCelebration" class="boss-celebration hidden" aria-label="Snickers feiert seinen Boss-Sieg">
+        <span id="bossDanceEyebrow" class="eyebrow">BOSS BESIEGT · TANZFLÄCHE FREI</span>
+        <p id="bossDanceQuote" role="status" aria-live="polite"></p>
+        <button id="bossDanceContinue" class="secondary-button" disabled>WEITER ↗</button>
+      </section>
       <div id="overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
         <div id="overlayContent" class="overlay-content"></div>
       </div>
