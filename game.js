@@ -98,7 +98,7 @@
   };
   const accents = {lime:{name:'Limette',hex:'#c7f36b',rgb:'199 243 107'}, cyan:{name:'Eisblau',hex:'#7ee5f5',rgb:'126 229 245'}, violet:{name:'Flieder',hex:'#d1afff',rgb:'209 175 255'}, amber:{name:'Gold',hex:'#ffd17a',rgb:'255 209 122'}, pink:{name:'Pink',hex:'#ffa9ca',rgb:'255 169 202'}};
   let settings = {theme:'forest',accent:'lime',volume:70,musicMute:false,sfxMute:false}, settingsReturn = 'menu', generalDefeated = false, cyberDefeated = false, lastDefeatedBoss = '';
-  let gamePlusLevel=0, newGamePlus=false, newGamePlus2=false, ngPlusUnlocked=false, ngPlusBuild=null, ngPlus2Unlocked=false, ngPlus2Build=null, ngPlusEverUnlocked=false, ngPlus2EverUnlocked=false, hallOfFame=[];
+  let gamePlusLevel=0, newGamePlus=false, newGamePlus2=false, ngPlusUnlocked=false, ngPlusBuild=null, ngPlus2Unlocked=false, ngPlus2Build=null, ngPlusEverUnlocked=false, ngPlus2EverUnlocked=false, hallOfFame=[], endlessHallOfFame=[];
   let endlessMode=false,endlessSelectedBuild=null,endlessFromHall=false,endlessBuildTier=0,endlessBossesDefeated=0,stageVisual=0,stagePrepared=false;
   const endlessCarryFactor=()=>endlessFromHall?(endlessBuildTier===2?2.9:endlessBuildTier===1?1.8:1.22):1;
   let hardMode=false,impossibleMode=false,paftiBoss=null;
@@ -113,6 +113,7 @@
     if(!Array.isArray(hallOfFame))hallOfFame=[];
     hallOfFame=hallOfFame.filter(r=>r&&typeof r==='object'&&(!Number.isInteger(r.gamePlusLevel)||[0,1,2].includes(r.gamePlusLevel)));
   }catch{}
+  try{const records=JSON.parse(localStorage.getItem('snickers3-endless-hall-v1')||'[]');if(Array.isArray(records))endlessHallOfFame=records.filter(r=>r&&r.endlessMode===true&&r.build&&typeof r.build==='object'&&Number.isFinite(r.endlessWave));}catch{}
   try { const saved=JSON.parse(localStorage.getItem('snickers3-settings-v4')||localStorage.getItem('snickers3-settings-v3')||localStorage.getItem('snickers3-settings-v2')||'{}'); if(themes[saved.theme])settings.theme=saved.theme;if(accents[saved.accent])settings.accent=saved.accent;if(Number.isFinite(saved.volume))settings.volume=clamp(saved.volume,0,100);settings.musicMute=Boolean(saved.musicMute);settings.sfxMute=Boolean(saved.sfxMute); } catch {}
   const accent = () => accents[settings.accent].hex;
   const isBoss = e => e?.type === 'boss';
@@ -375,6 +376,14 @@
     const entry=completedEntry(build);hallOfFame.unshift(entry);
     try{localStorage.setItem('snickers3-hall-of-fame-v1',JSON.stringify(hallOfFame));}catch{toast('Dieser Abschluss konnte nicht in der Hall of Fame gespeichert werden.');}
   }
+  function archiveEndlessRun(voluntary){
+    if(!endlessMode||!player||player.endlessHallArchived)return;
+    const survived=Math.max(0,Math.floor(player.endlessCleared||0));
+    if(!voluntary&&wave+1<50)return;
+    const entry={...completedEntry(captureNGPlusBuild(player)),endlessMode:true,endlessWave:voluntary?survived:Math.max(wave+1,survived),endlessCleared:survived,voluntary:Boolean(voluntary),gamePlusLevel:3};
+    endlessHallOfFame.unshift(entry);player.endlessHallArchived=true;
+    try{localStorage.setItem('snickers3-endless-hall-v1',JSON.stringify(endlessHallOfFame));}catch{toast('Endlos-Build konnte nicht in der Hall of Fame gespeichert werden.');}
+  }
   function migrateLegacyHallRecords(){
     let changed=false;
     for(const [difficulty,b0,b1] of [['normal',ngPlusBuild,ngPlus2Build],['hard',hardProgress.ngBuild,hardProgress.ng2Build],['impossible',impossibleProgress.ngBuild,impossibleProgress.ng2Build]]){
@@ -422,14 +431,17 @@
   }
   let hallCategory='normal:0';
   function showHallOfFame(category=hallCategory){
-    if(!['menu','hallDetail','hallOfFame'].includes(mode)||!hallOfFame.length)return;
-    if(mode==='menu'&&!hallOfFame.some(r=>`${hallDifficulty(r)}:${hallTier(r)}`===category)){const first=hallOfFame[0];category=`${hallDifficulty(first)}:${hallTier(first)}`;}
+    if(!['menu','hallDetail','hallOfFame'].includes(mode)||!hallOfFame.length&&!endlessHallOfFame.length)return;
+    if(mode==='menu'&&category!=='endless'&&!hallOfFame.some(r=>`${hallDifficulty(r)}:${hallTier(r)}`===category)){const first=hallOfFame[0];category=first?`${hallDifficulty(first)}:${hallTier(first)}`:'endless';}
     hallCategory=category;mode='hallOfFame';
-    const groups=['normal','hard','impossible'].flatMap(d=>[0,1,2].map(l=>({d,l,key:`${d}:${l}`})));
+    const groups=[...['normal','hard','impossible'].flatMap(d=>[0,1,2].map(l=>({d,l,key:`${d}:${l}`}))),{d:'endless',l:3,key:'endless'}];
     const entries=hallOfFame.map((r,i)=>({r,i})).filter(({r})=>`${hallDifficulty(r)}:${hallTier(r)}`===category);
-    showOverlay(`<span class="eyebrow">DIE UNSTERBLICHEN KNABBERLÄUFE</span><h2 id="overlayTitle">HALL OF FAME</h2><p>${hallOfFame.length} abgeschlossene Kampagnen-Runs in neun Kategorien. Wähle einen Schwierigkeitsgrad und eine Stufe.</p><div class="hall-category-grid">${groups.map((g,i)=>`<button class="hall-category ${g.key===category?'selected':''}" id="hallCategory${i}" aria-pressed="${g.key===category}"><strong>${g.d.toUpperCase()}</strong><small>${tierName(g.l)}</small><b>${hallOfFame.filter(r=>hallDifficulty(r)===g.d&&hallTier(r)===g.l).length}</b></button>`).join('')}</div><div class="hall-run-list">${entries.length?entries.map(({r,i})=>runSummary(r,i,'hall')).join(''):'<p class="build-empty">In dieser Kategorie liegt noch kein abgeschlossener Run.</p>'}</div><button class="secondary-button" id="hallClose">ZURÜCK ZUM MENÜ</button>`);
+    const endlessCards=endlessHallOfFame.map((r,i)=>`<button class="run-card" id="endlessHallRun${i}"><span class="run-card-medal" aria-hidden="true">∞</span><span class="run-card-main"><span class="run-card-heading"><strong>ENDLOSRUN ${endlessHallOfFame.length-i}</strong><small>${hallDifficulty(r).toUpperCase()} · WELLE ${r.endlessWave}</small></span><span class="run-card-date">${escapeHTML(runDate(r))} · ${r.voluntary?'freiwillig beendet':'im Kampf gefallen'}</span><span class="run-card-score">${displayNumber(r.score)} <small>PUNKTE</small></span><span class="run-card-tags"><span>${Object.keys(hallBuild(r).skills).length} Skills</span><span>${hallBuild(r).weapons.length} Waffen</span><span>${r.endlessCleared} Wellen überstanden</span></span></span><span class="run-card-arrow" aria-hidden="true">↗</span></button>`);
+    const list=category==='endless'?endlessCards:entries.map(({r,i})=>runSummary(r,i,'hall'));
+    showOverlay(`<span class="eyebrow">DIE UNSTERBLICHEN KNABBERLÄUFE</span><h2 id="overlayTitle">HALL OF FAME</h2><p>${hallOfFame.length} Kampagnen-Runs und ${endlessHallOfFame.length} Endlosläufe in zehn Kategorien. Endlos-Builds sind nur als Gegner im Hasenbein-Modus spielbar.</p><div class="hall-category-grid">${groups.map((g,i)=>`<button class="hall-category ${g.key===category?'selected':''}" id="hallCategory${i}" aria-pressed="${g.key===category}"><strong>${g.d.toUpperCase()}</strong><small>${g.key==='endless'?'ALLE SCHWIERIGKEITEN':tierName(g.l)}</small><b>${g.key==='endless'?endlessHallOfFame.length:hallOfFame.filter(r=>hallDifficulty(r)===g.d&&hallTier(r)===g.l).length}</b></button>`).join('')}</div><div class="hall-run-list">${list.length?list.join(''):'<p class="build-empty">In dieser Kategorie liegt noch kein abgeschlossener Run.</p>'}</div><button class="secondary-button" id="hallClose">ZURÜCK ZUM MENÜ</button>`);
     groups.forEach((g,i)=>{$('hallCategory'+i).onclick=()=>showHallOfFame(g.key);});
     entries.forEach(({i})=>{$('hallRun'+i).onclick=()=>showRunDetail(i,'hall');});
+    if(category==='endless')endlessHallOfFame.forEach((_,i)=>{$('endlessHallRun'+i).onclick=()=>showEndlessHallDetail(i);});
     $('hallClose').onclick=()=>{mode='menu';hideOverlay();$('hallOfFameButton').focus();};
   }
   function startHallRun(index){
@@ -1527,6 +1539,7 @@
       const desired=e.type==='gunner'||e.type==='pigMortar'?300:0;
       e.mineCd-=actionDt;e.howlCd-=actionDt;
       if(e.discussTime>0){e.discussTime=Math.max(0,e.discussTime-dt);}
+      else if(e.knoll)updateKnollVulture(e,dt);
       else if(e.troll||e.hardType)updateContentEnemy(e,dt);
       else if(e.miniKind||e.variant)updateExtraEnemy(e,dt);
       else if(e.type==='rabid'||e.type==='gatling'||e.type==='sniper'||e.type==='sapper'||e.type==='pigHowler'||e.type==='pigRammer'||e.type==='pigMortar'||e.type==='pigCannon'||e.type==='pigDrone'||e.type==='zombieBoss'||e.type==='voidBunny'||e.type==='rocketHare'||e.type==='pigJuggernaut'||e.type==='burrowBunny'||e.type==='stormBunny'||e.type==='gnomePig')updateTerror(e,dt);
@@ -1565,8 +1578,11 @@
               e.dudenSpot=null;
             }
           }
+          if(b.ronnyBullet&&player.skills.ronnyUp6&&(isBoss(e)||e.miniBoss))impact*=1.15;
           damageEnemy(e,impact*((b.auto||b.narrath||b.ping)&&player.professorCouncil?1.18:1));if(b.ricochet&&player.ricochet){b.ricochet=false;chainHit(e,b.damage*.55);}
           if(mode!=='playing')return;
+          if(b.ronnyLongFrost)e.slow=Math.max(e.slow||0,isBoss(e)||e.miniBoss?1.7:2.1);
+          if(b.ronnySplash){b.ronnySplash=false;for(const other of combatTargets().filter(other=>other!==e&&!other.dead&&dist(other,e)<75+other.r).slice(0,2)){damageEnemy(other,.75*Math.sqrt(player.damage||1),true);if(mode!=='playing')return;}burst(e.x,e.y,'#dec6ac',7,70);}
           if(b.normalNut&&player.powerups.splinterStorm>0&&!b.splintered){
             b.splintered=true;const other=combatTargets().filter(t=>t!==e&&!t.dead&&dist(t,e)<180).sort((a,c)=>dist(a,e)-dist(c,e))[0];
             if(other){particles.push({type:'beam',x:e.x,y:e.y,x2:other.x,y2:other.y,life:.16,maxLife:.16,color:'#f8c584'});damageEnemy(other,b.damage*.35);if(mode!=='playing')return;}
@@ -1752,7 +1768,7 @@
     for(let i=0;i<12;i++){const edge=Math.floor(Math.random()*4),p={x:edge===0?40:edge===1?W-40:rnd(40,W-40),y:edge===2?115:edge===3?H-50:rnd(115,H-50)},d=dist(player,p);if(d>far){best=p;far=d;}if(d>340)return p;}
     return best;
   }
-  function isRabbit(e){if(e.miniKind)return ['ramCaptain','frostWarden'].includes(e.miniKind);if(e.troll)return false;if(extraEnemyBook[e.type])return extraEnemyBook[e.type].species==='rabbit';return isBoss(e)?e.endlessBoss?['general','cyber'].includes(e.endlessKind):!e.karnil&&!e.ottah:!e.type.startsWith('pig')&&e.type!=='gnomePig';}
+  function isRabbit(e){if(e.knoll)return false;if(e.miniKind)return ['ramCaptain','frostWarden'].includes(e.miniKind);if(e.troll)return false;if(extraEnemyBook[e.type])return extraEnemyBook[e.type].species==='rabbit';return isBoss(e)?e.endlessBoss?['general','cyber'].includes(e.endlessKind):!e.karnil&&!e.ottah:!e.type.startsWith('pig')&&e.type!=='gnomePig';}
   function limitEnemyType(type){
     if(type==='pigMedic'&&enemies.filter(e=>!e.dead&&e.type==='pigMedic').length>=2)return 'pigDrone';
     const caster=['pigMortar','gnomePig','rocketHare','sapper','clockCrab','lanternMoth'];
@@ -2295,6 +2311,7 @@
     if(player.carrotDrone){const a=runTime*1.35+Math.PI,x=player.x+Math.cos(a)*55,y=player.y-48+Math.sin(a)*12;ctx.save();ctx.translate(x,y);path(ctx,[[-10,-4],[7,-7],[12,0],[7,7],[-10,4]],'#e78642');ctx.strokeStyle='#75a85b';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-8,-2);ctx.lineTo(-17,-10);ctx.moveTo(-8,2);ctx.lineTo(-17,10);ctx.stroke();ctx.restore();}
     if(player.eggBooger){let x=player.x,y=player.y-28;if(player.eggBoogerTo){x=player.eggBoogerTo.x;y=player.eggBoogerTo.y;if(player.eggBoogerAnim>0&&player.eggBoogerFrom){const t=1-player.eggBoogerAnim/.34;x=player.eggBoogerFrom.x+(player.eggBoogerTo.x-player.eggBoogerFrom.x)*t;y=player.eggBoogerFrom.y+(player.eggBoogerTo.y-player.eggBoogerFrom.y)*t-Math.sin(t*Math.PI)*42;}}ctx.save();ctx.translate(x,y);ellipse(ctx,0,0,9,6,'#b8d85f');ellipse(ctx,4,-2,4,3,'#e9ef96');ctx.strokeStyle='#668339';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-7,2);ctx.lineTo(-14,8);ctx.stroke();ctx.restore();}
     for(const b of bullets){
+      if(b.ronnyBullet){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.a);ellipse(ctx,0,0,b.r,b.r*.72,b.ronnyColor||'#ddb984');ellipse(ctx,-b.r*.2,-b.r*.2,2,2,'#fff4d6');ctx.restore();continue;}
       if(b.ping||b.puff){drawContentBullet(b);continue;}
       if(b.narrath){ctx.strokeStyle='#91f7ff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x-Math.cos(b.a)*20,b.y-Math.sin(b.a)*20);ctx.lineTo(b.x,b.y);ctx.stroke();continue;}
       if(b.pretzel){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(ambientTime*8);ctx.strokeStyle='#e8ba78';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(-5,-2,6,8,-.4,0,TAU);ctx.ellipse(5,-2,6,8,.4,0,TAU);ctx.moveTo(-9,7);ctx.lineTo(9,-6);ctx.moveTo(9,7);ctx.lineTo(-9,-6);ctx.stroke();ctx.restore();continue;}
@@ -2346,7 +2363,7 @@
     bruno:passive('BRUNO STERNI (DIE SESSELSAU)','▰','Bruno sitzt rechts oben im Sessel. Alle 0,85 s wirft er einen Pingpongball auf einen Gegner: 2 × √Nussschaden und 1 Durchschlag.','bruno'),
     pigHose:passive('DER SCHWEINESCHLAUCH','〰','Alle 2,4 s bespritzt ein Schweineschlauch die nächste Gegnerlinie in Reichweite 240: 3 × √Nussschaden und 1 s Verlangsamung.','pigHose'),
     fartBottle:passive('FURZ IN DER FLASCHE','♧','Ein Dash hinterlässt 3 s eine Duftwolke. Sie verursacht alle 0,6 s 1,2 × √Nussschaden im Radius 85. 4,5 s Abklingzeit; verlangsamt normale Gegner.','fartBottle'),
-    wollenkamps:passive('FRAU WOLLENKAMPS','☂','Frau Wollenkamps geht zu Gegnern und diskutiert über schlechtes Wetter. Alle 6,5 s hält sie einen normalen Gegner 1,8 s vom Angreifen ab. Bosse werden kurz verlangsamt.','wollenkamps')
+    wollenkamps:passive('FRAU WOLLENKAMPS','☂','Frau Wollenkamps eilt zu Gegnern und diskutiert übers Wetter. Etwa alle 6,1 s stoppt sie einen normalen Gegner 1,95 s; Bosse werden 1,55 s verlangsamt.','wollenkamps')
   });
   Object.assign(ngPlusSkillBook,{
     cheeseInsurance:passive('KÄSEVERSICHERUNG','◇','NG+: Nach tatsächlichem Lebensverlust verschwinden bis zu 3 feindliche Geschosse im Radius 100. 8 s Abklingzeit.','cheeseInsurance',{ngplus:true}),
@@ -2410,6 +2427,7 @@
     $('confirmEndlessEnd').onclick=()=>{
       if(mode!=='endlessFinishConfirm')return;
       const difficulty=impossibleMode?'impossible':hardMode?'hard':'normal';recordEndlessBest(last);
+      archiveEndlessRun(true);
       endlessHistory.unshift({difficulty,wave:last,score,kills,completedAt:new Date().toISOString(),voluntary:true});endlessHistory=endlessHistory.slice(0,40);
       try{localStorage.setItem('snickers3-endless-history-v1',JSON.stringify(endlessHistory));}catch{toast('Abgeschlossener Lauf konnte nicht in der Historie gespeichert werden.');}
       mode='won';endRunSession();updateNGPlusMenu();
@@ -2566,7 +2584,7 @@
   }catch{}
   let runSessionId=null,runRevision=0,runSaveClock=0,restoringRun=false,saveFailed=false;
   let pendingBossKind=null,pendingBossChoices=[],scoreFallback=null,victoryDestination=null,interludeKind=null;
-  let contentEffects=[],contentCompanion=null,trollQuest=null;
+  let contentEffects=[],contentCompanion=null,trollQuest=null,knollQuest=null;
   const savedRunModes=new Set(['intro','playing','victory','upgrade','bossUpgrade','scoreSkill','interlude','retry','paftiCutscene']);
   const cloneData=value=>JSON.parse(JSON.stringify(value));
   // A graph preserves identity: a piercing projectile's hit Set must refer to the restored enemy,
@@ -2608,7 +2626,7 @@
     return {savedMode,player,enemies,bullets,enemyBullets,particles,pickups,hazards,floaters,thrownWeapons,ossiWalls,poisonPatches,ratSwarms,boss,
       wave,waveTime,runTime,spawnTimer,kills,score,shake,bombFlash,shotTimer,ambientTime,uiTimer,retriesLeft,retryWave,retryBossKind,
       gamePlusLevel,newGamePlus,newGamePlus2,endlessMode,endlessFromHall,endlessBuildTier,endlessBossesDefeated,stageVisual,stagePrepared,generalDefeated,cyberDefeated,lastDefeatedBoss,
-      minibossPlan,lastMiniWave,victoryTime,hardMode,impossibleMode,paftiBoss,contentEffects,contentCompanion,trollQuest,pendingBossKind,scoreFallback,victoryDestination,interludeKind,
+      minibossPlan,lastMiniWave,victoryTime,hardMode,impossibleMode,paftiBoss,contentEffects,contentCompanion,trollQuest,knollQuest,pendingBossKind,scoreFallback,victoryDestination,interludeKind,
       rewardRefs:activeRewardChoices.map(rewardRef),bossRewardRefs:pendingBossChoices.map(rewardRef),pointer:{...pointer},inputMode,bossQuoteBag};
   }
   function readSavedRun(key=RUN_SAVE_KEY){
@@ -2625,7 +2643,7 @@
   function beginRunSession(carryBuild){
     runSessionId=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);runRevision=0;runSaveClock=0;saveFailed=false;
     player.hardMode=hardMode;player.impossibleMode=impossibleMode;contentEffects=[];contentCompanion=null;pendingBossKind=null;pendingBossChoices=[];scoreFallback=null;victoryDestination=null;interludeKind=null;
-    trollQuest=carryBuild?.trollCarry?cloneData(carryBuild.trollCarry):null;
+    knollQuest=null;trollQuest=carryBuild?.trollCarry?cloneData(carryBuild.trollCarry):null;
     if(trollQuest){trollQuest.status='pending';trollQuest.wave=null;}
     if(hardMode){const p=$('overlayContent').querySelector('p');if(p)p.textContent+=impossibleMode?' IMPOSSIBLE: zusätzliche Gegner und Bossphasen. Ottah kämpft zusammen mit Pafti.':' HARD: 55 % mehr Punkte, neue Gegner und eine zusätzliche Phase je Hauptboss.';}
     saveRunNow();updateContinueButton();
@@ -2657,7 +2675,7 @@
       ({player,enemies,bullets,enemyBullets,particles,pickups,hazards,floaters,thrownWeapons,ossiWalls,poisonPatches,ratSwarms,boss,
         wave,waveTime,runTime,spawnTimer,kills,score,shake,bombFlash,shotTimer,ambientTime,uiTimer,retriesLeft,retryWave,retryBossKind,
         gamePlusLevel,newGamePlus,newGamePlus2,endlessMode,endlessFromHall,endlessBuildTier,endlessBossesDefeated,stageVisual,stagePrepared,generalDefeated,cyberDefeated,lastDefeatedBoss,
-        minibossPlan,lastMiniWave,victoryTime,hardMode,impossibleMode,paftiBoss,contentEffects,contentCompanion,trollQuest,pendingBossKind,scoreFallback,victoryDestination,interludeKind,bossQuoteBag}=s);
+        minibossPlan,lastMiniWave,victoryTime,hardMode,impossibleMode,paftiBoss,contentEffects,contentCompanion,trollQuest,knollQuest,pendingBossKind,scoreFallback,victoryDestination,interludeKind,bossQuoteBag}=s);
       activeRewardChoices=s.rewardRefs.map(resolveReward);pendingBossChoices=s.bossRewardRefs.map(resolveReward);Object.assign(pointer,s.pointer);inputMode=(matchMedia('(pointer: coarse)').matches||shell.classList.contains('touch-input'))?'touch':'mouse';
       runSessionId=saved.id;runRevision=saved.revision||0;runSaveClock=0;mode=s.savedMode;resetInput();lastFrame=performance.now();musicTrack=-1;makeGround();
       $('startScreen').classList.add('hidden');$('hud').classList.remove('hidden');$('hud').setAttribute('aria-hidden','false');
@@ -2683,7 +2701,7 @@
   const contentScoreMenu=showScoreSkillMenu;
   showScoreSkillMenu=function(after=null){if(!restoringRun)scoreFallback=typeof after==='function'?(mode==='bossUpgrade'?'boss':'wave'):null;contentScoreMenu(after);};
   const contentFinish=finish;
-  finish=function(won){contentFinish(won);if(mode==='won'||mode==='lost'){endRunSession();}else if(mode==='retry')saveRunNow();};
+  finish=function(won){contentFinish(won);if(mode==='won'||mode==='lost'){if(mode==='lost'&&endlessMode)archiveEndlessRun(false);endRunSession();}else if(mode==='retry'){saveRunNow();if(endlessMode&&wave+1>=50)$('retryMenuButton').onclick=()=>{archiveEndlessRun(false);goMenu();};}};
   const contentGeneralInterlude=showGeneralInterlude,contentCyberInterlude=showCyberInterlude;
   showGeneralInterlude=function(){interludeKind='general';contentGeneralInterlude();};
   showCyberInterlude=function(){interludeKind='cyber';contentCyberInterlude();};
@@ -2839,10 +2857,15 @@
     if(player.bruno){player.brunoCd=(player.brunoCd||0)-dt;const from=brunoPosition(),target=nearestTarget(from,1500);if(target&&player.brunoCd<=0){player.brunoCd=.85;contentProjectile(from,Math.atan2(target.y-from.y,target.x-from.x),2*rootDamage,{ping:true,pierce:1,speed:650,life:2.1,r:7});}}
     if(player.pigHose){player.hoseCd=(player.hoseCd||0)-dt;const t=nearestTarget(player,240);if(t&&player.hoseCd<=0){player.hoseCd=2.4;const a=Math.atan2(t.y-player.y,t.x-player.x),to={x:player.x+Math.cos(a)*240,y:player.y+Math.sin(a)*240};particles.push({type:'beam',x:player.x,y:player.y,x2:to.x,y2:to.y,life:.25,maxLife:.25,color:'#f4b7c6'});for(const e of targets)if(!e.dead&&segmentDistance(e,player,to)<e.r+11){e.slow=Math.max(e.slow||0,1);damageEnemy(e,3*rootDamage);if(mode!=='playing')return;}}}
     if(player.wollenkamps){
+      player.wollenUmbrellaCd=Math.max(0,(player.wollenUmbrellaCd||0)-dt);
       contentCompanion??={x:player.x-38,y:player.y+25,cooldown:1,talk:0};const c=contentCompanion;c.cooldown=Math.max(0,c.cooldown-dt);c.talk=Math.max(0,c.talk-dt);
       const t=c.cooldown<=0?nearestTarget(c,1500):null,dest=t||{x:player.x-45,y:player.y+30},d=dist(c,dest);
-      if(d>35){const step=Math.min(d-35,165*dt);c.x+=(dest.x-c.x)/d*step;c.y+=(dest.y-c.y)/d*step;}
-      if(t&&d<80&&c.cooldown<=0){c.cooldown=6.5;c.talk=2;c.line=shuffled(['Schon wieder Regen!','Dieses Wetter!','Früher war mehr Sonne.','Haben Sie einen Schirm?','Der Wind ist ja frech!','Die Wolken sind beleidigt.','Nass bis ins Fell!','Morgen wird es besser.','Das ist doch kein Sommer!','Ich melde das dem Wetteramt.','Wo ist mein Regenschirm?','Die Luft riecht nach Ärger.','Die Sonne macht Überstunden.','Das gibt Gewitter!'])[0];if(isBoss(t)||t.miniBoss)t.slow=Math.max(t.slow||0,1.4);else t.discussTime=1.8;burst(t.x,t.y,'#d3c7ef',6,45);}
+      if(d>35){const step=Math.min(d-35,175*dt);c.x+=(dest.x-c.x)/d*step;c.y+=(dest.y-c.y)/d*step;}
+      if(t&&d<80&&c.cooldown<=0){c.cooldown=6.1;c.talk=2;c.line=shuffled(['Schon wieder Regen!','Dieses Wetter!','Früher war mehr Sonne.','Haben Sie einen Schirm?','Der Wind ist ja frech!','Die Wolken sind beleidigt.','Nass bis ins Fell!','Morgen wird es besser.','Das ist doch kein Sommer!','Ich melde das dem Wetteramt.','Wo ist mein Regenschirm?','Die Luft riecht nach Ärger.','Die Sonne macht Überstunden.','Das gibt Gewitter!','Der Luftdruck ist unverschämt!','Ich habe die Wolke gewarnt!','Bei dem Wind fliegt mein Kuchen weg!','Die Sonne schuldet mir Urlaub!','Wer hat hier Durchzug bestellt?','Das Thermometer lügt schon wieder!','Mein Schirm hat heute Kündigung eingereicht.'])[0];if(isBoss(t)||t.miniBoss)t.slow=Math.max(t.slow||0,1.55);else t.discussTime=1.95;burst(t.x,t.y,'#d3c7ef',6,45);
+        if(player.skills.wollenkampsUp6){const nearby=targets.filter(e=>e!==t&&!e.dead&&dist(e,t)<105+e.r).slice(0,3);for(const e of nearby){damageEnemy(e,1.1*rootDamage,true);if(mode!=='playing')return;}}
+        if(player.skills.wollenkampsUp7)for(const e of targets)if(e!==t&&!e.dead&&dist(e,t)<115+e.r){e.slow=Math.max(e.slow||0,(isBoss(e)||e.miniBoss)?.35:.85);}
+        if(player.skills.wollenkampsUp8&&player.wollenUmbrellaCd<=0&&enemyBullets.some(b=>dist(b,player)<145)){eraseNearbyShots(player,145,2);player.wollenUmbrellaCd=16;burst(player.x,player.y,'#d3c7ef',8,70);}
+      }
     }
     if(player.crunchChronicle){player.chronicleCd=(player.chronicleCd??3)-dt;if(player.chronicleCd<=0){player.chronicleCd=12;contentEffects.push({kind:'timeBubble',x:player.x,y:player.y,r:145,life:3});eraseNearbyShots(player,145,8);}}
     for(const f of contentEffects){
@@ -3095,6 +3118,45 @@
     fleaHop:{title:'FLOHSPRUNG',short:'Flohsprung',icon:'↗',desc:'+15 % Tempo und +10 % Feuerrate.',apply:p=>{p.speed*=1.15;p.fireRate/=1.10;}}
   });
   specialUpgradePools[0].push('amberShield','fleaHop');specialUpgradePools[1].push('sharpDentist','recoilEngine');specialUpgradePools[2].push('sharpDentist','amberShield','recoilEngine');
+  // Kastenschwein II: every new card has a bounded, distinct combat role.
+  Object.assign(skillBook,{
+    pigCheekBomber:passive('SCHWEINEBACKENBOMBER','◉','Alle 6 Sekunden schleudern Snickers’ Backen eine Bombe zum nächsten Gegner (Reichweite 550): 5 × √Nussschaden im Radius 100.','pigCheekBomber'),
+    hamsterTwister:passive('HAMSTERSCHNIEDELDREHER','↻','Alle 3,6 Sekunden wirbelt eine cartoonhafte Nuss um Snickers: Gegner in 115 Reichweite erleiden 2,8 × √Nussschaden und werden kurz verlangsamt.','hamsterTwister'),
+    hamsterVape:passive('HAMSTER VAPE','☁','Alle 8 Sekunden entsteht am nächsten Gegner eine 3 Sekunden anhaltende Cartoon-Dampfwolke. Sie trifft höchstens viermal für je 1,6 × √Spezialschaden und bremst normale Gegner.','hamsterVape')
+  });
+  upgradePools[1].push('pigCheekBomber','hamsterTwister');upgradePools[3].push('hamsterVape','pigCheekBomber');upgradePools[5].push('hamsterTwister','hamsterVape');upgradePools[7].push('pigCheekBomber','hamsterVape');
+  Object.assign(ngPlusSkillBook,{
+    ngAcornBarrage:passive('EICHELSALVE DER NACHT','⋰','NG+: Alle 7 Sekunden fliegen vier gezielte Eicheln zum nächsten Gegner in 620 Reichweite: je 2,5 × √Nussschaden.','ngAcornBarrage',{ngplus:true}),
+    ngBattleApron:passive('KAMPFSCHÜRZE','▤','NG+: +1 permanentes Herz, volle Heilung und 7 Prozentpunkte Blockchance (höchstens 45 % insgesamt).','ngBattleApron',{ngplus:true,apply:p=>{p.ngBattleApron=true;p.maxHp++;p.hp=p.maxHp;p.damageGuard=Math.min(.45,p.damageGuard+.07);}}),
+    ngHareLaces:passive('HASENSCHNÜRSENKEL','↗','NG+: 10 % mehr Lauftempo und 10 % kürzerer Dash-Cooldown.','ngHareLaces',{ngplus:true,apply:p=>{p.ngHareLaces=true;p.speed*=1.10;p.dashCooldown*=.9;}}),
+    ngPouchRunner:passive('BEUTELBOTEN','⊕','NG+: +1 maximale Ladung je Spezialwaffe, +20 % Munitions-Dropchance und +30 Sammelradius. Keine direkte Nachladung.','ngPouchRunner',{ngplus:true,apply:p=>{p.ngPouchRunner=true;p.ammoBonus++;p.ammoDropLuck*=1.2;p.magnet+=30;}}),
+    ngDashCinders:passive('DASH-FUNKEN','✴','NG+: Ein Dash legt höchstens alle 5 Sekunden einen kurzen Funkenstoß im Radius 125: 5 × √Nussschaden.','ngDashCinders',{ngplus:true})
+  });
+  Object.assign(ngPlus2SkillBook,{
+    ng2Graviton:passive('GRAVITONEN-NUSS','◎','NG+2: Alle 9 Sekunden zieht ein Impuls normale Gegner in Reichweite 175 kurz zusammen und trifft sie für 6 × √Spezialschaden. Bosse erleiden Schaden ohne Sog.','ng2Graviton',{ngplus2:true}),
+    ng2VictoryTeeth:passive('SIEGERZÄHNE','⌖','NG+2: +13 % Schaden gegen Bosse und +7 Prozentpunkte Krit-Chance.','ng2VictoryTeeth',{ngplus2:true,apply:p=>{p.ng2VictoryTeeth=true;p.bossDamage=(p.bossDamage||1)*1.13;p.crit=Math.min(.65,p.crit+.07);}}),
+    ng2TimeCrust:passive('ZEITKRUSTE','◌','NG+2: Alle 12 Sekunden räumt ein Puls bis zu fünf nahe gegnerische Geschosse ab und trifft Gegner im Radius 155 für 4 × √Nussschaden.','ng2TimeCrust',{ngplus2:true}),
+    ng2LastSnack:passive('LETZTER SNACK','♥','NG+2: Unter 50 % Leben heilt Snickers höchstens alle 24 Sekunden 1 Herz. Kein Effekt bei vollem Leben.','ng2LastSnack',{ngplus2:true}),
+    ng2Crossfire:passive('KREUZFEUER-KASTEN','✳','NG+2: Alle 5 Sekunden fliegen zwei durchschlagende Nüsse zum nächsten Gegner: je 3 × √Nussschaden.','ng2Crossfire',{ngplus2:true})
+  });
+  Object.assign(weaponBook,{
+    diarrheaSling:{name:'DURCHFALLSCHLEUDER',icon:'◔',desc:'Waffe: Drei Cartoon-Schlammpfützen am Ziel. Jede bleibt 3,4 Sekunden, trifft bis zu viermal für 4 × Spezialfaktor Schaden im Radius 86 und bremst normale Gegner. 3 Ladungen.',max:3},
+    ngCheeseGatling:{name:'KÄSE-GATLING',icon:'⋰',desc:'NG+-Waffe: sechs versetzte Käsegeschosse, je 9 × Spezialfaktor Schaden und ein Durchschlag. 3 Ladungen.',max:3},
+    ng2StarRoaster:{name:'STERNENRÖSTER',icon:'☀',desc:'NG+2-Waffe: Vier angekündigte Einschläge am Ziel, je 23 × Spezialfaktor Schaden im Radius 92. 2 Ladungen.',max:2}
+  });
+  skillBook.diarrheaSling=weaponUnlock('diarrheaSling');
+  ngPlusWeaponUpgrades.ngCheeseGatling={...weaponUnlock('ngCheeseGatling'),ngplus:true};
+  ngPlus2WeaponUpgrades.ng2StarRoaster={...weaponUnlock('ng2StarRoaster'),ngplus2:true};
+  Object.assign(specialUpgradeBook,{
+    echoPelts:{title:'ECHO-FELL',short:'Echo-Fell',icon:'♧',desc:'Boss-Up: +13 % Nussschaden und +12 % Spezialschaden.',apply:p=>{p.damage*=1.13;p.specialDamage*=1.12;}},
+    warDrums:{title:'FERKEL-KRIEGSTROMMEL',short:'Kriegstrommel',icon:'♫',desc:'Boss-Up: 11 % höhere Feuerrate und +12 % Schaden gegen Bosse.',apply:p=>{p.fireRate/=1.11;p.bossDamage=(p.bossDamage||1)*1.12;}},
+    stonePlating:{title:'STEINPLATTEN-PANZER',short:'Steinplatten',icon:'▣',desc:'Boss-Up: +2 Herzen, volle Heilung und +8 Prozentpunkte Blockchance (höchstens 45 %).',apply:p=>{p.maxHp+=2;p.hp=p.maxHp;p.damageGuard=Math.min(.45,p.damageGuard+.08);}},
+    bottomlessSatchel:{title:'NACHLADER-RUCKSACK',short:'Nachlader',icon:'⊕',desc:'Boss-Up: +1 maximale Ladung je Spezialwaffe und +25 % Munitions-Dropchance. Keine direkte Nachladung.',apply:p=>{p.ammoBonus++;p.ammoDropLuck*=1.25;}},
+    liquidCourage:{title:'SCHWEINEMUT',short:'Schweinemut',icon:'↗',desc:'Boss-Up: 13 % schneller laufen und +12 % Spezialschaden.',apply:p=>{p.speed*=1.13;p.specialDamage*=1.12;}},
+    tidalNut:{title:'DOPPELKERNNUSS',short:'Doppelkern',icon:'✹',desc:'Boss-Up: +1 Durchschlag und +8 Prozentpunkte Krit-Chance.',apply:p=>{p.pierce++;p.crit=Math.min(.65,p.crit+.08);}}
+  });
+  specialUpgradePools[0].push('stonePlating','echoPelts','bottomlessSatchel');specialUpgradePools[1].push('warDrums','liquidCourage','tidalNut');specialUpgradePools[2].push('warDrums','tidalNut','stonePlating','echoPelts','bottomlessSatchel','liquidCourage');
+  ngPlusCarryKeys.push('pigCheekBomber','hamsterTwister','hamsterVape','ngAcornBarrage','ngBattleApron','ngHareLaces','ngPouchRunner','ngDashCinders','ng2Graviton','ng2VictoryTeeth','ng2TimeCrust','ng2LastSnack','ng2Crossfire');
   skillBook.madelpulator.desc=skillBook.madelpulator.desc.replace('+90 %','+78 %');
   // Cap stacks before applying them; boolean skills and weapons remain unique.
   const stackCaps={rapid:3,power:3,turbo:2,health:2,ammo:3,specialCore:2,hunter:2,crit:2,powerLuck:2,ammoHunter:2,ironFur:2,scavenger:2};
@@ -3464,7 +3526,25 @@
       try{localStorage.setItem('snickers3-hall-of-fame-v1',JSON.stringify(remaining));}
       catch{toast('Der Hall-Eintrag konnte nicht gelöscht werden.');return;}
       retainHallUnlocks(record);forgetDeletedCachedBuild(record);hallOfFame=remaining;updateNGPlusMenu();
-      mode='hallDetail';if(remaining.length)showHallOfFame(category);else goMenu();
+      mode='hallDetail';if(remaining.length||endlessHallOfFame.length)showHallOfFame(remaining.length?category:'endless');else goMenu();
+    };
+  }
+  function showEndlessHallDetail(index){
+    const r=endlessHallOfFame[index];if(!r)return;mode='hallDetail';
+    const view=restoreBuildValues(hallBuild(r)),difficulty=hallDifficulty(r).toUpperCase();
+    showOverlay(`<div class="run-detail-header"><span class="eyebrow">HALL OF FAME · ENDLOSMODUS · ${difficulty}</span><h2 id="overlayTitle">WELLE ${r.endlessWave} · ${difficulty}</h2><p>${escapeHTML(runDate(r))} · ${displayNumber(r.score)} Punkte · ${displayNumber(r.kills)} Gegner · ${formatTime(r.time||0)} · ${r.voluntary?'freiwillig beendet':'im Kampf gefallen'}</p><p>Dieser Build ist nur als Snickers-Gegner im Hasenbein-Modus spielbar.</p></div><div class="run-detail-actions"><button class="secondary-button" id="runDetailBack">← ENDLOSRUNS</button><button class="secondary-button hall-delete-button" id="runDetailDelete">DIESEN BUILD LÖSCHEN</button></div>${buildDetailsMarkup(view,false)}<div class="run-detail-nav"><button class="secondary-button" id="runPrev" ${index===0?'disabled':''}>← NEUERER RUN</button><button class="secondary-button" id="runNext" ${index===endlessHallOfFame.length-1?'disabled':''}>ÄLTERER RUN →</button></div>`);
+    $('runDetailBack').onclick=()=>showHallOfFame('endless');$('runDetailDelete').onclick=()=>confirmEndlessHallDeletion(index);
+    $('runPrev').onclick=()=>showEndlessHallDetail(index-1);$('runNext').onclick=()=>showEndlessHallDetail(index+1);bindBuildJumps();
+  }
+  function confirmEndlessHallDeletion(index){
+    const r=endlessHallOfFame[index];if(mode!=='hallDetail'||!r)return;mode='hallDeleteConfirm';
+    showOverlay(`<span class="eyebrow">HALL OF FAME · ENDLOS-BUILD LÖSCHEN</span><h2 id="overlayTitle">DIESEN RUN LÖSCHEN?</h2><p>${hallDifficulty(r).toUpperCase()} · Welle ${r.endlessWave} · ${escapeHTML(runDate(r))}. Der Build steht anschließend auch als Hasenbein-Gegner nicht mehr bereit.</p><div class="overlay-actions"><button class="secondary-button" id="cancelHallDeletion">ABBRECHEN</button><button class="secondary-button hall-delete-button" id="confirmHallDeletion">BUILD ENDGÜLTIG LÖSCHEN</button></div>`);
+    $('cancelHallDeletion').onclick=()=>{mode='hallDetail';showEndlessHallDetail(index);};
+    $('confirmHallDeletion').onclick=()=>{
+      if(mode!=='hallDeleteConfirm'||endlessHallOfFame[index]!==r)return;
+      const remaining=endlessHallOfFame.filter(entry=>entry!==r);
+      try{localStorage.setItem('snickers3-endless-hall-v1',JSON.stringify(remaining));}catch{toast('Der Endlos-Build konnte nicht gelöscht werden.');return;}
+      endlessHallOfFame=remaining;mode='hallDetail';updateNGPlusMenu();if(remaining.length||hallOfFame.length)showHallOfFame('endless');else goMenu();
     };
   }
 
@@ -3590,20 +3670,23 @@
   const hasenbeinDifficultyOf=r=>r.impossibleMode||r.build?.impossibleMode?'impossible':r.hardMode?'hard':'normal';
   const hasenbeinMenuUpdate=updateNGPlusMenu;
   updateNGPlusMenu=function(){hasenbeinMenuUpdate();$('hasenbeinButton').classList.toggle('hidden',!hasenbeinUnlocked());};
+  const endlessHallMenuUpdate=updateNGPlusMenu;
+  updateNGPlusMenu=function(){endlessHallMenuUpdate();$('hallOfFameButton').classList.toggle('hidden',!hallOfFame.length&&!endlessHallOfFame.length);};
   function showHasenbeinSelect(){
     if(!hasenbeinUnlocked()||!['menu','hasenbeinResult','hasenbeinSelect'].includes(mode))return;
     mode='hasenbeinSelect';
-    showOverlay(`<span class="eyebrow">EINE STAGE · DIE RACHE DES HASENBEIN</span><h2 id="overlayTitle">JETZT JAGT DER HASE.</h2><p>Spiele General Hasenbein gegen einen Sieger-Build aus deiner Hall of Fame. Du steuerst seine Möhrensalven, Bodenbeben, Hasenhelfer und den angekündigten Rammangriff. Hasenbein erhält drei bis fünf eigene Lebensphasen; Snickers hat einen Lebensbalken. WASD: bewegen · Q: gezielte Salve · E: Möhrenorkan · R: Erdbeben · Leertaste: Rammen · F: Felsdeckel zum Blocken · G: zwei Hasen rufen.</p>${hallOfFame.length?`<div class="hall-run-list">${hallOfFame.map((r,i)=>`<button class="run-card hasenbein-card" id="hasenbeinRun${i}"><span class="run-card-medal">♞</span><span class="run-card-main"><strong>SNICKERS · ${hasenbeinDifficultyOf(r).toUpperCase()} · ${tierName(hallTier(r))}</strong><small>${escapeHTML(runDate(r))} · ${Object.keys(hallBuild(r).skills||{}).length} Skills · ${hallBuild(r).weapons?.length||1} Waffen</small></span><span class="run-card-arrow">↗</span></button>`).join('')}</div>`:'<p>Schließe einen Kampagnen-Run ab, damit sein Sieger-Build in der Hall of Fame erscheint.</p>'}<button class="secondary-button" id="hasenbeinBack">← ZURÜCK ZUM MENÜ</button>`);
-    hallOfFame.forEach((r,i)=>{$('hasenbeinRun'+i).onclick=()=>startHasenbeinDuel(i);});
+    const opponents=[...hallOfFame,...endlessHallOfFame];
+    showOverlay(`<span class="eyebrow">EINE STAGE · DIE RACHE DES HASENBEIN</span><h2 id="overlayTitle">JETZT JAGT DER HASE.</h2><p>Spiele General Hasenbein gegen einen Snickers-Build aus deiner Hall of Fame, auch gegen gespeicherte Endlosläufe. Du steuerst seine Möhrensalven, Bodenbeben, Hasenhelfer und den angekündigten Rammangriff. Hasenbein erhält drei bis fünf eigene Lebensphasen; Snickers hat einen Lebensbalken. WASD: bewegen · Q: gezielte Salve · E: Möhrenorkan · R: Erdbeben · Leertaste: Rammen · F: Felsdeckel zum Blocken · G: zwei Hasen rufen.</p>${opponents.length?`<div class="hall-run-list">${opponents.map((r,i)=>`<button class="run-card hasenbein-card" id="hasenbeinRun${i}"><span class="run-card-medal">♞</span><span class="run-card-main"><strong>SNICKERS · ${hasenbeinDifficultyOf(r).toUpperCase()} · ${r.endlessMode?'ENDLOS · WELLE '+r.endlessWave:tierName(hallTier(r))}</strong><small>${escapeHTML(runDate(r))} · ${Object.keys(hallBuild(r).skills||{}).length} Skills · ${hallBuild(r).weapons?.length||1} Waffen</small></span><span class="run-card-arrow">↗</span></button>`).join('')}</div>`:'<p>Schließe einen Kampagnen-Run ab, damit sein Build in der Hall of Fame erscheint.</p>'}<button class="secondary-button" id="hasenbeinBack">← ZURÜCK ZUM MENÜ</button>`);
+    opponents.forEach((r,i)=>{$('hasenbeinRun'+i).onclick=()=>startHasenbeinDuel(i);});
     $('hasenbeinBack').onclick=goMenu;
   }
   function startHasenbeinDuel(index){
     if(mode!=='hasenbeinSelect'||!hasenbeinUnlocked())return;
-    const record=hallOfFame[index];if(!record)return;
+    const record=[...hallOfFame,...endlessHallOfFame][index];if(!record)return;
     const build=restoreBuildValues(hallBuild(record));hasenbeinDifficulty=hasenbeinDifficultyOf(record);
     hasenbeinBuildThreat=scaleHasenbeinToBuild(build);
     hasenbeinPower=1+(hasenbeinBuildThreat-1)*.53;
-    const factor=hasenbeinDifficulty==='impossible'?1.75+(hasenbeinBuildThreat-1)*.03:hasenbeinDifficulty==='hard'?1.45+(hasenbeinBuildThreat-1)*.07:1.15;
+    const factor=hasenbeinDifficulty==='impossible'?1.37+(hasenbeinBuildThreat-1)*.05:hasenbeinDifficulty==='hard'?1.20+(hasenbeinBuildThreat-1)*.06:1.34;
     hasenbeinMode=true;runSessionId=null;resetInput();clearTimeout(announcementTimer);
     $('touchControls').classList.add('hasenbein-touch');for(const id of ['touchShock','touchGuard','touchCall'])$(id).classList.remove('hidden');
     $('touchCycle').innerHTML='SALVE<span>Q</span>';$('touchCycle').setAttribute('aria-label','Hasenbeins Salve');
@@ -3616,8 +3699,8 @@
     const hearts=Math.round(baseHearts*(1+(hasenbeinBuildThreat-1)*.62)*10)/10;
     Object.assign(player,{x:W*.23,y:H*.56,r:49,hp:hearts,maxHp:hearts,speed:105+Math.min(13,(hasenbeinBuildThreat-1)*8),invuln:1.4,phase:0,enraged:false});
     hasenbeinRival=createPlayer();
-    const rivalHp=clamp((425+Math.sqrt(Math.max(1,build.maxHp||5)*Math.max(1,build.damage||1))*29+(build.weapons?.length||1)*22)*factor,465,2200);
-    Object.assign(hasenbeinRival,{x:W*.76,y:H*.56,r:23,hp:rivalHp,speed:clamp((build.speed||264)*.7,165,252),invuln:.7,phase:0,fireCd:1.15,patternCd:4.6,dodgeCd:3.8,charge:null,weaponCount:build.weapons?.length||1,angle:Math.PI,face:-1,moving:true,damage:clamp(Math.sqrt((build.damage||1)/1.4),1,2.5),fireRate:clamp(build.fireRate||.32,.08,.55),dodgeChance:clamp(build.dodgeChance||0,0,.22),shieldReady:Boolean(build.shield),shieldUsed:false,nutFan:Boolean(build.nutFan||build.spread),rearNut:Boolean(build.rearNut),orbit:Boolean(build.orbit),sentry:Boolean(build.nutSentry),frost:Boolean(build.frost),vampire:Boolean(build.vampire),companionCount:['bruno','narrath','knisterKnight','wollenkamps','erweinLewy','soapedRat','daimDuo','pigPatrol'].filter(k=>build[k]||build.skills?.[k]).length});
+    const rivalHp=clamp((425+Math.sqrt(Math.max(1,build.maxHp||5)*Math.max(1,build.damage||1))*29+(build.weapons?.length||1)*22)*factor+170*Math.pow(Math.max(0,hasenbeinBuildThreat-2),1.4),465,2200);
+    Object.assign(hasenbeinRival,{x:W*.76,y:H*.56,r:23,hp:rivalHp,speed:clamp((build.speed||264)*.7,165,252),invuln:.7,phase:0,fireCd:1.15,patternCd:4.6,dodgeCd:3.8,companionCd:4.5,shieldCd:0,lifeStealCd:0,charge:null,weaponCount:build.weapons?.length||1,angle:Math.PI,face:-1,moving:true,damage:clamp(Math.sqrt((build.damage||1)/1.4)*(build.madelpulator?1.12:1),1,2.8),fireRate:clamp(build.fireRate||.32,.08,.55),dodgeChance:clamp(build.dodgeChance||0,0,.22),damageGuard:clamp(build.damageGuard||0,0,.35),crit:clamp(build.crit||0,0,.45),shieldReady:Boolean(build.shield),shieldUsed:false,madelpulator:Boolean(build.madelpulator),nutFan:Boolean(build.nutFan||build.spread),rearNut:Boolean(build.rearNut),orbit:Boolean(build.orbit),sentry:Boolean(build.nutSentry),frost:Boolean(build.frost),vampire:Boolean(build.vampire),companionCount:['bruno','narrath','knisterKnight','wollenkamps','erweinLewy','soapedRat','daimDuo','pigPatrol','ronnySquirrel'].filter(k=>build[k]||build.skills?.[k]).length});
     hasenbeinRival.maxHp=hasenbeinRival.hp;
     mode='hasenbeinIntro';$('startScreen').classList.add('hidden');$('hud').classList.add('hidden');$('hud').setAttribute('aria-hidden','true');
     for(const id of ['runInfo','bossHud','skillHud','powerHud','achievementHud','waveMiniBar'])$(id).classList.add('hidden');
@@ -3639,7 +3722,8 @@
   function hasenbeinShot(x,y,a,speed,damage,owner,homing=false){hasenbeinShots.push({x,y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,damage,owner,homing,r:owner==='hasenbein'?9:7,life:2.8});}
   function hasenbeinHitRival(damage){
     const rival=hasenbeinRival;if(!rival||rival.invuln>0||Math.random()<rival.dodgeChance)return;
-    if(rival.shieldReady&&!rival.shieldUsed){damage*=.35;rival.shieldUsed=true;burst(rival.x,rival.y,'#a1e5bc',8,80);}
+    if(rival.shieldReady&&!rival.shieldUsed){damage*=.35;rival.shieldUsed=true;rival.shieldCd=15;burst(rival.x,rival.y,'#a1e5bc',8,80);}
+    if(rival.damageGuard&&Math.random()<rival.damageGuard)damage*=.65;
     rival.hp-=damage;rival.hit=.16;
   }
   function hasenbeinHurt(damage){
@@ -3650,8 +3734,8 @@
   }
   function hasenbeinSalvo(){
     if(!hasenbeinMode||mode!=='playing'||hasenbeinFanCd>0)return;
-    hasenbeinFanCd=4.6;const a=Math.atan2(hasenbeinRival.y-player.y,hasenbeinRival.x-player.x),count=hasenbeinPhase>=2?7:5;
-    for(let i=0;i<count;i++)hasenbeinShot(player.x,player.y,a+(i-(count-1)/2)*.14,hasenbeinPhase>=2?275:220,hasenbeinDamage(6.8),'hasenbein',i===(count-1)/2);
+    hasenbeinFanCd=4.3;const a=Math.atan2(hasenbeinRival.y-player.y,hasenbeinRival.x-player.x),count=hasenbeinPhase>=2?7:5;
+    for(let i=0;i<count;i++)hasenbeinShot(player.x,player.y,a+(i-(count-1)/2)*.14,hasenbeinPhase>=2?320:265,hasenbeinDamage(7.2),'hasenbein',i===(count-1)/2);
     burst(player.x,player.y,'#f2bf78',13,95);tone(380,.16,'square',.035,220);updateHasenbeinHud();
   }
   function hasenbeinOrkan(){
@@ -3664,7 +3748,7 @@
   function hasenbeinEarthquake(){
     if(!hasenbeinMode||mode!=='playing'||hasenbeinShockCd>0)return;
     hasenbeinShockCd=8;const rival=hasenbeinRival;
-    hasenbeinHazards.push({x:rival.x,y:rival.y,r:hasenbeinPhase>=2?138:112,wait:1.05,track:.48,life:.35,hit:false,damage:hasenbeinDamage(15)});
+    hasenbeinHazards.push({x:rival.x,y:rival.y,r:hasenbeinPhase>=2?147:128,wait:1.05,track:.82,life:.35,hit:false,damage:hasenbeinDamage(15)});
     hasenbeinHazards.push({x:clamp(rival.x+rnd(-180,180),65,W-65),y:clamp(rival.y+rnd(-150,150),140,H-55),r:88,wait:1.45,life:.35,hit:false,damage:hasenbeinDamage(12)});
     tone(90,.3,'sawtooth',.07,28);updateHasenbeinHud();
   }
@@ -3692,11 +3776,10 @@
   }
   function hasenbeinJump(){
     if(!hasenbeinMode||mode!=='playing'||hasenbeinDashCd>0||hasenbeinWindup>0)return;
-    let x=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+touch.x;
-    let y=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+touch.y;
-    const m=Math.hypot(x,y);hasenbeinRamAutoAim=m<.15;
-    if(hasenbeinRamAutoAim){x=hasenbeinRival.x-player.x;y=hasenbeinRival.y-player.y;}
-    hasenbeinRamAngle=Math.atan2(y,x);hasenbeinWindup=.58;hasenbeinDashHit=false;hasenbeinDashCd=5.8;
+    // Moving players can aim the charge without releasing WASD or the touch stick.
+    hasenbeinRamAutoAim=true;
+    hasenbeinRamAngle=Math.atan2(hasenbeinRival.y-player.y,hasenbeinRival.x-player.x);
+    hasenbeinWindup=.5;hasenbeinDashHit=false;hasenbeinDashCd=6.4;
     player.invuln=Math.max(player.invuln,.64);
     tone(180,.15,'sawtooth',.035,440);updateHasenbeinHud();
   }
@@ -3731,7 +3814,7 @@
   }
   function startHasenbeinKarnilIntro(){
     if(mode!=='playing'||hasenbeinKarnil)return;
-    const hp=Math.round(45+(hasenbeinBuildThreat-1)*18);
+    const hp=Math.round(65+(hasenbeinBuildThreat-1)*22);
     hasenbeinKarnil={x:clamp(player.x+140,90,W-90),y:clamp(player.y-60,165,H-95),r:75,hp,maxHp:hp,speed:90,phase:0,hit:0,shotCd:1.2,rockCd:3.5,contactCd:0,type:'boss',karnil:true};
     mode='hasenbeinKarnilIntro';hasenbeinCinematicTime=3.3;resetInput();updateHasenbeinHud();
     showOverlay(`<span class="eyebrow">LETZTE PHASE · DIE ERDE BEBT</span><h2 id="overlayTitle">KARNIL KOMMT!</h2>${hasenbeinCinematicArt(false)}<p class="hasenbein-scene-copy">„Finger weg von meinem Hasen!“ Karnil durchbricht den Gartenzaun und kämpft jetzt an Hasenbeins Seite. Snickers' verbleibendes Leben bleibt unverändert.</p><button class="secondary-button" id="hasenbeinSkipKarnil">KAMPF FORTSETZEN ↗</button>`);
@@ -3783,6 +3866,8 @@
     const rival=hasenbeinRival;if(!rival)return;
     hasenbeinDuelTime+=dt;music(dt);
     player.invuln=Math.max(0,player.invuln-dt);rival.invuln=Math.max(0,rival.invuln-dt);
+    rival.shieldCd=Math.max(0,(rival.shieldCd||0)-dt);if(rival.shieldReady&&rival.shieldUsed&&rival.shieldCd===0)rival.shieldUsed=false;
+    rival.lifeStealCd=Math.max(0,(rival.lifeStealCd||0)-dt);
     hasenbeinSpecialCd=Math.max(0,hasenbeinSpecialCd-dt);hasenbeinDashCd=Math.max(0,hasenbeinDashCd-dt);
     hasenbeinFanCd=Math.max(0,hasenbeinFanCd-dt);hasenbeinShockCd=Math.max(0,hasenbeinShockCd-dt);
     hasenbeinGuardCd=Math.max(0,hasenbeinGuardCd-dt);hasenbeinGuardTime=Math.max(0,hasenbeinGuardTime-dt);hasenbeinCallCd=Math.max(0,hasenbeinCallCd-dt);
@@ -3790,7 +3875,7 @@
     let my=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+touch.y;
     const len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len;}player.moving=len>.1;
     hasenbeinIdleTime=len>.1||hasenbeinWindup>0||hasenbeinDashTime>0?Math.max(0,hasenbeinIdleTime-dt*2):Math.min(3,hasenbeinIdleTime+dt);
-    if(hasenbeinWindup>0){hasenbeinWindup-=dt;player.moving=false;if(hasenbeinWindup<=0){hasenbeinDashTime=.68;player.dashX=Math.cos(hasenbeinRamAngle);player.dashY=Math.sin(hasenbeinRamAngle);}}
+    if(hasenbeinWindup>0){hasenbeinWindup-=dt;player.moving=false;if(hasenbeinRamAutoAim&&hasenbeinWindup>.16)hasenbeinRamAngle=Math.atan2(rival.y-player.y,rival.x-player.x);if(hasenbeinWindup<=0){hasenbeinDashTime=.68;player.dashX=Math.cos(hasenbeinRamAngle);player.dashY=Math.sin(hasenbeinRamAngle);}}
     if(hasenbeinDashTime>0){
       hasenbeinDashTime=Math.max(0,hasenbeinDashTime-dt);
       if(hasenbeinRamAutoAim){const target=Math.atan2(rival.y-player.y,rival.x-player.x);hasenbeinRamAngle+=clamp(angleDelta(target,hasenbeinRamAngle),-dt*1.2,dt*1.2);player.dashX=Math.cos(hasenbeinRamAngle);player.dashY=Math.sin(hasenbeinRamAngle);}
@@ -3799,7 +3884,7 @@
     else if(hasenbeinWindup<=0){player.x+=mx*player.speed*dt;player.y+=my*player.speed*dt;}
     player.x=clamp(player.x,55,W-55);player.y=clamp(player.y,150,H-65);
     player.face=rival.x<player.x?-1:1;player.phase=(player.phase||0)+dt*4;
-    if(hasenbeinDashTime>0&&!hasenbeinDashHit&&dist(player,rival)<player.r+rival.r+13){hasenbeinDashHit=true;hasenbeinHitRival(hasenbeinDamage(40+hasenbeinPhase*3));burst(rival.x,rival.y,'#eab46e',18,170);}
+    if(hasenbeinDashTime>0&&!hasenbeinDashHit&&dist(player,rival)<player.r+rival.r+13){hasenbeinDashHit=true;hasenbeinHitRival(hasenbeinDamage(27+hasenbeinPhase*2));burst(rival.x,rival.y,'#eab46e',18,170);}
     if(dist(player,rival)<player.r+rival.r-8&&hasenbeinDashTime<=0)hasenbeinHurt(.65);
 
     // Boss pressure remains automatic, but only the player may order the ram.
@@ -3816,7 +3901,7 @@
     }
     for(const hazard of hasenbeinHazards){
       hazard.wait-=dt;
-      if(hazard.track>0&&hazard.wait>.46){const follow=Math.min(1,dt*5);hazard.x+=(rival.x-hazard.x)*follow;hazard.y+=(rival.y-hazard.y)*follow;hazard.track-=dt;}
+      if(hazard.track>0&&hazard.wait>.22){const follow=Math.min(1,dt*4.5);hazard.x+=(rival.x-hazard.x)*follow;hazard.y+=(rival.y-hazard.y)*follow;hazard.track-=dt;}
       if(hazard.wait<=0&&!hazard.hit){hazard.hit=true;burst(hazard.x,hazard.y,'#e4b075',14,120);if(dist(hazard,rival)<hazard.r+rival.r)hasenbeinHitRival(hazard.damage);}
       if(hazard.hit)hazard.life-=dt;
     }
@@ -3841,13 +3926,20 @@
     rival.dodgeCd-=dt;
     if(rival.dodgeChance>0&&rival.dodgeCd<=0){rival.dodgeCd=3.8;rival.x=clamp(rival.x-dy/d*85,65,W-65);rival.y=clamp(rival.y+dx/d*85,157,H-65);burst(rival.x,rival.y,'#e4a86e',7,60);}
     rival.face=player.x<rival.x?-1:1;rival.angle=Math.atan2(player.y-rival.y,player.x-rival.x);rival.phase+=dt*8;rival.hit=Math.max(0,(rival.hit||0)-dt);
+    rival.companionCd-=dt;
+    if(rival.companionCount>0&&rival.companionCd<=0){
+      rival.companionCd=Math.max(3.2,5.4-rival.companionCount*.22);
+      const n=Math.min(3,rival.companionCount),a=Math.atan2(player.y-rival.y,player.x-rival.x);
+      for(let i=0;i<n;i++)hasenbeinShot(rival.x+(i-1)*15,rival.y-30,a+(i-(n-1)/2)*.18,280+16*n,.46+(hardMode?.14:0),'snickers');
+      burst(rival.x,rival.y-30,'#d8c495',5,55);
+    }
     rival.fireCd-=dt;if(rival.fireCd<=0){
       rival.fireCd=clamp(rival.fireRate/(rival.damage*.26+.6),.17,.45);
       rival.shotCount=(rival.shotCount||0)+1;
       const bait=rival.shotCount%4===0?[...hasenbeinMinions,...(hasenbeinKarnil?.hp>0?[hasenbeinKarnil]:[])].filter(b=>dist(rival,b)<360).sort((a,b)=>dist(rival,a)-dist(rival,b))[0]:null;
       const a=bait?Math.atan2(bait.y-rival.y,bait.x-rival.x):rival.angle;
       const n=rival.nutFan||rival.weaponCount>=4?3:1;
-      for(let i=0;i<n;i++)hasenbeinShot(rival.x,rival.y,a+(i-(n-1)/2)*.20,345+15*rival.weaponCount,clamp(.62*rival.damage*(hasenbeinDifficulty==='impossible'?1.35:hasenbeinDifficulty==='hard'?1.15:1),.58,2.1),'snickers');
+      for(let i=0;i<n;i++)hasenbeinShot(rival.x,rival.y,a+(i-(n-1)/2)*.20,345+15*rival.weaponCount,clamp(.62*rival.damage*(Math.random()<rival.crit?1.35:1)*(hasenbeinDifficulty==='impossible'?1.35:hasenbeinDifficulty==='hard'?1.15:1),.58,2.4),'snickers');
       if(rival.rearNut&&Math.random()<.18)hasenbeinShot(rival.x,rival.y,a+Math.PI,290,.55,'snickers');
       if(rival.orbit&&Math.random()<.28)for(let i=0;i<5;i++)hasenbeinShot(rival.x,rival.y,i*TAU/5+hasenbeinDuelTime,240,.7,'snickers');
       if(rival.sentry&&Math.random()<.25)hasenbeinShot(rival.x,rival.y-35,rival.angle,430,.95,'snickers');
@@ -3863,7 +3955,7 @@
     }}
     for(const s of hasenbeinShots){if(s.life<=0)continue;s.life-=dt;if(s.life<=0)continue;const before={x:s.x,y:s.y};if(s.homing&&s.owner==='hasenbein'){
       const speed=Math.hypot(s.vx,s.vy),angle=Math.atan2(s.vy,s.vx),target=Math.atan2(rival.y-s.y,rival.x-s.x);
-      const next=angle+clamp(angleDelta(target,angle),-dt*.72,dt*.72);s.vx=Math.cos(next)*speed;s.vy=Math.sin(next)*speed;
+      const next=angle+clamp(angleDelta(target,angle),-dt*1.1,dt*1.1);s.vx=Math.cos(next)*speed;s.vy=Math.sin(next)*speed;
     }s.x+=s.vx*dt;s.y+=s.vy*dt;
       if(s.owner==='snickers'){
         const minion=hasenbeinMinions.find(b=>b.hp>0&&segmentDistance(b,before,s)<b.r+s.r);
@@ -3872,7 +3964,7 @@
           s.life=0;hasenbeinKarnil.hp=Math.max(0,hasenbeinKarnil.hp-s.damage*.72);hasenbeinKarnil.hit=.2;
           if(hasenbeinKarnil.hp===0){burst(hasenbeinKarnil.x,hasenbeinKarnil.y,'#e5aa8a',27,140);announce('KARNIL IST ERSCHÖPFT','HASENBEIN KÄMPFT WEITER');}
         }
-        else if(s.life>0&&segmentDistance(player,before,s)<player.r+s.r){s.life=0;hasenbeinHurt(s.damage);}
+        else if(s.life>0&&segmentDistance(player,before,s)<player.r+s.r){s.life=0;const prior=player.hp;hasenbeinHurt(s.damage);if(rival.vampire&&player.hp<prior&&rival.lifeStealCd<=0){rival.lifeStealCd=18;rival.hp=Math.min(rival.maxHp,rival.hp+Math.min(8,rival.maxHp*.008));}}
       }else if(s.life>0&&segmentDistance(rival,before,s)<rival.r+s.r){s.life=0;hasenbeinHitRival(s.damage);}
     }
     hasenbeinMinions=hasenbeinMinions.filter(b=>b.hp>0);
@@ -4131,6 +4223,210 @@
     document.addEventListener('visibilitychange',()=>{if(document.hidden)stopBossSpeech();});
     try{window.speechSynthesis?.getVoices();}catch{}
   }
+
+  // The Knollengeier only takes reversible, unstacked passive skills without dependent upgrades.
+  const knollStealable={frost:'frost',chain:'chain',orbit:'orbit',nutSentry:'nutSentry',carrotDrone:'carrotDrone',eggBooger:'eggBooger',merzEggs:'merzEggs',homing:'homing',shockDash:'shockDash',breadHalo:'breadHalo',ricochet:'ricochet',creamPuff:'creamPuff',bruno:'bruno',wollenkamps:'wollenkamps',duden:'duden',olangolil:'bingoMaster',potencyMinister:'potencyMinister',eichelkopf:'eichelkopf',pigPatrol:'pigPatrol',troutDormian:'troutDormian',pockenstrombose:'pockenstrombose',pigCheekBomber:'pigCheekBomber',hamsterTwister:'hamsterTwister',hamsterVape:'hamsterVape',ngAcornBarrage:'ngAcornBarrage',ngDashCinders:'ngDashCinders',ng2Graviton:'ng2Graviton',ng2TimeCrust:'ng2TimeCrust',ng2LastSnack:'ng2LastSnack',ng2Crossfire:'ng2Crossfire'};
+  function knollCandidates(){return Object.keys(knollStealable).filter(id=>player.skills[id]===1&&player[knollStealable[id]]&&!(id==='nutSentry'&&(player.turretVolley||player.ng2Turret))&&
+    !Object.keys(player.skills).some(other=>allSkillInfo(other)?.requires===id));}
+  const beforeKnollAvailability=availableRewards;
+  availableRewards=function(includeSpecial=false){const choices=beforeKnollAvailability(includeSpecial);return knollQuest&&['notice','pending','hunting'].includes(knollQuest.status)?choices.filter(c=>c.id!==knollQuest.id):choices;};
+  const beforeKnollReward=prepareWaveReward;
+  prepareWaveReward=function(){
+    beforeKnollReward();
+    const nextIsWave=endlessMode?(wave+1)%5!==0:![2,5,8].includes(wave);
+    if(knollQuest||trollQuest||!nextIsWave)return;
+    const choices=knollCandidates();
+    if(choices.length&&Math.random()<.01){
+      const id=choices[Math.floor(Math.random()*choices.length)],flag=knollStealable[id];
+      knollQuest={status:'notice',id,flag,wave:wave+1,spawned:false,expiresAt:0};
+      delete player.skills[id];player[flag]=false;updateSkills();updateHud();
+    }
+  };
+  const beforeKnollRenderReward=renderWaveReward;
+  renderWaveReward=function(){
+    if(knollQuest?.status==='notice'){
+      mode='upgrade';const title=escapeHTML(allSkillInfo(knollQuest.id)?.title||knollQuest.id);
+      showOverlay(`<span class="eyebrow">1 % EREIGNIS · KNOLLENGEIER</span><h2 id="overlayTitle">EIN SKILL IST WEG!</h2><p>Ein Knollengeier hat <strong>${title}</strong> gestohlen. Wähle gleich dein normales Wellen-Upgrade. In der nächsten Welle erscheint ein Schwarm: Nur der Geier mit der <strong>goldenen Feder</strong> trägt deinen Skill. Er flieht nach 19 Sekunden. Erwischst du ihn vorher, erhältst du den Skill zurück; sonst ist er für diesen Run verloren.</p><button class="primary-button" id="knollNoticeContinue">UPGRADE AUSWÄHLEN ↗</button>`);
+      $('knollNoticeContinue').onclick=()=>{if(mode!=='upgrade'||knollQuest?.status!=='notice')return;knollQuest.status='pending';renderWaveReward();saveRunNow();};return;
+    }
+    beforeKnollRenderReward();
+  };
+  const beforeKnollStartWave=startWave;
+  startWave=function(next,keepRetries=false){
+    beforeKnollStartWave(next,keepRetries);
+    if(knollQuest&&knollQuest.wave===next&&(knollQuest.status==='pending'||keepRetries&&knollQuest.status==='hunting')){
+      knollQuest.status='hunting';knollQuest.spawned=false;knollQuest.expiresAt=0;
+    }
+    saveRunNow();
+  };
+  function spawnKnollFlock(){
+    if(knollQuest?.status!=='hunting'||knollQuest.spawned)return;
+    knollQuest.spawned=true;knollQuest.expiresAt=waveTime+19;
+    const count=impossibleMode?13:hardMode?11:9,correct=Math.floor(Math.random()*count);
+    for(let i=0;i<count;i++){
+      const e=spawnEnemy('runner');e.type='knollVulture';e.knoll=true;e.knollCorrect=i===correct;
+      e.hp=e.maxHp=Math.max(3,e.maxHp*(e.knollCorrect?3.2:2.3));e.r=e.knollCorrect?21:19;
+      e.speed=clamp(e.speed*(e.knollCorrect?.67:.76),70,170);e.fireCd=1.4+(i%4)*.4;e.spawnGrace=.7;
+      const a=TAU*i/count,rr=clamp(315+i%3*35,270,400);
+      e.x=clamp(player.x+Math.cos(a)*rr,55,W-55);e.y=clamp(player.y+Math.sin(a)*rr,145,H-55);
+    }
+    announce('KNOLLENGEIER-SCHWARM!','DIE GOLDENE FEDER TRÄGT DEINEN SKILL · 19 SEKUNDEN');saveRunNow();
+  }
+  function updateKnollVulture(e,dt){
+    const dx=player.x-e.x,dy=player.y-e.y,d=Math.hypot(dx,dy)||1;
+    const slow=(e.slow>0?.7:1)*(player.powerups.freeze>0?.6:1);
+    const desired=e.knollCorrect?210:105,dir=d>desired+35?1:d<desired-40?-1:0;
+    const turn=Math.sin(runTime*2.1+e.phase)>0?1:-1;
+    e.x+=((dx/d)*dir*.8-(dy/d)*turn*.3)*e.speed*slow*dt;
+    e.y+=((dy/d)*dir*.8+(dx/d)*turn*.3)*e.speed*slow*dt;
+    if(e.fireCd<=0&&d<420){e.fireCd=e.knollCorrect?3.2:4.4;enemyShot(e.x,e.y,Math.atan2(dy,dx),e.knollCorrect?225:180,false);}
+  }
+  const beforeKnollKill=onContentKill;
+  onContentKill=function(e){
+    beforeKnollKill(e);
+    if(!e.knoll||knollQuest?.status!=='hunting'||e.knollCorrect!==true){if(e.knoll)floater(e.x,e.y-27,'FALSCHE FEDER','#dfc9a1');return;}
+    const {id,flag}=knollQuest,skill=allSkillInfo(id);
+    if(skill&&!player.skills[id]){skill.apply(player);player.skills[id]=1;normalizeBuild(player);updateSkills();updateHud();}
+    knollQuest.status='recovered';floater(e.x,e.y-34,'SKILL ZURÜCK!','#f9de7e');announce('GEIER ERWISCHT!',`${skill?.title||id} IST WIEDER DA`);saveRunNow();
+  };
+  const beforeKnollUpdateContent=updateContent;
+  updateContent=function(dt){
+    beforeKnollUpdateContent(dt);if(mode!=='playing')return;
+    if(knollQuest?.status==='hunting'&&!boss){
+      if(!knollQuest.spawned&&waveTime>=2.5)spawnKnollFlock();
+      if(knollQuest.spawned&&waveTime>=knollQuest.expiresAt){
+        for(const e of enemies)if(e.knollCorrect&&!e.dead){e.dead=true;burst(e.x,e.y,'#f0ce78',20,140);}
+        knollQuest.status='lost';announce('KNOLLENGEIER ENTWISCHT',`${(allSkillInfo(knollQuest.id)?.title||'DER SKILL')} IST VERLOREN`);saveRunNow();
+      }
+    }
+    player.cinderCd=Math.max(0,(player.cinderCd||0)-dt);
+    const root=Math.sqrt(player.damage||1),specialRoot=Math.sqrt(player.specialDamage||1);
+    const pulse=(key,seconds,range,fn)=>{player[key]=(player[key]??1)-dt;if(player[key]<=0){const target=nearestTarget(player,range);if(target){player[key]=seconds;fn(target);}}};
+    if(player.pigCheekBomber)pulse('cheekBombCd',6,550,t=>{burst(t.x,t.y,'#e6a17b',12,115);for(const e of combatTargets())if(!e.dead&&dist(e,t)<100+e.r){damageEnemy(e,5*root,true);if(mode!=='playing')return;}});
+    if(mode!=='playing')return;
+    if(player.hamsterTwister)pulse('twisterCd',3.6,115,()=>{burst(player.x,player.y,'#eed6aa',16,135);for(const e of combatTargets())if(!e.dead&&dist(e,player)<115+e.r){e.slow=Math.max(e.slow||0,isBoss(e)?.35:.9);damageEnemy(e,2.8*root);if(mode!=='playing')return;}});
+    if(mode!=='playing')return;
+    if(player.hamsterVape)pulse('vapeCd',8,570,t=>{contentEffects.push({kind:'hamsterVapor',x:t.x,y:t.y,r:105,life:3,tick:.1,hits:0});});
+    if(player.ngAcornBarrage)pulse('acornBarrageCd',7,620,t=>{const a=Math.atan2(t.y-player.y,t.x-player.x);for(const off of [-.16,-.05,.05,.16])contentProjectile(player,a+off,2.5*root,{speed:610,pierce:1,auto:true,r:7,life:1.5});});
+    if(player.ng2Graviton)pulse('gravitonCd',9,175,()=>{burst(player.x,player.y,'#bca8e1',22,165);for(const e of combatTargets())if(!e.dead&&dist(player,e)<175+e.r){if(!isBoss(e)&&!e.miniBoss){const d=dist(player,e)||1;e.x+=(player.x-e.x)/d*24;e.y+=(player.y-e.y)/d*24;}damageEnemy(e,6*specialRoot,true);if(mode!=='playing')return;}});
+    if(mode!=='playing')return;
+    if(player.ng2TimeCrust){player.timeCrustCd=(player.timeCrustCd??8)-dt;if(player.timeCrustCd<=0){player.timeCrustCd=12;eraseNearbyShots(player,155,5);burst(player.x,player.y,'#cbdef1',12,115);for(const e of combatTargets())if(!e.dead&&dist(e,player)<155+e.r){damageEnemy(e,4*root,true);if(mode!=='playing')return;}}}
+    if(mode!=='playing')return;
+    if(player.ng2LastSnack&&player.hp<player.maxHp*.5){player.lastSnackCd=(player.lastSnackCd??24)-dt;if(player.lastSnackCd<=0){player.lastSnackCd=24;player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-32,'LETZTER SNACK +1 ♥','#d1e8a9');updateHud();}}
+    if(player.ng2Crossfire)pulse('crossfireCd',5,630,t=>{const a=Math.atan2(t.y-player.y,t.x-player.x);for(const off of [-.09,.09])contentProjectile(player,a+off,3*root,{pierce:2,auto:true,speed:660,r:8,life:1.45});});
+    for(const f of contentEffects)if((f.kind==='hamsterVapor'||f.kind==='diarrheaPuddle')&&f.tick<=0&&f.hits<4){f.tick=f.kind==='hamsterVapor'?.72:.8;f.hits++;const dmg=f.kind==='hamsterVapor'?1.6*specialRoot:4*player.specialDamage;for(const e of combatTargets())if(!e.dead&&dist(e,f)<f.r+e.r){if(!isBoss(e))e.slow=Math.max(e.slow||0,.8);damageEnemy(e,dmg,true);if(mode!=='playing')return;}}
+  };
+  const beforeKnollDash=useDash;
+  useDash=function(){const old=player?.dashCount||0;beforeKnollDash();if(hasenbeinMode||!player?.ngDashCinders||player.dashCount<=old||(player.cinderCd||0)>0)return;player.cinderCd=5;burst(player.x,player.y,'#e7ad74',17,115);for(const e of combatTargets())if(!e.dead&&dist(player,e)<125+e.r)damageEnemy(e,5*Math.sqrt(player.damage||1),true);};
+  const beforeKnollNewWeapon=useNewWeapon;
+  useNewWeapon=function(id){
+    if(!['diarrheaSling','ngCheeseGatling','ng2StarRoaster'].includes(id))return beforeKnollNewWeapon(id);
+    player.weaponShots++;const t=weaponTarget(440),sm=player.specialDamage||1;
+    if(id==='diarrheaSling'){for(const side of [-1,0,1])contentEffects.push({kind:'diarrheaPuddle',x:clamp(t.x+side*105,60,W-60),y:clamp(t.y+Math.abs(side)*26,140,H-60),r:86,life:3.4,tick:.1,hits:0});burst(t.x,t.y,'#aa8a65',16,100);tone(205,.16,'triangle',.05,75);}
+    else if(id==='ngCheeseGatling'){for(let i=0;i<6;i++){const a=player.angle+(i-2.5)*.095;contentProjectile(player,a,9*sm,{speed:665,life:1.55,pierce:1,r:8,pretzel:true});}burst(player.x,player.y,'#f2d677',14,110);}
+    else{for(let i=0;i<4;i++)hazards.push({type:'friendlyMortar',x:clamp(t.x+(i-1.5)*67,65,W-65),y:clamp(t.y+(i%2?24:-24),145,H-55),r:92,wait:.55+i*.17,life:.35,hit:false,damage:23*sm,friendly:true});tone(520,.2,'sawtooth',.07,150);}
+    return true;
+  };
+  const beforeKnollDrawContent=drawContent;
+  drawContent=function(){beforeKnollDrawContent();for(const f of contentEffects)if(f.kind==='hamsterVapor'||f.kind==='diarrheaPuddle'){ctx.save();ctx.globalAlpha=Math.min(.47,Math.max(.04,f.life*.15));ellipse(ctx,f.x,f.y,f.r,f.r*.45,f.kind==='hamsterVapor'?'#abacbc':'#977453');ctx.strokeStyle=f.kind==='hamsterVapor'?'#d7d1ed':'#bd9b70';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(f.x,f.y,f.r,f.r*.45,0,0,TAU);ctx.stroke();ctx.restore();}};
+  const beforeKnollRabbitDraw=drawRabbit;
+  drawRabbit=function(e){beforeKnollRabbitDraw(e);if(!e.knoll||e.dead)return;ctx.save();ctx.translate(e.x,e.y);ctx.rotate(Math.sin(ambientTime*8+e.phase)*.1);
+    path(ctx,[[-10,-7],[-37,-23],[-27,9],[-10,8]],'#736a65');path(ctx,[[10,-7],[37,-23],[27,9],[10,8]],'#736a65');ellipse(ctx,0,-4,17,17,'#827768');
+    path(ctx,[[-13,-14],[0,-30],[13,-14]],'#a69874');path(ctx,[[-8,0],[13,4],[-8,10]],'#dfb572');ellipse(ctx,5,-12,3,3,'#312a30');
+    if(e.knollCorrect){ctx.shadowColor='#ffe48a';ctx.shadowBlur=16;path(ctx,[[-9,-30],[0,-47],[9,-31]],'#ffe48a');ctx.font='bold 16px Arial';ctx.textAlign='center';ctx.fillStyle='#fff0b0';ctx.fillText(allSkillInfo(knollQuest?.id)?.icon||'✦',0,-53);}
+    ctx.restore();};
+  const beforeKnollHelp=helpMarkup;
+  helpMarkup=function(){return beforeKnollHelp().replace('<article><b>Minibosse</b>','<article><b>Knollengeier · 1 %</b><p>Zwischen geeigneten Wellen kann ein Geier einen reversiblen Skill stehlen. Die nächste Welle bringt einen Schwarm: Der Geier mit goldener Feder hat den Skill. Besiege ihn innerhalb von 19 Sekunden; sonst bleibt der Skill in diesem Run verloren. Normale Wellen-Belohnungen bleiben erhalten.</p></article><article><b>Minibosse</b>');};
+  const beforeKnollHud=updateHud;
+  updateHud=function(){beforeKnollHud();if(knollQuest?.status==='hunting'&&knollQuest.spawned&&!boss){$('waveObjective').textContent+=` · GOLDENE FEDER: ${Math.max(0,Math.ceil(knollQuest.expiresAt-waveTime))} s`;}};
+  blueRewards.add('pigCheekBomber');blueRewards.add('hamsterVape');
+
+  // Ronny cycles through ten actual projectile patterns. His seven upgrades need
+  // the base companion and never grant player-wide damage or a free weapon.
+  const ronnyNuts=[
+    {name:'Walnuss',color:'#c38b54',damage:2.9},
+    {name:'Haselnuss',color:'#dfbd76',damage:1.6,shots:2,spread:.12},
+    {name:'Eichel',color:'#c18d4f',damage:2.2,pierce:2},
+    {name:'Pistazie',color:'#acc489',damage:2,frost:true},
+    {name:'Kastanie',color:'#b57056',damage:3.6,r:11,speed:430,heavy:true},
+    {name:'Mandel',color:'#e5bd91',damage:2,chain:true},
+    {name:'Cashew',color:'#ecd295',damage:1.2,shots:3,spread:.18},
+    {name:'Pekannuss',color:'#a27c60',damage:2.4,pierce:1,frost:true},
+    {name:'Macadamia',color:'#e8d9b3',damage:2.7,splash:true},
+    {name:'Pinienkern',color:'#e9e6bb',damage:1.7,pierce:1,homing:true}
+  ];
+  skillBook.ronnySquirrel=passive('RONNY HÖRNCHEN','♧','Ein mutiertes Eichhörnchen begleitet dich und schießt alle 1,8 s im Wechsel zehn Nusssorten: Walnuss, Haselnuss, Eichel, Pistazie, Kastanie, Mandel, Cashew, Pekannuss, Macadamia und Pinienkern. Verschiedene Streuung, Durchschlag und Effekte.','ronnySquirrel');
+  ngPlusCarryKeys.push('ronnySquirrel');blueRewards.add('ronnySquirrel');
+  upgradePools.forEach((pool,i)=>{if(i%2===0||i===7)pool.push('ronnySquirrel');});
+  const ronnyUpgrades=[
+    ['BUSCHFUNK-TURBO','Ronny feuert 12 % schneller: alle 1,58 statt 1,8 Sekunden.'],
+    ['SCHÄRFERE KERNE','Jedes Geschoss von Ronny verursacht 18 % mehr Schaden.'],
+    ['ZWEITE PFOTE','Jeder dritte Angriff schickt ein Zusatzgeschoss derselben Sorte für 50 % ihres Schadens.'],
+    ['FROSTIGES NUSSLAGER','Ronnys Pistazien und Pekannüsse bremsen normale Gegner 2,1 s, Bosse 1,7 s statt 1,5 s.'],
+    ['RONNYS KETTENKERN','Auch Ronnys Walnüsse und Macadamianüsse lösen bei einem Treffer eine Kettennuss aus.'],
+    ['BOSS-KNABBERER','Ronnys Geschosse verursachen 15 % mehr Schaden gegen Bosse und Minibosse.'],
+    ['NOTFALLVORRAT','Unter 35 % Leben vernichtet Ronny bis zu zwei Geschosse nahe Snickers; höchstens alle 22 s.']
+  ];
+  ronnyUpgrades.forEach(([title,desc],i)=>{
+    const id=`ronnyUp${i+1}`;
+    skillBook[id]={title,short:title,icon:'♧',desc:`Ronny Hörnchen: ${desc}`,requires:'ronnySquirrel',requiresFlag:'ronnySquirrel',apply:p=>{p.skills[id]=1;}};
+    if([0,1,2,4,5].includes(i))blueRewards.add(id);
+    if(i===6)purpleRewards.add(id);
+  });
+  const wollenkampsMore=[
+    ['SCHIRMGEWITTER','Bei jeder Diskussion trifft sie bis zu drei weitere Gegner im Umkreis 105 für je 1,1 × √Nussschaden.'],
+    ['KALTFRONT IM ANMARSCH','Ihre Diskussion bremst zusätzlich andere Gegner im Umkreis 115 für 0,85 s; Bosse und Minibosse 0,35 s.'],
+    ['FALTSCHIRM-REFLEX','Bei einer Diskussion vernichtet sie bis zu zwei Geschosse in 145 Reichweite um Snickers; höchstens alle 16 s.']
+  ];
+  wollenkampsMore.forEach(([title,desc],i)=>{
+    const id=`wollenkampsUp${i+6}`;
+    skillBook[id]={title,short:title,icon:'☂',desc:`Frau Wollenkamps: ${desc}`,requires:'wollenkamps',requiresFlag:'wollenkamps',apply:p=>{p.skills[id]=1;}};
+    (i===2?purpleRewards:blueRewards).add(id);
+  });
+  weaponBook.potatoSalvo={name:'KARTOFFELHAGEL',icon:'◉',desc:'Waffe: Zwei versetzte Kartoffeleinschläge am Ziel, je 21 × Spezialfaktor Schaden im Radius 96. Jeder Einschlag trifft dasselbe Ziel höchstens einmal. 4 Ladungen.',max:4};
+  skillBook.potatoSalvo=weaponUnlock('potatoSalvo');
+  upgradePools[2].push('potatoSalvo');upgradePools[5].push('potatoSalvo');upgradePools[8].push('potatoSalvo');
+  const ronnyWeaponUse=useNewWeapon;
+  useNewWeapon=function(id){
+    if(id!=='potatoSalvo')return ronnyWeaponUse(id);
+    player.weaponShots++;const t=weaponTarget(440),sm=player.specialDamage||1;
+    for(const [i,dx] of [-46,46].entries())hazards.push({type:'friendlyMortar',x:clamp(t.x+dx,55,W-55),y:clamp(t.y+(i?20:-20),120,H-55),r:96,wait:.48+i*.24,life:.35,hit:false,damage:21*sm,friendly:true});
+    burst(t.x,t.y,'#d7b580',14,110);tone(280,.18,'triangle',.055,85);return true;
+  };
+  const ronnyExpansion=updateExpansion;
+  updateExpansion=function(dt){
+    ronnyExpansion(dt);if(mode!=='playing'||!player?.ronnySquirrel)return;
+    const px=player.x-42,py=player.y-32;
+    player.ronnyX=(player.ronnyX??px)+(px-(player.ronnyX??px))*Math.min(1,dt*7);
+    player.ronnyY=(player.ronnyY??py)+(py-(player.ronnyY??py))*Math.min(1,dt*7);
+    const origin={x:player.ronnyX,y:player.ronnyY};
+    player.ronnyCd=(player.ronnyCd??.65)-dt;
+    const target=nearestTarget(origin,610);
+    if(target&&player.ronnyCd<=0){
+      player.ronnyCd=player.skills.ronnyUp1?1.58:1.8;
+      const index=(player.ronnyIndex||0)%ronnyNuts.length,nut=ronnyNuts[index];player.ronnyIndex=index+1;
+      player.ronnyShots=(player.ronnyShots||0)+1;
+      const aim=Math.atan2(target.y-origin.y,target.x-origin.x),shots=nut.shots||1,root=Math.sqrt(player.damage||1);
+      for(let i=0;i<shots;i++){
+        const angle=aim+(i-(shots-1)/2)*(nut.spread||0),damage=nut.damage*root*(player.skills.ronnyUp2?1.18:1);
+        contentProjectile(origin,angle,damage,{ronnyBullet:true,ronnyType:index,ronnyColor:nut.color,ronnySplash:Boolean(nut.splash),ronnyHoming:Boolean(nut.homing),ronnyLongFrost:Boolean(nut.frost&&player.skills.ronnyUp4),r:nut.r||6,speed:nut.speed||570,life:1.6,pierce:nut.pierce||0,chain:Boolean(nut.chain||player.skills.ronnyUp5&&(index===0||index===8)),frost:Boolean(nut.frost),heavy:Boolean(nut.heavy),auto:true});
+      }
+      if(player.skills.ronnyUp3&&player.ronnyShots%3===0)contentProjectile(origin,aim+.10,nut.damage*root*(player.skills.ronnyUp2?1.18:1)*.5,{ronnyBullet:true,ronnyType:index,ronnyColor:nut.color,auto:true,r:5,speed:570,life:1.5});
+    }
+    for(const b of bullets)if(b.ronnyHoming&&b.life>0){const t=nearestTarget(b,340);if(t){const aim=Math.atan2(t.y-b.y,t.x-b.x);b.a+=clamp(angleDelta(aim,b.a),-dt*3.3,dt*3.3);const speed=Math.hypot(b.vx,b.vy);b.vx=Math.cos(b.a)*speed;b.vy=Math.sin(b.a)*speed;}}
+    if(player.skills.ronnyUp7){player.ronnyGuardCd=Math.max(0,(player.ronnyGuardCd||0)-dt);if(player.hp<player.maxHp*.35&&player.ronnyGuardCd<=0&&enemyBullets.some(b=>b.life>0&&dist(b,player)<135)){eraseNearbyShots(player,135,2);player.ronnyGuardCd=22;burst(player.ronnyX,player.ronnyY,'#e5d397',8,70);}}
+  };
+  const ronnyDrawExpansion=drawExpansion;
+  drawExpansion=function(){ronnyDrawExpansion();if(!player?.ronnySquirrel)return;
+    const x=player.ronnyX??player.x-42,y=player.ronnyY??player.y-32;ctx.save();ctx.translate(x,y);
+    ctx.strokeStyle='#9a684d';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-9,9);ctx.bezierCurveTo(-32,22,-36,-20,-18,-15);ctx.stroke();
+    ellipse(ctx,0,7,12,14,'#a87951');ellipse(ctx,0,-7,12,11,'#be8a5a');
+    path(ctx,[[-11,-10],[-13,-23],[-4,-15]],'#b88457');path(ctx,[[5,-15],[13,-24],[12,-9]],'#b88457');
+    ellipse(ctx,-4,-8,2,3,'#282e28');ellipse(ctx,6,-8,2,3,'#282e28');ellipse(ctx,1,-1,6,4,'#efd1ac');ellipse(ctx,1,-2,2,2,'#423632');
+    ellipse(ctx,13,10,5,4,ronnyNuts[(player.ronnyIndex||0)%10].color);ctx.fillStyle='#f8e3af';ctx.font='bold 9px Arial';ctx.textAlign='center';ctx.fillText('RONNY',0,-28);ctx.restore();
+  };
+  const knattertrollHelp=helpMarkup;
+  helpMarkup=function(){return knattertrollHelp().replace('Der Endlosmodus wird nach NG+2 freigeschaltet und bietet frische oder Hall-of-Fame-Builds.','Der Endlosmodus wird nach NG+2 freigeschaltet und bietet frische Runs oder Kampagnen-Builds. Archivierte Endlos-Builds sind ausschließlich als Gegner im Hasenbein-Modus spielbar.');};
 
   $('startButton').onclick=()=>startGame(0);$('menuSettingsButton').onclick=showSettings;$('ngPlusButton').onclick=()=>startGame(1);$('ngPlus2Button').onclick=()=>startGame(2);$('hallOfFameButton').onclick=showHallOfFame;$('endlessButton').onclick=showEndlessSelect;$('hasenbeinButton').onclick=showHasenbeinSelect;$('helpButton').onclick=showHelp;$('achievementButton').onclick=showAchievements;$('powerupButton').onclick=showPowerups;$('pauseButton').onclick=pauseGame;$('soundButton').onclick=toggleSound;$('settingsButton').onclick=showSettings;
   updateNGPlusMenu();
