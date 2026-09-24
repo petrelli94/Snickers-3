@@ -2326,6 +2326,7 @@
   function frame(now){
     const dt=Math.min((now-lastFrame)/1000||0,.04);lastFrame=now;
     if(mode==='victory'){if(!document.hidden){ambientTime+=dt;victoryTime-=dt;updateBossCelebration();if(victoryTime<=0){closeBossCelebration();const next=victoryAfter;victoryAfter=null;next?.();}}}
+    if((mode==='hasenbeinKarnilIntro'||mode==='hasenbeinVictoryCutscene')&&!document.hidden){ambientTime+=dt;advanceHasenbeinCinematic(dt);}
     if(mode==='playing'){
       ambientTime+=dt; update(dt);shake=Math.max(0,shake-dt*22);bombFlash=Math.max(0,bombFlash-dt);
       for(const p of particles){p.life-=dt;p.x+=(p.vx||0)*dt;p.y+=(p.vy||0)*dt;if(p.vx!==undefined)p.vx*=.97;if(p.vy!==undefined)p.vy*=.97;}
@@ -3574,7 +3575,16 @@
   let hasenbeinMode=false,hasenbeinRival=null,hasenbeinDifficulty='normal',hasenbeinDuelTime=0;
   let hasenbeinShots=[],hasenbeinAttackCd=0,hasenbeinSpecialCd=0,hasenbeinDashCd=0,hasenbeinDashTime=0,hasenbeinDashHit=false;
   let hasenbeinPhase=1,hasenbeinMaxPhases=3,hasenbeinFanCd=0,hasenbeinShockCd=0,hasenbeinVolleyCd=0,hasenbeinWindup=0,hasenbeinRamAngle=0,hasenbeinHazards=[];
-  let hasenbeinMinions=[],hasenbeinSummonCd=0,hasenbeinAttackPattern=0;
+  let hasenbeinMinions=[],hasenbeinSummonCd=0,hasenbeinAttackPattern=0,hasenbeinKarnil=null;
+  let hasenbeinBuildThreat=1,hasenbeinPower=1,hasenbeinCinematicTime=0;
+  function scaleHasenbeinToBuild(build){
+    const burst=Math.sqrt(Math.max(.7,build.damage||1.4)/1.4*(.32/clamp(build.fireRate||.32,.10,.55)));
+    const offense=clamp(burst,1,3.4),extreme=clamp((burst-5)*.24,0,.8);
+    const endurance=clamp(Math.sqrt(Math.max(4,build.maxHp||5)/5),1,2.6);
+    const weapons=clamp((build.weapons?.length||1)-1,0,6),skills=clamp(Object.keys(build.skills||{}).length,0,30);
+    return clamp(1+(offense-1)*.36+(endurance-1)*.24+weapons*.11+skills*.012+extreme,1,3.5);
+  }
+  const hasenbeinDamage=amount=>amount*hasenbeinPower;
   const hasenbeinUnlocked=()=>ngPlus2EverUnlocked||ngPlus2Unlocked||hallOfFame.some(r=>hallDifficulty(r)==='normal'&&hallTier(r)===2);
   const hasenbeinDifficultyOf=r=>r.impossibleMode||r.build?.impossibleMode?'impossible':r.hardMode?'hard':'normal';
   const hasenbeinMenuUpdate=updateNGPlusMenu;
@@ -3590,17 +3600,20 @@
     if(mode!=='hasenbeinSelect'||!hasenbeinUnlocked())return;
     const record=hallOfFame[index];if(!record)return;
     const build=restoreBuildValues(hallBuild(record));hasenbeinDifficulty=hasenbeinDifficultyOf(record);
-    const factor=hasenbeinDifficulty==='impossible'?2.45:hasenbeinDifficulty==='hard'?1.70:1;
+    hasenbeinBuildThreat=scaleHasenbeinToBuild(build);
+    hasenbeinPower=1+(hasenbeinBuildThreat-1)*.67;
+    const factor=hasenbeinDifficulty==='impossible'?1.69:hasenbeinDifficulty==='hard'?1.45+(hasenbeinBuildThreat-1)*.07:1.15;
     hasenbeinMode=true;runSessionId=null;resetInput();clearTimeout(announcementTimer);
     $('touchControls').classList.add('hasenbein-touch');$('touchShock').classList.remove('hidden');
     $('touchCycle').innerHTML='SALVE<span>Q</span>';$('touchCycle').setAttribute('aria-label','Hasenbeins Salve');
     $('touchBomb').innerHTML='ORKAN<span>E</span>';$('touchBomb').setAttribute('aria-label','Möhrenorkan');
     $('touchDash').innerHTML='RAMMEN<span>↗</span>';$('touchDash').setAttribute('aria-label','Hasenbeins Rammangriff');
     hardMode=hasenbeinDifficulty!=='normal';impossibleMode=hasenbeinDifficulty==='impossible';endlessMode=false;gamePlusLevel=0;
-    stageVisual=0;makeGround();hasenbeinDuelTime=0;hasenbeinShots=[];hasenbeinHazards=[];hasenbeinMinions=[];hasenbeinAttackPattern=0;hasenbeinSummonCd=5.5;hasenbeinAttackCd=1.2;hasenbeinSpecialCd=0;hasenbeinDashCd=0;hasenbeinDashTime=0;hasenbeinWindup=0;hasenbeinFanCd=0;hasenbeinShockCd=0;hasenbeinVolleyCd=0;
+    stageVisual=0;makeGround();hasenbeinDuelTime=0;hasenbeinShots=[];hasenbeinHazards=[];hasenbeinMinions=[];hasenbeinKarnil=null;hasenbeinCinematicTime=0;hasenbeinAttackPattern=0;hasenbeinSummonCd=5.5;hasenbeinAttackCd=1.2;hasenbeinSpecialCd=0;hasenbeinDashCd=0;hasenbeinDashTime=0;hasenbeinWindup=0;hasenbeinFanCd=0;hasenbeinShockCd=0;hasenbeinVolleyCd=0;
     hasenbeinPhase=1;hasenbeinMaxPhases=hasenbeinDifficulty==='impossible'?5:hasenbeinDifficulty==='hard'?4:3;
-    player=createPlayer();const hearts=hasenbeinDifficulty==='impossible'?7:hasenbeinDifficulty==='hard'?8:10;
-    Object.assign(player,{x:W*.23,y:H*.56,r:49,hp:hearts,maxHp:hearts,speed:105,invuln:1.4,phase:0,enraged:false});
+    player=createPlayer();const baseHearts=hasenbeinDifficulty==='hard'?9:hasenbeinDifficulty==='impossible'?10.5:10;
+    const hearts=Math.round(baseHearts*(1+(hasenbeinBuildThreat-1)*.86)*10)/10;
+    Object.assign(player,{x:W*.23,y:H*.56,r:49,hp:hearts,maxHp:hearts,speed:105+Math.min(13,(hasenbeinBuildThreat-1)*8),invuln:1.4,phase:0,enraged:false});
     hasenbeinRival=createPlayer();
     const rivalHp=clamp((425+Math.sqrt(Math.max(1,build.maxHp||5)*Math.max(1,build.damage||1))*29+(build.weapons?.length||1)*22)*factor,465,2200);
     Object.assign(hasenbeinRival,{x:W*.76,y:H*.56,r:23,hp:rivalHp,speed:clamp((build.speed||264)*.7,165,252),invuln:.7,phase:0,fireCd:1.15,patternCd:4.6,dodgeCd:3.8,charge:null,weaponCount:build.weapons?.length||1,angle:Math.PI,face:-1,moving:true,damage:clamp(Math.sqrt((build.damage||1)/1.4),1,2.5),fireRate:clamp(build.fireRate||.32,.08,.55),dodgeChance:clamp(build.dodgeChance||0,0,.22),shieldReady:Boolean(build.shield),shieldUsed:false,nutFan:Boolean(build.nutFan||build.spread),rearNut:Boolean(build.rearNut),orbit:Boolean(build.orbit),sentry:Boolean(build.nutSentry),frost:Boolean(build.frost),vampire:Boolean(build.vampire),companionCount:['bruno','narrath','knisterKnight','wollenkamps','erweinLewy','soapedRat','daimDuo','pigPatrol'].filter(k=>build[k]||build.skills?.[k]).length});
@@ -3608,7 +3621,7 @@
     mode='hasenbeinIntro';$('startScreen').classList.add('hidden');$('hud').classList.add('hidden');$('hud').setAttribute('aria-hidden','true');
     for(const id of ['runInfo','bossHud','skillHud','powerHud','achievementHud','waveMiniBar'])$(id).classList.add('hidden');
     $('hasenbeinHud').classList.remove('hidden');$('pauseButton').classList.remove('hidden');$('touchControls').classList.remove('hidden');
-    updateHasenbeinHud();showOverlay(`<span class="eyebrow">HASENBEIN MODUS · ${hasenbeinDifficulty.toUpperCase()}</span><h2 id="overlayTitle">DIE RACHE DES GENERAL HASENBEIN.</h2><p>Du hast ${hasenbeinMaxPhases} Hasenbein-Phasen mit eigenen Lebensbalken gegen einen einzigen mächtigen Snickers. Seine Gesundheit setzt sich niemals zurück. Der General greift wie im Bosskampf mit Ringsalven, Fächerschüssen, angekündigten Beben und Rammanläufen an und ruft Hasen zur Hilfe. Ab seiner zweiten Phase gerät er in Wut.</p><p><strong>WASD</strong> den schweren Boss bewegen · <strong>Automatisch</strong> Angriffsmuster · <strong>Q</strong> Fächersalve · <strong>E</strong> Möhrenorkan · <strong>R</strong> Erdbeben · <strong>SPACE</strong> Rammen.</p><button class="primary-button" id="hasenbeinGo">REVANCHE STARTEN ↗</button>`);
+    updateHasenbeinHud();showOverlay(`<span class="eyebrow">HASENBEIN MODUS · ${hasenbeinDifficulty.toUpperCase()}</span><h2 id="overlayTitle">DIE RACHE DES GENERAL HASENBEIN.</h2><p>Dein Gegner hat ${Object.keys(build.skills||{}).length} Skills und ${build.weapons?.length||1} Waffen. Hasenbeins Leben pro Phase und der Schaden seiner Bossangriffe wachsen passend zu diesem Build; Snickers bleibt gefährlicher. Du hast ${hasenbeinMaxPhases} eigene Phasen gegen seinen einzigen Lebensbalken. In der letzten Phase eilt Karnil zu Hilfe.</p><p>Der General greift automatisch mit Ringsalven, Fächerschüssen, angekündigten Beben und Rammanläufen an und ruft Hasen herbei. <strong>WASD</strong> bewegen · <strong>Q</strong> Fächersalve · <strong>E</strong> Möhrenorkan · <strong>R</strong> Erdbeben · <strong>SPACE</strong> Rammen.</p><button class="primary-button" id="hasenbeinGo">REVANCHE STARTEN ↗</button>`);
     $('hasenbeinGo').onclick=()=>{mode='playing';hideOverlay();lastFrame=performance.now();};
   }
   function updateHasenbeinHud(){
@@ -3617,6 +3630,7 @@
     $('hasenbeinHealthFill').style.width=clamp(player.hp/player.maxHp*100,0,100)+'%';
     $('hasenbeinRivalHealth').textContent=`SNICKERS · ${Math.ceil(Math.max(0,hasenbeinRival.hp))} / ${Math.ceil(hasenbeinRival.maxHp)}`;
     $('hasenbeinRivalFill').style.width=clamp(hasenbeinRival.hp/hasenbeinRival.maxHp*100,0,100)+'%';
+    const ally=$('hasenbeinKarnilStatus');ally.textContent=hasenbeinKarnil?(hasenbeinKarnil.hp>0?`KARNIL HILFT DIR · ${Math.ceil(hasenbeinKarnil.hp)} ♥`:'KARNIL IST ERSCHÖPFT'):'';ally.classList.toggle('hidden',!hasenbeinKarnil);
     const ready=n=>n<=0?'BEREIT':n.toFixed(1)+' s';
     $('hasenbeinAbilities').textContent=`Q SALVE ${ready(hasenbeinFanCd)} · E ORKAN ${ready(hasenbeinSpecialCd)} · R BEBEN ${ready(hasenbeinShockCd)} · SPACE RAMMEN ${ready(hasenbeinDashCd)}`;
   }
@@ -3633,21 +3647,21 @@
   function hasenbeinSalvo(){
     if(!hasenbeinMode||mode!=='playing'||hasenbeinFanCd>0)return;
     hasenbeinFanCd=4.6;const a=Math.atan2(hasenbeinRival.y-player.y,hasenbeinRival.x-player.x),count=hasenbeinPhase>=2?7:5;
-    for(let i=0;i<count;i++)hasenbeinShot(player.x,player.y,a+(i-(count-1)/2)*.14,hasenbeinPhase>=2?275:220,6.8,'hasenbein');
+    for(let i=0;i<count;i++)hasenbeinShot(player.x,player.y,a+(i-(count-1)/2)*.14,hasenbeinPhase>=2?275:220,hasenbeinDamage(6.8),'hasenbein');
     burst(player.x,player.y,'#f2bf78',13,95);tone(380,.16,'square',.035,220);updateHasenbeinHud();
   }
   function hasenbeinOrkan(){
     if(!hasenbeinMode||mode!=='playing'||hasenbeinSpecialCd>0)return;
     hasenbeinSpecialCd=7.2;const a=Math.atan2(hasenbeinRival.y-player.y,hasenbeinRival.x-player.x);
-    for(let i=-2;i<=2;i++)hasenbeinShot(player.x,player.y,a+i*.14,295,5.8,'hasenbein');
-    for(let i=0;i<(hasenbeinPhase>=2?18:13);i++)hasenbeinShot(player.x,player.y,a+i*TAU/(hasenbeinPhase>=2?18:13),hasenbeinPhase>=2?225:185,4.8,'hasenbein');
+    for(let i=-2;i<=2;i++)hasenbeinShot(player.x,player.y,a+i*.14,295,hasenbeinDamage(5.8),'hasenbein');
+    for(let i=0;i<(hasenbeinPhase>=2?18:13);i++)hasenbeinShot(player.x,player.y,a+i*TAU/(hasenbeinPhase>=2?18:13),hasenbeinPhase>=2?225:185,hasenbeinDamage(4.8),'hasenbein');
     burst(player.x,player.y,'#e6a86d',23,170);tone(260,.16,'triangle',.05,550);updateHasenbeinHud();
   }
   function hasenbeinEarthquake(){
     if(!hasenbeinMode||mode!=='playing'||hasenbeinShockCd>0)return;
     hasenbeinShockCd=8;const rival=hasenbeinRival;
-    hasenbeinHazards.push({x:rival.x,y:rival.y,r:hasenbeinPhase>=2?138:112,wait:1.05,life:.35,hit:false,damage:16});
-    hasenbeinHazards.push({x:clamp(rival.x+rnd(-180,180),65,W-65),y:clamp(rival.y+rnd(-150,150),140,H-55),r:88,wait:1.45,life:.35,hit:false,damage:12});
+    hasenbeinHazards.push({x:rival.x,y:rival.y,r:hasenbeinPhase>=2?138:112,wait:1.05,life:.35,hit:false,damage:hasenbeinDamage(16)});
+    hasenbeinHazards.push({x:clamp(rival.x+rnd(-180,180),65,W-65),y:clamp(rival.y+rnd(-150,150),140,H-55),r:88,wait:1.45,life:.35,hit:false,damage:hasenbeinDamage(12)});
     tone(90,.3,'sawtooth',.07,28);updateHasenbeinHud();
   }
   function hasenbeinJump(){
@@ -3663,12 +3677,76 @@
     hasenbeinPhase++;player.hp=player.maxHp;player.invuln=1.6;player.enraged=true;
     player.speed=Math.min(142,player.speed+10);hasenbeinAttackCd=.7;hasenbeinSummonCd=Math.min(hasenbeinSummonCd,2.5);
     hasenbeinShots=hasenbeinShots.filter(s=>s.owner==='hasenbein');hasenbeinHazards=[];hasenbeinRival.charge=null;
-    burst(player.x,player.y,'#ffab6f',45,210);announce(`HASENBEIN · PHASE ${hasenbeinPhase} / ${hasenbeinMaxPhases}`,'DER GENERAL DREHT DURCH');tone(105,.6,'sawtooth',.08,40);updateHasenbeinHud();
+    burst(player.x,player.y,'#ffab6f',45,210);tone(105,.6,'sawtooth',.08,40);
+    if(hasenbeinPhase===hasenbeinMaxPhases){startHasenbeinKarnilIntro();return;}
+    announce(`HASENBEIN · PHASE ${hasenbeinPhase} / ${hasenbeinMaxPhases}`,'DER GENERAL DREHT DURCH');updateHasenbeinHud();
+  }
+  function hasenbeinCinematicArt(victory){
+    return `<div class="hasenbein-cinematic ${victory?'hasenbein-campfire':'hasenbein-arrival'}" role="group" aria-label="${victory?'Hasenbein und Karnil jubeln am Lagerfeuer; Snickers hängt als Cartoonfigur über den Flammen':'Karnil bricht durch den Zaun und eilt Hasenbein gegen Snickers zur Hilfe'}">
+      <svg viewBox="0 0 840 315" role="img" aria-label="${victory?'Hasenbein und Karnil feiern am Lagerfeuer mit Snickers am Grillspieß':'Hasenbein und Karnil stellen sich gemeinsam Snickers'}">
+        <defs><linearGradient id="hbSky" x2="0" y2="1"><stop stop-color="${victory?'#17243d':'#46304a'}"/><stop offset="1" stop-color="${victory?'#50504b':'#8f5460'}"/></linearGradient><radialGradient id="hbGlow"><stop stop-color="#ffd374" stop-opacity=".85"/><stop offset="1" stop-color="#ef693b" stop-opacity="0"/></radialGradient></defs>
+        <rect width="840" height="315" rx="16" fill="url(#hbSky)"/><circle cx="683" cy="64" r="38" fill="${victory?'#f5efc1':'#efbea5'}" opacity=".76"/>
+        <path d="M0 245 Q130 205 278 240 T560 235 T840 246 V315 H0Z" fill="${victory?'#332c30':'#533c3c'}"/>
+        <path d="M18 239l36-53 41 55m635 3 35-64 37 62" fill="none" stroke="#252b32" stroke-width="16" opacity=".8"/>
+        ${victory?`<ellipse cx="632" cy="237" rx="144" ry="72" fill="url(#hbGlow)" class="hb-fire-glow"/>
+          <path d="M523 243 L674 287 M676 244 L529 287" stroke="#886047" stroke-width="15" stroke-linecap="round"/>
+          <g class="hb-flames"><path d="M575 254q-26-46 4-74-3 32 20 39 8-37 30-62-4 46 26 48 6-22 20-32 16 53 0 82z" fill="#f37535"/><path d="M589 255q-14-29 6-47 3 23 24 19 3-22 16-41 2 35 22 37 9 13 2 32z" fill="#ffd46c"/></g>
+          <path d="M530 143 L752 143" stroke="#b7a28a" stroke-width="9" stroke-linecap="round"/><path d="M534 143 L517 247m231-104 18 104" stroke="#8a746c" stroke-width="8"/>
+          <g transform="translate(642 122)" class="hb-roasting"><ellipse cy="12" rx="29" ry="31" fill="#bf8752"/><path d="M-23-14l-10-27 23 11m20 0 23-11-10 27" fill="#d7a06a"/><ellipse cy="-5" rx="24" ry="20" fill="#e1ab77"/><circle cx="-8" cy="-8" r="3" fill="#352f35"/><circle cx="9" cy="-8" r="3" fill="#352f35"/><path d="M-6 5q7-7 15 0" fill="none" stroke="#513633" stroke-width="3"/><path d="M-32 15l-13 16m77-16 13 16" stroke="#d5a06b" stroke-width="8" stroke-linecap="round"/></g>
+          <path d="M599 164q-9-12 2-23m35 23q-10-12 1-24m36 24q-9-12 2-23" stroke="#f6d6a6" stroke-width="3" fill="none" opacity=".65"/>`:`<path d="M620 185L705 163M666 186l59-34m-15 49 78-14" stroke="#ffd7a7" stroke-width="3" opacity=".55"/>
+          <g transform="translate(717 203)" class="hb-snickers-run"><ellipse cy="12" rx="27" ry="30" fill="#c68d54"/><ellipse cy="-11" rx="25" ry="22" fill="#e7b47c"/><path d="M-18-29l-7-24 17 17m21-2 18-19-4 29" fill="#c69162"/><circle cx="-8" cy="-14" r="3"/><circle cx="9" cy="-14" r="3"/><ellipse cy="-3" rx="6" ry="4" fill="#a75e57"/><path d="M-20 31l-19 16m54-18 21 10" stroke="#ba8150" stroke-width="8" stroke-linecap="round"/></g>`}
+        <g transform="translate(227 205)" class="hb-hero-motion"><ellipse cy="48" rx="64" ry="12" fill="#111b24aa"/><path d="M-38-53l-18-87q-14-28-24-11l4 88m107 8 20-89q13-21 23-8l-6 93" fill="#d1c2a0" stroke="#a4a58f" stroke-width="6"/><ellipse cy="15" rx="54" ry="54" fill="#b8bb9d"/><ellipse cy="-41" rx="47" ry="43" fill="#d7d2b0"/><path d="M-25-51l15 6m29-7 17-7" stroke="#5e5153" stroke-width="5"/><circle cx="-13" cy="-45" r="5" fill="#ab4449"/><circle cx="20" cy="-46" r="5" fill="#ab4449"/><ellipse cx="5" cy="-18" rx="14" ry="9" fill="#e9c6ab"/>${victory?'<path d="M-55 10l-33-45m141 30 27-44m-104 94-12 24m56-24 14 23" stroke="#c4bca0" stroke-width="14" stroke-linecap="round"/><path d="M-22-12q26 33 54-3" fill="none" stroke="#85534a" stroke-width="4" stroke-linecap="round"/>':'<path d="M-55 10l-29-8m136-6 28-16m-104 65-12 24m56-24 14 23" stroke="#c4bca0" stroke-width="14" stroke-linecap="round"/>'}<path d="M-40 5h80v24h-80z" fill="#695552"/><circle cy="16" r="9" fill="#f0c378"/></g>
+        <g transform="translate(424 208)" class="hb-boar-motion"><ellipse cy="43" rx="70" ry="13" fill="#111b24aa"/><ellipse cy="9" rx="68" ry="51" fill="#916e66"/><path d="M-51-23l-16-42 38 29m51-1 38-31-8 45" fill="#bd8d7d"/><ellipse cy="-25" rx="54" ry="43" fill="#b08375"/><ellipse cy="-3" rx="34" ry="20" fill="#dba291"/><circle cx="-12" cy="-5" r="5" fill="#825e5a"/><circle cx="11" cy="-5" r="5" fill="#825e5a"/><path d="M-40 0l-21 20 4-31m96 11 22 20-4-31" fill="#f5dfc0"/><circle cx="-18" cy="-40" r="4" fill="#f9d98c"/><circle cx="19" cy="-40" r="4" fill="#f9d98c"/><path d="M-43 40l-12 20m86-19 12 20" stroke="#8d6562" stroke-width="14" stroke-linecap="round"/></g>
+        <text x="420" y="294" fill="#f8e4b7" font-size="16" font-family="Arial" font-weight="bold" text-anchor="middle">${victory?'DIE REVANCHE IST SERVIERT.':'KARNIL EILT ZU HILFE!'}</text>
+      </svg>
+    </div>`;
+  }
+  function startHasenbeinKarnilIntro(){
+    if(mode!=='playing'||hasenbeinKarnil)return;
+    const hp=Math.round(10+(hasenbeinBuildThreat-1)*9);
+    hasenbeinKarnil={x:clamp(player.x+140,90,W-90),y:clamp(player.y-60,165,H-95),r:75,hp,maxHp:hp,speed:90,phase:0,hit:0,shotCd:1.2,rockCd:3.5,contactCd:0,type:'boss',karnil:true};
+    mode='hasenbeinKarnilIntro';hasenbeinCinematicTime=3.3;resetInput();updateHasenbeinHud();
+    showOverlay(`<span class="eyebrow">LETZTE PHASE · DIE ERDE BEBT</span><h2 id="overlayTitle">KARNIL KOMMT!</h2>${hasenbeinCinematicArt(false)}<p class="hasenbein-scene-copy">„Finger weg von meinem Hasen!“ Karnil durchbricht den Gartenzaun und kämpft jetzt an Hasenbeins Seite. Snickers' verbleibendes Leben bleibt unverändert.</p><button class="secondary-button" id="hasenbeinSkipKarnil">KAMPF FORTSETZEN ↗</button>`);
+    $('hasenbeinSkipKarnil').onclick=finishHasenbeinKarnilIntro;
+    tone(78,.6,'sawtooth',.08,35);
+  }
+  function finishHasenbeinKarnilIntro(){
+    if(mode!=='hasenbeinKarnilIntro')return;
+    mode='playing';hasenbeinCinematicTime=0;hideOverlay();lastFrame=performance.now();
+    announce('HASENBEIN + KARNIL',`PHASE ${hasenbeinPhase} / ${hasenbeinMaxPhases}`);
+  }
+  function showHasenbeinCredits(){
+    if(mode!=='hasenbeinVictoryCutscene')return;
+    mode='hasenbeinResult';hasenbeinCinematicTime=0;$('hasenbeinHud').classList.add('hidden');
+    showOverlay(`<span class="eyebrow">ABSPANN · HASENBEINS RACHE · ${hasenbeinDifficulty.toUpperCase()}</span><h2 id="overlayTitle">HEUTE JAGT DER HASE.</h2><p>Hasenbein hat den Hall-of-Fame-Snickers besiegt. Karnil bewacht das Feuer, und der General tanzt endlich seinen Siegestanz.</p>${hasenbeinCinematicArt(true)}<div class="hasenbein-credits"><span>IN DER HAUPTROLLE <strong>GENERAL HASENBEIN</strong></span><span>${hasenbeinKarnil?'RETTER IN LETZTER MINUTE':'ÜBERRASCHUNGSGAST AM FEUER'} <strong>KARNIL, DAS SAUFERKEL</strong></span><span>AM LAGERFEUER <strong>SNICKERS</strong></span><span>DAUER DER REVANCHE <strong>${formatTime(hasenbeinDuelTime)}</strong></span><span>FREIGESCHALTET <strong>HASENBEINS ALBTRAUM</strong></span></div><div class="overlay-actions"><button class="primary-button" id="hasenbeinAgain">ANDEREN BUILD WÄHLEN ↗</button><button class="secondary-button" id="hasenbeinLeave">HAUPTMENÜ</button></div>`);
+    $('hasenbeinAgain').onclick=showHasenbeinSelect;$('hasenbeinLeave').onclick=goMenu;
+  }
+  function advanceHasenbeinCinematic(dt){
+    if(!['hasenbeinKarnilIntro','hasenbeinVictoryCutscene'].includes(mode))return;
+    hasenbeinCinematicTime=Math.max(0,hasenbeinCinematicTime-dt);
+    if(hasenbeinCinematicTime===0){if(mode==='hasenbeinKarnilIntro')finishHasenbeinKarnilIntro();else showHasenbeinCredits();}
+  }
+  function updateHasenbeinKarnil(dt){
+    const k=hasenbeinKarnil,rival=hasenbeinRival;if(!k||k.hp<=0||!rival||rival.hp<=0)return;
+    k.phase+=dt*4;k.hit=Math.max(0,k.hit-dt);
+    const dx=rival.x-k.x,dy=rival.y-k.y,d=Math.hypot(dx,dy)||1;
+    if(d>115){k.x=clamp(k.x+dx/d*k.speed*dt,78,W-78);k.y=clamp(k.y+dy/d*k.speed*dt,155,H-78);}
+    k.shotCd-=dt;k.rockCd-=dt;k.contactCd=Math.max(0,k.contactCd-dt);
+    if(d<540&&k.shotCd<=0){k.shotCd=2.6;const a=Math.atan2(dy,dx);for(const off of [-.12,0,.12])hasenbeinShot(k.x,k.y,a+off,330,hasenbeinDamage(4.2),'hasenbein',off===0);burst(k.x,k.y,'#eab58b',5,65);}
+    if(d<650&&k.rockCd<=0){k.rockCd=6.4;hasenbeinHazards.push({x:rival.x,y:rival.y,r:94,wait:.8,life:.35,hit:false,damage:hasenbeinDamage(9),karnil:true});}
+    if(d<k.r+rival.r&&k.contactCd<=0){k.contactCd=1.5;hasenbeinHitRival(hasenbeinDamage(3));}
   }
   function endHasenbeinDuel(won){
     if(mode!=='playing')return;
-    mode='hasenbeinResult';resetInput();if(won)addAchievementProgress('hasenbein_'+hasenbeinDifficulty);
-    updateHasenbeinHud();showOverlay(`<span class="eyebrow">HASENBEIN MODUS · ${hasenbeinDifficulty.toUpperCase()}</span><h2 id="overlayTitle">${won?'HASENBEIN HAT SICH GERÄCHT!':'SNICKERS GEWINNT DIE REVANCHE.'}</h2><p>${won?`Du hast Snickers in seiner einzigen Lebensphase besiegt. Dein Skin HASENBEINS ALBTRAUM ist jetzt freigeschaltet.`:`Hasenbein unterlag in seiner eigenen Phase ${hasenbeinPhase} von ${hasenbeinMaxPhases}. Wähle einen anderen Hall-Build oder versuche es erneut.`} Kampfzeit: ${formatTime(hasenbeinDuelTime)}. Kampagne und Endloslauf bleiben gespeichert.</p><div class="overlay-actions"><button class="primary-button" id="hasenbeinAgain">ANDEREN BUILD WÄHLEN ↗</button><button class="secondary-button" id="hasenbeinLeave">HAUPTMENÜ</button></div>`);
+    resetInput();if(won){
+      addAchievementProgress('hasenbein_'+hasenbeinDifficulty);
+      mode='hasenbeinVictoryCutscene';hasenbeinCinematicTime=4.6;
+      $('hasenbeinHud').classList.add('hidden');$('touchControls').classList.add('hidden');$('pauseButton').classList.add('hidden');
+      showOverlay(`<span class="eyebrow">HASENBEIN MODUS · DER SIEG</span><h2 id="overlayTitle">HASENBEIN HAT SICH GERÄCHT!</h2>${hasenbeinCinematicArt(true)}<p class="hasenbein-scene-copy">Der General jubelt. Karnil schürt das Lagerfeuer und Snickers schmort als Cartoonfigur am Grillspieß. Hasenbein hat seinen Erzfeind besiegt!</p><button class="secondary-button" id="hasenbeinSkipVictory">ZUM ABSPANN ↗</button>`);
+      $('hasenbeinSkipVictory').onclick=showHasenbeinCredits;tone(410,.25,'triangle',.05,670);return;
+    }
+    mode='hasenbeinResult';updateHasenbeinHud();$('hasenbeinHud').classList.add('hidden');
+    showOverlay(`<span class="eyebrow">HASENBEIN MODUS · ${hasenbeinDifficulty.toUpperCase()}</span><h2 id="overlayTitle">SNICKERS GEWINNT DIE REVANCHE.</h2><p>Hasenbein unterlag in seiner eigenen Phase ${hasenbeinPhase} von ${hasenbeinMaxPhases}. Wähle einen anderen Hall-Build oder versuche es erneut. Kampfzeit: ${formatTime(hasenbeinDuelTime)}. Kampagne und Endloslauf bleiben gespeichert.</p><div class="overlay-actions"><button class="primary-button" id="hasenbeinAgain">ANDEREN BUILD WÄHLEN ↗</button><button class="secondary-button" id="hasenbeinLeave">HAUPTMENÜ</button></div>`);
     $('hasenbeinAgain').onclick=showHasenbeinSelect;$('hasenbeinLeave').onclick=goMenu;
   }
   // Reverse of General Hasenbein's campaign encounter: the player owns the boss phases.
@@ -3687,7 +3765,7 @@
     else if(hasenbeinWindup<=0){player.x+=mx*player.speed*dt;player.y+=my*player.speed*dt;}
     player.x=clamp(player.x,55,W-55);player.y=clamp(player.y,150,H-65);
     player.face=rival.x<player.x?-1:1;player.phase=(player.phase||0)+dt*4;
-    if(hasenbeinDashTime>0&&!hasenbeinDashHit&&dist(player,rival)<player.r+rival.r+13){hasenbeinDashHit=true;hasenbeinHitRival(40+hasenbeinPhase*3);burst(rival.x,rival.y,'#eab46e',18,170);}
+    if(hasenbeinDashTime>0&&!hasenbeinDashHit&&dist(player,rival)<player.r+rival.r+13){hasenbeinDashHit=true;hasenbeinHitRival(hasenbeinDamage(40+hasenbeinPhase*3));burst(rival.x,rival.y,'#eab46e',18,170);}
     if(dist(player,rival)<player.r+rival.r-8&&hasenbeinDashTime<=0)hasenbeinHurt(.65);
 
     // Exactly the general's repeating pattern: ram, 13/18 radial carrots, two marked
@@ -3697,9 +3775,9 @@
       const enraged=hasenbeinPhase>=2,a=Math.atan2(rival.y-player.y,rival.x-player.x);
       hasenbeinAttackPattern=(hasenbeinAttackPattern+1)%5;
       if(hasenbeinAttackPattern===0&&hasenbeinDashCd<=0){hasenbeinRamAngle=a;hasenbeinWindup=.78;hasenbeinDashHit=false;hasenbeinDashCd=5.6;}
-      else if(hasenbeinAttackPattern===1){const count=enraged?18:13;for(let i=0;i<count;i++)hasenbeinShot(player.x,player.y,a+i*TAU/count,enraged?225:185,5.1,'hasenbein');}
-      else if(hasenbeinAttackPattern===2){hasenbeinHazards.push({x:rival.x,y:rival.y,r:enraged?138:112,wait:1.05,life:.35,hit:false,damage:14},{x:clamp(rival.x+rnd(-180,180),65,W-65),y:clamp(rival.y+rnd(-150,150),140,H-55),r:88,wait:1.45,life:.35,hit:false,damage:10});}
-      else {const count=enraged?7:5;for(let i=0;i<count;i++)hasenbeinShot(player.x,player.y,a+(i-(count-1)/2)*.14,enraged?275:220,6.1,'hasenbein');}
+      else if(hasenbeinAttackPattern===1){const count=enraged?18:13;for(let i=0;i<count;i++)hasenbeinShot(player.x,player.y,a+i*TAU/count,enraged?225:185,hasenbeinDamage(5.1),'hasenbein');}
+      else if(hasenbeinAttackPattern===2){hasenbeinHazards.push({x:rival.x,y:rival.y,r:enraged?138:112,wait:1.05,life:.35,hit:false,damage:hasenbeinDamage(14)},{x:clamp(rival.x+rnd(-180,180),65,W-65),y:clamp(rival.y+rnd(-150,150),140,H-55),r:88,wait:1.45,life:.35,hit:false,damage:hasenbeinDamage(10)});}
+      else {const count=enraged?7:5;for(let i=0;i<count;i++)hasenbeinShot(player.x,player.y,a+(i-(count-1)/2)*.14,enraged?275:220,hasenbeinDamage(6.1),'hasenbein');}
       hasenbeinAttackCd=enraged?1.34:1.74;
     }
     for(const hazard of hasenbeinHazards){hazard.wait-=dt;if(hazard.wait<=0&&!hazard.hit){hazard.hit=true;burst(hazard.x,hazard.y,'#e4b075',14,120);if(dist(hazard,rival)<hazard.r+rival.r)hasenbeinHitRival(hazard.damage);}if(hazard.hit)hazard.life-=dt;}
@@ -3716,9 +3794,10 @@
     for(const bunny of hasenbeinMinions){bunny.phase+=dt*5;bunny.hit=Math.max(0,bunny.hit-dt);bunny.fireCd-=dt;
       const dx=rival.x-bunny.x,dy=rival.y-bunny.y,d=Math.hypot(dx,dy)||1;
       if(d>80){bunny.x=clamp(bunny.x+dx/d*(bunny.type==='runner'?136:92)*dt,35,W-35);bunny.y=clamp(bunny.y+dy/d*(bunny.type==='runner'?136:92)*dt,140,H-45);}
-      if(d<280&&bunny.fireCd<=0){hasenbeinShot(bunny.x,bunny.y,Math.atan2(dy,dx),240,2.7,'hasenbein');bunny.fireCd=2.2;}
+      if(d<280&&bunny.fireCd<=0){hasenbeinShot(bunny.x,bunny.y,Math.atan2(dy,dx),240,hasenbeinDamage(2.7),'hasenbein');bunny.fireCd=2.2;}
     }
     hasenbeinMinions=hasenbeinMinions.filter(b=>b.hp>0);
+    updateHasenbeinKarnil(dt);
 
     // Snickers fights as the selected build; its attacks never advance with boss phases.
     const dx=player.x-rival.x,dy=player.y-rival.y,d=Math.hypot(dx,dy)||1;
@@ -3731,7 +3810,7 @@
     rival.fireCd-=dt;if(rival.fireCd<=0){
       rival.fireCd=clamp(rival.fireRate/(rival.damage*.26+.6),.17,.45);
       rival.shotCount=(rival.shotCount||0)+1;
-      const bait=rival.shotCount%4===0?hasenbeinMinions.filter(b=>dist(rival,b)<360).sort((a,b)=>dist(rival,a)-dist(rival,b))[0]:null;
+      const bait=rival.shotCount%4===0?[...hasenbeinMinions,...(hasenbeinKarnil?.hp>0?[hasenbeinKarnil]:[])].filter(b=>dist(rival,b)<360).sort((a,b)=>dist(rival,a)-dist(rival,b))[0]:null;
       const a=bait?Math.atan2(bait.y-rival.y,bait.x-rival.x):rival.angle;
       const n=rival.nutFan||rival.weaponCount>=4?3:1;
       for(let i=0;i<n;i++)hasenbeinShot(rival.x,rival.y,a+(i-(n-1)/2)*.20,345+15*rival.weaponCount,clamp(.62*rival.damage*(hasenbeinDifficulty==='impossible'?1.35:hasenbeinDifficulty==='hard'?1.15:1),.58,2.1),'snickers');
@@ -3755,6 +3834,10 @@
       if(s.owner==='snickers'){
         const minion=hasenbeinMinions.find(b=>b.hp>0&&segmentDistance(b,before,s)<b.r+s.r);
         if(minion){s.life=0;minion.hp-=1;minion.hit=.15;}
+        else if(hasenbeinKarnil?.hp>0&&segmentDistance(hasenbeinKarnil,before,s)<hasenbeinKarnil.r*.7+s.r){
+          s.life=0;hasenbeinKarnil.hp=Math.max(0,hasenbeinKarnil.hp-s.damage);hasenbeinKarnil.hit=.2;
+          if(hasenbeinKarnil.hp===0){burst(hasenbeinKarnil.x,hasenbeinKarnil.y,'#e5aa8a',27,140);announce('KARNIL IST ERSCHÖPFT','HASENBEIN KÄMPFT WEITER');}
+        }
         else if(s.life>0&&segmentDistance(player,before,s)<player.r+s.r){s.life=0;hasenbeinHurt(s.damage);}
       }else if(s.life>0&&segmentDistance(rival,before,s)<rival.r+s.r){s.life=0;hasenbeinHitRival(s.damage);}
     }
@@ -3771,6 +3854,7 @@
     for(const h of hasenbeinHazards){ctx.fillStyle='#e5a16031';ctx.strokeStyle='#f4ce81';ctx.lineWidth=3;ctx.beginPath();ctx.arc(h.x,h.y,h.r,0,TAU);ctx.fill();ctx.stroke();}
     if(hasenbeinWindup>0){ctx.strokeStyle='#ffe0a5';ctx.lineWidth=14;ctx.globalAlpha=.55;ctx.setLineDash([22,12]);ctx.beginPath();ctx.moveTo(player.x,player.y);ctx.lineTo(player.x+Math.cos(hasenbeinRamAngle)*380,player.y+Math.sin(hasenbeinRamAngle)*380);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
     for(const bunny of hasenbeinMinions){ctx.save();ctx.strokeStyle='#eed080';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(bunny.x,bunny.y+13,22,9,0,0,TAU);ctx.stroke();ctx.restore();drawRabbit({...bunny,hasenbeinAlly:true,dead:false});}
+    if(hasenbeinKarnil?.hp>0){ctx.save();ctx.strokeStyle='#f4c484';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(hasenbeinKarnil.x,hasenbeinKarnil.y+32,hasenbeinKarnil.r*.8,19,0,0,TAU);ctx.stroke();ctx.restore();drawRabbit({...hasenbeinKarnil,hasenbeinControlled:true,face:hasenbeinRival.x<hasenbeinKarnil.x?-1:1,dead:false});}
     drawRabbit({...player,type:'boss',hasenbeinControlled:true,dead:false,enraged:hasenbeinPhase>=2});drawHamster(hasenbeinRival);
     if(player.invuln>0){ctx.save();ctx.strokeStyle='#ffd78e';ctx.globalAlpha=.3+.2*Math.sin(ambientTime*15);ctx.lineWidth=3;ctx.beginPath();ctx.arc(player.x,player.y,player.r+8,0,TAU);ctx.stroke();ctx.restore();}
     for(const s of hasenbeinShots){ellipse(ctx,s.x,s.y,s.r,s.r,s.owner==='hasenbein'?'#dfad72':'#ff796a');}
@@ -3786,7 +3870,7 @@
   cycleWeapon=function(direction=1){if(hasenbeinMode){if(direction<0)hasenbeinSalvo();else hasenbeinEarthquake();return;}hasenbeinOriginalCycle(direction);};
   const hasenbeinOriginalFire=fire;
   fire=function(){return hasenbeinMode?false:hasenbeinOriginalFire();};
-  goMenu=function(){if(hasenbeinMode){hasenbeinMode=false;runSessionId=null;$('hasenbeinHud').classList.add('hidden');$('touchControls').classList.remove('hasenbein-touch');$('touchShock').classList.add('hidden');$('touchCycle').innerHTML='WAFFE<span>↻</span>';$('touchCycle').setAttribute('aria-label','Spezialwaffe wechseln');$('touchBomb').innerHTML='NUSS<span>E</span>';$('touchBomb').setAttribute('aria-label','Nussbombe');$('touchDash').innerHTML='DASH<span>↗</span>';$('touchDash').setAttribute('aria-label','Ausweichen');}hasenbeinOriginalMenu();};
+  goMenu=function(){if(hasenbeinMode){hasenbeinMode=false;hasenbeinKarnil=null;hasenbeinCinematicTime=0;runSessionId=null;$('hasenbeinHud').classList.add('hidden');$('touchControls').classList.remove('hasenbein-touch');$('touchShock').classList.add('hidden');$('touchCycle').innerHTML='WAFFE<span>↻</span>';$('touchCycle').setAttribute('aria-label','Spezialwaffe wechseln');$('touchBomb').innerHTML='NUSS<span>E</span>';$('touchBomb').setAttribute('aria-label','Nussbombe');$('touchDash').innerHTML='DASH<span>↗</span>';$('touchDash').setAttribute('aria-label','Ausweichen');}hasenbeinOriginalMenu();};
   pauseGame=function(){if(!hasenbeinMode){hasenbeinOriginalPause();return;}if(mode!=='playing'&&mode!=='paused')return;previousMode='playing';mode='paused';resetInput();showOverlay(`<span class="eyebrow">HASENBEINS PAUSE</span><h2 id="overlayTitle">SNICKERS WARTET.</h2><p>Du kämpfst gegen einen ${hasenbeinDifficulty.toUpperCase()}-Hall-of-Fame-Build. Dein Kampagnen- und dein Endlosspeicher bleiben erhalten.</p><div class="overlay-actions"><button class="primary-button" id="hasenbeinResume">WEITERKÄMPFEN ↗</button><button class="secondary-button" id="hasenbeinExit">HAUPTMENÜ</button></div>`);$('hasenbeinResume').onclick=resumeGame;$('hasenbeinExit').onclick=goMenu;};
 
   // Companion evolutions are run skills: each card requires its visible base actor.
