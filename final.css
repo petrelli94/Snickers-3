@@ -38,6 +38,25 @@
 .overlay-content:focus{outline:none}
 @media(max-width:430px){.reward-upgrades .upgrade strong{font-size:19px}}
 
+/* Knastkopf: all unlocked menu choices fit in a compact grid on desktop. */
+.start-content{width:72%;max-width:900px;padding:2.4cqw 3.6cqw 8px}
+.start-content .chapter{margin-bottom:.65cqw}
+.start-content h1{font-size:clamp(43px,6.55cqw,90px);margin-bottom:.6cqw}
+.start-content .story{font-size:clamp(11px,1cqw,14px);margin-bottom:.7cqw}
+.start-content>.primary-button{min-height:38px;padding:8px 16px}
+.start-content .continue-run-button{min-height:34px;margin:4px 0 2px}
+.menu-links{grid-template-columns:repeat(3,minmax(0,1fr));max-width:650px;gap:0 8px;margin-top:5px;padding:0}
+.menu-links .text-button{min-height:23px;padding:2px 0;font-size:clamp(10px,.95cqw,12px);line-height:1.12;gap:5px}
+.menu-links .help-circle{flex-basis:16px;width:16px;height:16px;font-size:9px}
+.run-character-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:17px 0;text-align:left}
+.run-character-card{display:flex;flex-direction:column;gap:7px;min-height:160px;padding:15px;border:2px solid var(--skin);border-radius:11px;background:#152926;color:#f0eddb;text-align:left}
+.run-character-card[aria-pressed="true"]{box-shadow:inset 0 0 0 2px #e5f2cb,0 0 18px var(--skin)}
+.run-character-card:disabled{opacity:.42;cursor:default}
+.run-character-card>span{font-size:25px}.run-character-card strong{font-size:13px}.run-character-card small{font-size:11px;line-height:1.25;color:#ced8c9}.run-character-card b{font-size:10px;color:#f1d699}.run-character-card em{font-size:10px;font-style:normal;color:var(--skin);margin-top:auto}
+.overlay .run-character-focus{max-width:780px;font-size:12px;margin-bottom:15px}
+@media(max-width:760px){.start-content,.game-shell:fullscreen .start-content{width:100%;padding:45px 22px 8px}.start-content h1{font-size:clamp(43px,9cqw,72px);margin-bottom:6px}.start-content .story{margin-bottom:7px}.menu-links{grid-template-columns:repeat(2,minmax(0,1fr));max-width:420px;gap:0 7px}.run-character-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.start-content,.game-shell:fullscreen .start-content{padding:39px 18px 8px}.start-content h1{font-size:42px}.start-content .chapter{margin-bottom:5px}.start-content .story{font-size:10px;margin-bottom:5px}.menu-links .text-button{min-height:21px;font-size:9px}.run-character-grid{grid-template-columns:1fr}.run-character-card{min-height:110px}}
+
 /* Knochenbrot content patch */
 .continue-run-button{margin:12px 0 6px;width:100%;max-width:470px;font-size:12px;min-height:45px}
 .difficulty-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0}.hard-card{border-color:#df9877!important;background:linear-gradient(135deg,#452d2b,#202b29)!important;color:#ffe1c0!important}.hard-mode-list{display:grid;gap:12px;margin:24px 0}.hard-mode-list button:disabled{opacity:.4;cursor:default}.difficulty-options .upgrade{min-height:160px}.troll-visit{max-width:430px;margin:auto}.troll-visit svg{width:100%;height:115px}.visiting-troll{animation:troll-visit 2s ease-out forwards}.soiled-upgrades .upgrade{opacity:.6;filter:sepia(.65);min-height:190px}.soiled-upgrades .upgrade-icon{font-size:38px}.soiled-upgrades{margin-bottom:20px}.legendary-upgrade{border-color:#e6c169!important}.click-note{font-size:12px}
