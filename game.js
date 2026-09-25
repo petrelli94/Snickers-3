@@ -2670,10 +2670,10 @@
   function hasSavedRun(key=RUN_SAVE_KEY){return Boolean(readSavedRun(key));}
   function updateContinueButton(){
     const button=$('continueRunButton');if(!button)return;const saved=readSavedRun();button.classList.toggle('hidden',!saved);
-    if(saved){const s=saved.summary||{};button.textContent=`RUN FORTSETZEN · ${s.impossible?'IMPOSSIBLE · ':s.hard?'HARD · ':''}${s.level===3?'ENDLOS · ':s.level===2?'NG+2 · ':s.level===1?'NG+ · ':''}WELLE ${s.wave||1} ↗`;}
+    if(saved){const s=saved.summary||{},difficulty=s.impossible?'IMPOSSIBLE':s.hard?'HARD':'NORMAL',tier=s.level===3?'ENDLOS':s.level===2?'NG+2':s.level===1?'NG+':'KAMPAGNE',wave=Math.max(1,Math.floor(Number(s.wave)||1));button.innerHTML=`<span class="entry-kicker">KAMPAGNE</span><strong>RUN FORTSETZEN</strong><small>${difficulty} · ${tier} · WELLE ${wave}</small><span class="entry-arrow" aria-hidden="true">↗</span>`;}
     const endless=$('endlessContinueRunButton'),endlessSave=readSavedRun(ENDLESS_SAVE_KEY);
     endless.classList.toggle('hidden',!endlessSave);
-    if(endlessSave){const s=endlessSave.summary||{};endless.textContent=`ENDLOS FORTSETZEN · ${s.impossible?'IMPOSSIBLE · ':s.hard?'HARD · ':'NORMAL · '}WELLE ${s.wave||1} ↗`;}
+    if(endlessSave){const s=endlessSave.summary||{},difficulty=s.impossible?'IMPOSSIBLE':s.hard?'HARD':'NORMAL',wave=Math.max(1,Math.floor(Number(s.wave)||1));endless.innerHTML=`<span class="entry-kicker">ENDLOSMODUS</span><strong>RUN FORTSETZEN</strong><small>${difficulty} · WELLE ${wave}</small><span class="entry-arrow" aria-hidden="true">↗</span>`;}
   }
   function beginRunSession(carryBuild){
     runSessionId=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);runRevision=0;runSaveClock=0;saveFailed=false;
@@ -4778,7 +4778,10 @@
   }
   const pilleMenuUpdate=updateNGPlusMenu;
   updateNGPlusMenu=function(){pilleMenuUpdate();if(!characterUnlocked(selectedCharacter)){selectedCharacter='snickers';selectedSkin='classic';try{localStorage.setItem('snickers3-selected-character-v1','snickers');}catch{}}
-    const button=$('characterButton');if(button)button.innerHTML=`<span class="help-circle">♟</span> Spielfigur: ${characterRoster[selectedCharacter].name}`;};
+    const button=$('characterButton');if(button){const short={snickers:'Snickers',raffzahn:'Raffzahn',krustenbraten:'Korenlius',slanny:'Slanny',koettitroeter:'Köttitröter'};
+      button.innerHTML=`<span class="help-circle">♟</span> Spielfigur: ${short[selectedCharacter]}`;
+      button.setAttribute('aria-label',`Spielfigur wählen: ${characterRoster[selectedCharacter].name}`);
+      button.title=`Spielfigur wählen: ${characterRoster[selectedCharacter].name}`;}};
   showSkins=function(fromPause=false){if(fromPause?mode!=='paused':mode!=='menu')return;
     overlayFromPause=fromPause;const id=fromPause?(player?.characterId||'snickers'):selectedCharacter,owned=unlockedSkins();mode='skins';
     const choices=skins.filter(s=>id==='snickers'?!s.characterId:s.characterId===id);

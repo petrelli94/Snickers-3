@@ -43,8 +43,20 @@
 .start-content .chapter{margin-bottom:.65cqw}
 .start-content h1{font-size:clamp(43px,6.55cqw,90px);margin-bottom:.6cqw}
 .start-content .story{font-size:clamp(11px,1cqw,14px);margin-bottom:.7cqw}
-.start-content>.primary-button{min-height:38px;padding:8px 16px}
-.start-content .continue-run-button{min-height:34px;margin:4px 0 2px}
+.run-entry-grid{--entry-columns:3;display:grid;grid-template-columns:repeat(var(--entry-columns),minmax(0,1fr));gap:8px;width:100%;max-width:650px;margin:8px 0 12px}
+.run-entry-grid:has(#continueRunButton.hidden),.run-entry-grid:has(#endlessContinueRunButton.hidden){--entry-columns:2;max-width:430px}
+.run-entry-grid:has(#continueRunButton.hidden):has(#endlessContinueRunButton.hidden){--entry-columns:1;max-width:275px}
+.run-entry-grid .run-entry{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;width:100%;height:78px;min-height:78px;max-width:none;margin:0;padding:10px 33px 10px 13px;border:1px solid #829d78;border-radius:6px;background:linear-gradient(145deg,#20352de8,#14251feb);color:#e8f1dc;box-shadow:inset 0 1px #ffffff18,0 7px 18px #0007;text-align:left;white-space:normal;transition:transform .15s,border-color .15s,background .15s}
+.run-entry-grid .run-entry-new{border-color:#e4ff98;background:linear-gradient(125deg,#ddff82,#b8ec65);color:#183023}
+.run-entry .entry-kicker{font-size:9px;font-weight:900;line-height:1;letter-spacing:.1em;color:#a8d788}
+.run-entry-new .entry-kicker{color:#416423}
+.run-entry strong{font-size:clamp(11px,1.05cqw,14px);line-height:1.1;letter-spacing:.03em;white-space:nowrap}
+.run-entry small{font-size:clamp(8px,.78cqw,10px);font-weight:700;line-height:1.18;letter-spacing:.01em;color:#c0cdb9}
+.run-entry-new small{color:#36542b}
+.run-entry .entry-arrow{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:19px;line-height:1;color:#bee887}
+.run-entry-new .entry-arrow{color:#294b20}
+.run-entry-grid .run-entry:hover{transform:translateY(-2px);border-color:#d7ff9b;background:linear-gradient(145deg,#2c4837,#1b3228)}
+.run-entry-grid .run-entry-new:hover{background:linear-gradient(125deg,#ebffa4,#c7f36b)}
 .menu-links{grid-template-columns:repeat(3,minmax(0,1fr));max-width:650px;gap:0 8px;margin-top:5px;padding:0}
 .menu-links .text-button{min-height:23px;padding:2px 0;font-size:clamp(10px,.95cqw,12px);line-height:1.12;gap:5px}
 .menu-links .help-circle{flex-basis:16px;width:16px;height:16px;font-size:9px}
@@ -54,7 +66,8 @@
 .run-character-card:disabled{opacity:.42;cursor:default}
 .run-character-card>span{font-size:25px}.run-character-card strong{font-size:13px}.run-character-card small{font-size:11px;line-height:1.25;color:#ced8c9}.run-character-card b{font-size:10px;color:#f1d699}.run-character-card em{font-size:10px;font-style:normal;color:var(--skin);margin-top:auto}
 .overlay .run-character-focus{max-width:780px;font-size:12px;margin-bottom:15px}
-@media(max-width:760px){.start-content,.game-shell:fullscreen .start-content{width:100%;padding:45px 22px 8px}.start-content h1{font-size:clamp(43px,9cqw,72px);margin-bottom:6px}.start-content .story{margin-bottom:7px}.menu-links{grid-template-columns:repeat(2,minmax(0,1fr));max-width:420px;gap:0 7px}.run-character-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.start-content,.game-shell:fullscreen .start-content{width:100%;padding:45px 22px 8px}.start-content h1{font-size:clamp(43px,9cqw,72px);margin-bottom:6px}.start-content .story{margin-bottom:7px}.run-entry-grid{max-width:420px}.run-entry-grid .run-entry{height:83px;min-height:83px}.run-entry strong{font-size:11px}.menu-links{grid-template-columns:repeat(2,minmax(0,1fr));max-width:420px;gap:0 7px}.run-character-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.game-shell{min-height:610px}.run-entry-grid{--entry-columns:1!important;max-width:310px!important;gap:5px;margin:6px 0 8px}.run-entry-grid .run-entry{height:51px;min-height:51px;padding:6px 34px 6px 12px;gap:2px}.run-entry .entry-kicker{font-size:8px}.run-entry strong{font-size:11px}.run-entry small{font-size:9px}.run-entry .entry-arrow{font-size:17px}}
 @media(max-width:430px){.start-content,.game-shell:fullscreen .start-content{padding:39px 18px 8px}.start-content h1{font-size:42px}.start-content .chapter{margin-bottom:5px}.start-content .story{font-size:10px;margin-bottom:5px}.menu-links .text-button{min-height:21px;font-size:9px}.run-character-grid{grid-template-columns:1fr}.run-character-card{min-height:110px}}
 
 /* Knochenbrot content patch */

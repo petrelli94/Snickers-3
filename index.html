@@ -7,11 +7,11 @@
   <meta name="description" content="Snickers 3 – Knastkopf Version: fünf Helden mit eigenem Kampfstil, Startwaffe, Geschichte und Arena.">
   <title>Snickers 3: Attack from Hasenbein</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23c7f36b'/%3E%3Cpath d='M12 10h17v6l-6 4 6 4v6H12v-6h10l-7-4 7-4H12z' fill='%23101a18'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?rev=knastkopf-1">
-  <link rel="stylesheet" href="v2.css?rev=knastkopf-1">
-  <link rel="stylesheet" href="v3.css?rev=knastkopf-1">
-  <link rel="stylesheet" href="final.css?rev=knastkopf-1">
-  <script src="game.js?rev=knastkopf-1" defer></script>
+  <link rel="stylesheet" href="styles.css?rev=knastkopf-2">
+  <link rel="stylesheet" href="v2.css?rev=knastkopf-2">
+  <link rel="stylesheet" href="v3.css?rev=knastkopf-2">
+  <link rel="stylesheet" href="final.css?rev=knastkopf-2">
+  <script src="game.js?rev=knastkopf-2" defer></script>
 </head>
 <body>
 <div class="app">
@@ -38,9 +38,12 @@
           <div class="chapter">DIE RASANTE KNABBEREI</div>
           <h1>SNICKERS<span class="title-three">3</span><span class="subtitle">ATTACK FROM<br>HASENBEIN</span></h1>
           <p class="story">Fünf Helden. Tausend Hasen. Wähle deine Jagd.</p>
-          <button id="startButton" class="primary-button">MISSION STARTEN <span aria-hidden="true">↗</span></button>
-          <button id="continueRunButton" class="primary-button continue-run-button hidden">KAMPAGNE FORTSETZEN ↗</button>
-          <button id="endlessContinueRunButton" class="primary-button continue-run-button hidden">ENDLOS FORTSETZEN ↗</button><nav class="menu-links" aria-label="Spielmodi und Extras">
+          <div class="run-entry-grid" aria-label="Run starten oder fortsetzen">
+            <button id="startButton" class="primary-button run-entry run-entry-new"><span class="entry-kicker">NEUER RUN</span><strong>MISSION STARTEN</strong><small>FIGUR &amp; MODUS WÄHLEN</small><span class="entry-arrow" aria-hidden="true">↗</span></button>
+            <button id="continueRunButton" class="primary-button continue-run-button run-entry hidden">KAMPAGNE FORTSETZEN</button>
+            <button id="endlessContinueRunButton" class="primary-button continue-run-button run-entry hidden">ENDLOS FORTSETZEN</button>
+          </div>
+          <nav class="menu-links" aria-label="Spielmodi und Extras">
           <button id="ngPlusButton" class="text-button ngplus-menu-button hidden"><span class="help-circle">+</span> NEW GAME+</button>
           <button id="ngPlus2Button" class="text-button ngplus-menu-button hidden"><span class="help-circle">++</span> NEW GAME+2</button>
           <button id="hallOfFameButton" class="text-button hidden"><span class="help-circle">♛</span> Hall of Fame</button>
