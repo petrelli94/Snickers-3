@@ -1,0 +1,69 @@
+/* Edition 19 · readable cards, coloured inlays and consistent pixel iconography. */
+:root{--ui-accent:#ffd17a;--ui-base:#101816;--ui-panel:#25392e;--ui-raised:#304734;--ui-border:#a6a37c;--ui-muted:#c2cbbc;--ui-ink:#101915;--ui-soft:#556345;--ui-light:#ffe4b7}
+.overlay{background:var(--ui-panel);border-color:var(--ui-border);box-shadow:inset 0 0 0 3px var(--ui-base),inset 0 0 0 4px var(--ui-border)}
+.overlay h2{color:var(--ui-light);text-shadow:0 3px var(--ui-ink)}
+.overlay p,.overlay small{color:var(--ui-muted)}
+.eyebrow,.chapter,.entry-kicker,.hud-label,.character-starter{color:var(--ui-accent)}
+.overlay-back{position:static;display:block;margin:0 0 20px!important;min-height:40px;font-size:14px;align-self:flex-start}
+.secondary-button,.upgrade,.skin-card,.run-character-card,.pause-section-button,.theme-option,.accent-option,.mute-option,.rebirth-option,.build-card,.power-card,.help-card,.guide-power,.pixel-power-library article,.pixel-mode-grid>button,.settings-section,.build-section{background:var(--ui-raised);border-color:var(--ui-border);color:var(--paper);box-shadow:inset 0 2px #ffffff16,0 4px var(--ui-ink)}
+button::before{border-color:var(--ui-border)}
+button:focus-visible{outline:3px solid var(--ui-accent);outline-offset:4px}
+button:not(:disabled):hover{border-color:var(--ui-accent)}
+.primary-button,.run-entry-new{background:var(--ui-accent);color:var(--ui-ink);border-color:var(--ui-light);box-shadow:inset 0 -5px #00000020,0 5px var(--ui-ink)}
+.run-entry-new .entry-kicker,.run-entry-new small{color:var(--ui-ink)}
+.menu-links .text-button{border-color:var(--ui-border);background:color-mix(in srgb,var(--ui-panel) 92%,transparent)}
+.menu-links .help-circle{border-right:1px solid var(--ui-border);padding-right:6px;margin-right:4px}
+.menu-links .pixel-icon{filter:drop-shadow(0 2px #0009)}
+.run-entry-grid,.menu-links{--line:var(--ui-border)}
+.health-panel,.wave-panel,.score-panel,.boss-hud,.weapon-hud,.dash-hud,.control-button,.touch-actions button,.pixel-skill-chip,.power-chip{background:color-mix(in srgb,var(--ui-panel) 94%,transparent);border-color:var(--ui-border)}
+.wave-progress>div,.dash-bar>div{background:var(--ui-accent);box-shadow:inset 0 1px var(--ui-light)}
+.score-panel strong{color:var(--ui-accent)}
+.difficulty-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;align-items:stretch;gap:14px;width:100%;max-width:1120px;margin:24px auto}
+.difficulty-options>button{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:start;gap:14px;width:100%;min-width:0;max-width:none;margin:0;padding:20px 16px;text-align:left;border:2px solid var(--ui-border);border-top:4px solid var(--difficulty-color);height:100%}
+.difficulty-options>button[data-difficulty=normal]{--difficulty-color:#aace84}
+.difficulty-options>button[data-difficulty=hard]{--difficulty-color:#eea36c}
+.difficulty-options>button[data-difficulty=impossible]{--difficulty-color:#ce9ee5}
+.difficulty-emblem{display:grid;place-items:center;width:64px;height:76px;background:var(--ui-base);border-bottom:3px solid var(--difficulty-color)}
+.difficulty-emblem img{width:62px;height:62px;image-rendering:pixelated;object-fit:contain}
+.difficulty-copy{display:flex;flex-direction:column;gap:10px;min-width:0}
+.difficulty-copy>small{font-size:14px;color:var(--difficulty-color);line-height:1.3;letter-spacing:1px}
+.difficulty-copy>strong{font:20px/1.4 var(--body);color:var(--paper)}
+.difficulty-copy>span{font:16px/1.5 var(--body);color:var(--ui-muted)}
+.pause-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;max-width:920px;margin:24px auto 30px}
+.pause-section-button{display:grid;grid-template-columns:58px minmax(0,1fr);gap:16px;align-items:center;min-width:0;padding:18px;text-align:left;min-height:116px}
+.pause-emblem{display:grid;place-items:center;width:58px;height:64px;background:var(--ui-base);border-bottom:2px solid var(--ui-accent)}
+.pause-emblem img{width:54px;height:54px;image-rendering:pixelated}
+.pause-copy{display:flex;flex-direction:column;gap:8px;min-width:0}
+.pause-copy strong{font:18px/1.35 var(--body);color:var(--ui-light)}
+.pause-copy small{font:16px/1.45 var(--body);color:var(--ui-muted)}
+.run-character-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch;margin:24px auto;max-width:1180px}
+.run-character-card{display:grid;grid-template-columns:104px minmax(0,1fr);grid-template-rows:minmax(162px,auto) auto 30px 1fr;column-gap:10px;row-gap:14px;align-content:start;align-items:start;text-align:left;padding:18px 14px;border-top:4px solid var(--skin);min-width:0;position:relative}
+.run-character-card[aria-pressed=true]{border-color:var(--ui-accent);background:var(--ui-soft);box-shadow:inset 0 0 0 2px var(--ui-base),0 4px var(--ui-ink)}
+.run-character-card>.character-portrait{display:grid;place-items:center;min-height:0;width:104px;height:136px;background:var(--ui-base);border-bottom:2px solid var(--skin)}
+.run-character-card .pixel-portrait{width:112px;height:128px;max-width:none;object-fit:contain}
+.run-character-card>.character-heading{display:flex;flex-direction:column;gap:12px;min-height:0;min-width:0}
+.character-heading .character-name{font:18px/1.25 var(--body);color:var(--ui-light);margin:0;overflow-wrap:normal}
+.character-heading .character-attack{font:16px/1.45 var(--body);color:var(--ui-muted);margin:0}
+.run-character-card>.character-stat-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px 0;border-top:1px solid var(--ui-border);border-bottom:1px solid var(--ui-border);margin:0}
+.character-stat-grid>span{display:flex;flex-direction:column;gap:5px;text-align:center;min-height:0!important}
+.character-stat-grid small{font:12px/1.25 var(--body);color:var(--ui-muted)}
+.character-stat-grid b{font:18px/1.1 var(--body);color:var(--ui-accent)}
+.run-character-card>.character-starter{grid-column:1/-1;font:14px/1.45 var(--body);font-style:normal;color:var(--ui-accent);margin:0;align-self:center}
+.run-character-card>.character-starter-description,.run-character-card>.character-locked{grid-column:1/-1;flex:none;font:16px/1.5 var(--body);margin:0;min-height:0;align-self:start}
+.run-character-focus{display:none}
+.touch-actions #touchBomb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px}
+#touchBomb .pixel-icon{width:27px;height:27px;object-fit:contain}
+#touchBomb .touch-action-label{font:12px/1.1 var(--body);max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#weaponLabel{display:inline-flex;align-items:center;gap:6px;max-width:min(60vw,430px)}
+#weaponLabel .pixel-icon{width:24px;height:24px;flex:none}
+#weaponLabel>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:1100px){.difficulty-options{grid-template-columns:1fr;max-width:760px}.difficulty-options>button{grid-template-columns:64px minmax(0,1fr);padding:16px;min-height:166px}.run-character-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.overlay{padding:22px 16px}.overlay>h2{font-size:25px;line-height:1.25}.overlay>p{font-size:16px;line-height:1.5}.overlay-back{margin-bottom:18px!important}.difficulty-options{gap:12px;margin:20px auto}.difficulty-options>button{padding:15px 12px;gap:12px;grid-template-columns:54px minmax(0,1fr);min-height:174px}.difficulty-emblem{width:54px;height:65px}.difficulty-emblem img{width:52px;height:52px}.difficulty-copy{gap:8px}.difficulty-copy>strong{font-size:18px}.difficulty-copy>span{font-size:16px}.pause-sections{grid-template-columns:1fr;gap:12px}.pause-section-button{grid-template-columns:48px minmax(0,1fr);gap:14px;padding:15px 13px;min-height:112px}.pause-emblem{width:48px;height:56px}.pause-emblem img{width:46px;height:46px}.pause-copy strong{font-size:17px}.pause-copy small{font-size:15px}.run-character-grid{grid-template-columns:1fr;gap:14px}.run-character-card{grid-template-columns:100px minmax(0,1fr);grid-template-rows:auto auto auto auto;gap:14px 12px;padding:16px 13px}.run-character-card>.character-heading{min-height:134px}.run-character-card>.character-portrait{width:100px;height:132px}.character-heading .character-name{font-size:19px}.character-heading .character-attack{font-size:16px}.run-character-card>.character-starter{min-height:0}.character-stat-grid small{font-size:12px}}
+@media(orientation:landscape) and (max-height:540px){#touchBomb .pixel-icon{width:23px;height:23px}#touchBomb .touch-action-label{font-size:11px}.overlay{padding:18px 24px}.difficulty-options{grid-template-columns:repeat(3,minmax(0,1fr));max-width:none}.difficulty-options>button{display:flex;flex-direction:column;padding:12px;gap:10px}.difficulty-emblem{width:44px;height:46px}.difficulty-emblem img{width:42px;height:42px}.difficulty-copy>strong{font-size:16px}.difficulty-copy>span{font-size:14px}.pause-sections{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:no-preference){.pause-section-button:active,.difficulty-options>button:active,.run-character-card:active{transform:translateY(2px)}.pause-emblem img{transition:transform .12s steps(2)}.pause-section-button:hover .pause-emblem img{transform:translateY(-2px)}}
+/* Neutralise the upgrade-card placements inherited by difficulty choices. */
+.difficulty-options>.upgrade>.difficulty-emblem{grid-column:1;grid-row:1;margin:0;align-self:start}
+.difficulty-options>.upgrade>.difficulty-copy{grid-column:2;grid-row:1;margin:0;align-self:start}
+#touchBomb .touch-action-label{margin:0;flex:none}
+.touch-actions #touchBomb{padding:3px}
+.difficulty-options>.upgrade>.difficulty-emblem,.difficulty-options>.upgrade>.difficulty-copy{align-self:center}

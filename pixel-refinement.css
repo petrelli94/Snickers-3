@@ -1,0 +1,19 @@
+/* Edition 23. Framed settings stay in normal document flow at every viewport. */
+#overlayContent:has(#settingsClose){max-width:1080px;text-align:left}
+#overlayContent:has(#settingsClose)>h2,#overlayContent:has(#settingsClose)>.eyebrow{text-align:center;display:block}
+#overlayContent:has(#settingsClose) .settings-section{box-sizing:border-box;position:relative;width:100%;max-width:none;margin:20px 0;padding:20px;border:2px solid var(--ui-border,#73928c);background:linear-gradient(135deg,#ffffff08,transparent 65%),var(--ui-raised,#243d4b);box-shadow:inset 0 2px #ffffff20,inset 0 -3px #07121d55,0 5px #07121d99}
+#overlayContent:has(#settingsClose) .settings-section h3{margin:0 0 14px;color:var(--gold,#edc882);font-size:20px}
+#overlayContent:has(#settingsClose) .settings-section p{margin:6px 0 16px;font-size:16px;line-height:1.6}
+.theme-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}
+.theme-option{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;width:100%;padding:14px;text-align:left}
+.theme-preview{width:100%;height:44px;margin:0;border:2px solid #ffffff25;box-shadow:inset 0 0 0 2px #081c2a66}
+.theme-option strong{display:block;font-size:17px}.theme-option small{display:block;line-height:1.5}
+.theme-option .choice-check,.accent-option .choice-check{position:absolute;top:5px;right:6px;display:none;padding:1px 5px;background:var(--gold);color:#142435;font-style:normal}
+.theme-option[aria-pressed=true] .choice-check,.accent-option[aria-pressed=true] .choice-check{display:block}
+.accent-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.accent-option{position:relative;display:flex;gap:10px;align-items:center;min-width:0;text-align:left}.accent-option>span:first-child{display:block;width:23px;height:23px;border:2px solid #ffffff66;flex:0 0 23px}
+.audio-section{display:grid;gap:14px}.audio-section>label{display:flex;justify-content:space-between;gap:14px}.audio-section input[type=range]{width:100%;max-width:none;height:28px}.mute-options{justify-content:flex-start;gap:18px}.mute-options label,.combat-number-options label{font-size:16px;line-height:1.5;display:flex;gap:10px;align-items:center;padding:8px 0}.settings-section input[type=checkbox]{flex:0 0 22px;width:22px;height:22px}
+.save-transfer-actions{display:flex;flex-wrap:wrap;gap:12px}.save-transfer-actions button{flex:1 1 200px;min-width:0;font-size:16px;padding:14px}.save-transfer-input{display:block;width:100%;box-sizing:border-box;padding:14px;border:2px solid var(--ui-border);background:#101f2e;color:var(--paper);font:16px var(--body)}
+.save-transfer-status{min-height:1.5em;color:var(--gold);overflow-wrap:anywhere}.save-transfer-preview{padding:20px;border:2px solid var(--ui-border);background:var(--ui-raised);text-align:left;line-height:1.7}.save-transfer-preview ul{padding-left:24px}.save-transfer-warning{color:#f3bd9a}
+#settingsClose{display:block;margin:24px auto 6px;min-width:180px}.settings-note{line-height:1.6}
+@media(max-width:700px){.theme-options{grid-template-columns:repeat(2,minmax(0,1fr))}.accent-options{grid-template-columns:repeat(2,minmax(0,1fr))}#overlayContent:has(#settingsClose) .settings-section{padding:15px}.theme-option{padding:12px}.mute-options{display:grid;grid-template-columns:1fr;gap:4px}.audio-section>label{flex-wrap:wrap}}
+@media(max-width:360px){.theme-options,.accent-options{grid-template-columns:1fr}}
