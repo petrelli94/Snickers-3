@@ -1256,7 +1256,7 @@
     if(e.potencyMarked>0)amount*=isBoss(e)?1.08:1.14;
     const rabbit=isRabbit(e);
     if(rabbit)speciesBonus*=player.rabbitDamage||1;amount*=Math.min(3,speciesBonus);
-    amount*=contentDamageMultiplier(e);e.hp -= amount; e.hit = .1;
+    amount*=contentDamageMultiplier(e);amount=bossImpact31(e,amount);e.hp -= amount; e.hit = .1;
     burst(e.x,e.y, e.type === 'boss' ? '#ffa977' : '#cad8b7', blast ? 12 : 4, 110);
     if(isBoss(e))maybeDropBossSupply(e);
     if(e.hp<=0&&e.herbert&&e.herbertPhase<3){e.herbertPhase++;e.hp=e.maxHp=Math.max(1,e.maxHp*.7);e.actionCd=1.6;e.windup=0;e.charge=0;e.attack=0;e.supplyStep=0;enemyBullets=[];hazards=hazards.filter(h=>h.friendly);player.invuln=Math.max(player.invuln,1.8);announce('HERBERT · ZUGABE '+e.herbertPhase+' / 3','DER LETZTE TON IST NOCH NICHT GESUNGEN');updateHud();return;}
@@ -1272,8 +1272,8 @@
     if (e.hp > 0) return;
     onContentKill(e);if(e.narrathHit)addAchievementProgress('professor_kills');if(e.ratHit)addAchievementProgress('rat_kills');e.dead = true; kills++; score += Math.round(e.points*((player.powerups.scoreRush>0?2:1)*runScoreMultiplier()));if(player.deathBurst&&!isBoss(e)&&!e.miniBoss){player.deathBurstKills=(player.deathBurstKills||0)+1;if(player.deathBurstKills>=8&&runTime-(player.lastBurst24??-99)>=1.8){player.deathBurstKills=0;player.lastBurst24=runTime;hazards.push({type:'friendlyMortar',x:e.x,y:e.y,r:125,wait:.08,life:.32,hit:false,damage:7*abilityPower(player),friendly:true});}}addAchievementProgress('first_crunch');setAchievementProgress('score_hog',score);if(e.type.startsWith('pig'))addAchievementProgress('pigsty');if(e.type==='gatling')addAchievementProgress('veggie_fear');if(newGamePlus&&e.type==='voidBunny')addAchievementProgress('ngplus_void');if(newGamePlus&&e.type==='rocketHare')addAchievementProgress('ngplus_rocket');if(newGamePlus&&e.type==='pigJuggernaut')addAchievementProgress('ngplus_juggernaut');
     burst(e.x,e.y, e.type === 'boss' ? '#c7f36b' : '#91ba70', e.type==='boss'?85:16,180);
-    floater(e.x,e.y-22,`+${e.points}`);
-    if(e.miniBoss){toast((e.troll?'BERGTROLL':e.miniKind?miniBossBook[e.miniKind].name:e.cyberMini?'CYBER-HASENBEIN':'ZOMBIE-HASENBEIN')+' ERLEDIGT');if(e.miniKind){recordDistinct('mini_collection',e.miniKind);const powers=shuffled(Object.keys(powerBook).filter(k=>k!=='overdrive'));for(let i=0;i<3;i++){const a=TAU*i/3;pickups.push({x:clamp(e.x+Math.cos(a)*34,45,W-45),y:clamp(e.y+Math.sin(a)*34,115,H-50),type:'power',power:powers[i],life:24,phase:a,guaranteed:true});}}updateHud();}
+    if(!e.queenInnies31)floater(e.x,e.y-22,`+${e.points}`);
+    if(e.miniBoss){toast((e.troll?'BERGTROLL':e.miniKind?miniBossBook[e.miniKind].name:e.cyberMini?'CYBER-HASENBEIN':'ZOMBIE-HASENBEIN')+' ERLEDIGT');if(e.miniKind&&!e.queenInnies31){recordDistinct('mini_collection',e.miniKind);const powers=shuffled(Object.keys(powerBook).filter(k=>k!=='overdrive'));for(let i=0;i<3;i++){const a=TAU*i/3;pickups.push({x:clamp(e.x+Math.cos(a)*34,45,W-45),y:clamp(e.y+Math.sin(a)*34,115,H-50),type:'power',power:powers[i],life:24,phase:a,guaranteed:true});}}updateHud();}
     if (isBoss(e)) {
       if(!player.bossHits)addAchievementProgress('precision_run');
       if(e.pafti){paftiBoss=null;if(boss?.ottah&&!boss.dead)return;stageAfterBoss('ottah');lastDefeatedBoss='ottah';addAchievementProgress('ng2_sahne');beginVictory(()=>{mode='playing';finish(true);});return;}
@@ -1284,6 +1284,7 @@
     if(player.brothBox){player.breadKills=(player.breadKills||0)+1;if(player.breadKills>=50&&runTime-(player.lastBread24??-99)>=12){player.breadKills=0;player.lastBread24=runTime;player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-38,'BROTZEIT! +1 ♥','#eac997');}}
     if(player.vampire){player.vampireKills++;if(player.vampireKills>=40&&runTime-(player.lastVampireHeal24??-99)>=10){player.vampireKills=0;player.lastVampireHeal24=runTime;player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-38,'SNACK! +1 ♥',accent());}}
     if(e.type==='splitter')for(let i=0;i<2;i++){const child=spawnEnemy('runner');child.x=clamp(e.x+(i?22:-22),32,W-32);child.y=clamp(e.y+12,105,H-45);Object.assign(child,freeWorldPoint(child.x,child.y,child.r));child.hp=child.maxHp=1;child.speed=158;burst(child.x,child.y,'#dba7ed',10,80);}
+    if(e.queenInnies31)return;
     if(e.miniKind){tryDropSpecialAmmo(e.x,e.y,24);return;}
     regularDrop23(e);
     if (Math.random()<.12) tone(400,.055,'triangle',.02,700);
@@ -1580,10 +1581,7 @@
     // Resolve separation against the same solid geometry as normal movement.
     const separationFrom=enemies.map(e=>({x:e.x,y:e.y}));
     // A small separation force keeps the rabbit horde readable.
-    for(let i=0;i<enemies.length;i++)for(let j=i+1;j<enemies.length;j++){
-      const a=enemies[i],b=enemies[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=(a.r+b.r)*.82;
-      if(d>0&&d<min){const force=(min-d)*dt*2;a.x-=dx/d*force;a.y-=dy/d*force;b.x+=dx/d*force;b.y+=dy/d*force;}
-    }
+    separateEnemies31(dt);
     // Never let a living enemy disappear outside the arena or become unfinishable through invalid coordinates.
     for(let i=0;i<enemies.length;i++)resolveWorldMotion(enemies[i],separationFrom[i]);
     keepEnemiesInArena();
@@ -4817,7 +4815,7 @@
   }
   function showCharacters(){if(mode!=='menu'&&mode!=='characters')return;mode='characters';
     const stat=c=>c.stats,show=n=>Number(n).toLocaleString('de-DE',{maximumFractionDigits:2}),chosen=characterRoster[selectedCharacter];
-    pilleShowOverlay(`<span class="eyebrow">FÜNF GARTENLEGENDEN</span><h2 id="overlayTitle">WER ZIEHT IN DIE SCHLACHT?</h2><p>Die Werte gelten für einen frischen Run. NG+-Builds behalten ihre gewählten Upgrades; bei einem Figurenwechsel werden die Grundwerte umgerechnet. Alle Skills bleiben verfügbar. Vor jedem neuen Run kannst du erneut wählen.</p><div class="character-compare" role="region" aria-label="Startwerte der fünf Spielfiguren"><table><thead><tr><th>FIGUR</th><th>HERZEN</th><th>ANGRIFF</th><th>SALVEN/S</th><th>TEMPO</th><th>DASH</th></tr></thead><tbody>${Object.entries(characterRoster).map(([id,c])=>`<tr class="${id===selectedCharacter?'chosen':''}"><th>${c.mark} ${c.name}</th><td>${stat(c).maxHp}</td><td>${show(stat(c).damage)}</td><td>${show(1/stat(c).fireRate)}</td><td>${stat(c).speed}</td><td>${show(stat(c).dashCooldown)} s</td></tr>`).join('')}</tbody></table></div><div class="character-focus" style="--skin:${chosen.color}"><strong>${chosen.mark} ${chosen.name} · ${chosen.attack.toUpperCase()}</strong><span>${chosen.attackDesc||'Klassische Nuss-Salven aus der Distanz.'}</span><span><b>Startwaffe:</b> ${weaponBook[chosen.starter].name} (${weaponBook[chosen.starter].max} Ladungen) · ${weaponBook[chosen.starter].desc}</span><small>${selectedCharacter==='snickers'?'Ausgeglichen und von Anfang an spielbar.':chosen.hint}</small></div><div class="skin-grid character-choices">${Object.entries(characterRoster).map(([id,c])=>`<button class="skin-card" id="char-${id}" style="--skin:${c.color}" ${characterUnlocked(id)?'':'disabled'} aria-pressed="${selectedCharacter===id}"><span class="skin-icon">${c.mark}</span><strong>${c.name}</strong><small>${c.attack} · ${weaponBook[c.starter].name}${characterUnlocked(id)?'':' · GESPERRT: '+c.hint}</small></button>`).join('')}</div><button class="secondary-button" id="characterBack">← ZUM MENÜ</button>`);
+    pilleShowOverlay(`<span class="eyebrow">FÜNF GARTENLEGENDEN</span><h2 id="overlayTitle">WER ZIEHT IN DIE SCHLACHT?</h2><p>Die Werte gelten für einen frischen Run. Ein übernommener Build bleibt an seine Figur gebunden. Für einen frischen Run kannst du die Figur frei wählen.</p><div class="character-compare" role="region" aria-label="Startwerte der fünf Spielfiguren"><table><thead><tr><th>FIGUR</th><th>HERZEN</th><th>ANGRIFF</th><th>SALVEN/S</th><th>TEMPO</th><th>DASH</th></tr></thead><tbody>${Object.entries(characterRoster).map(([id,c])=>`<tr class="${id===selectedCharacter?'chosen':''}"><th>${c.mark} ${c.name}</th><td>${stat(c).maxHp}</td><td>${show(stat(c).damage)}</td><td>${show(1/stat(c).fireRate)}</td><td>${stat(c).speed}</td><td>${show(stat(c).dashCooldown)} s</td></tr>`).join('')}</tbody></table></div><div class="character-focus" style="--skin:${chosen.color}"><strong>${chosen.mark} ${chosen.name} · ${chosen.attack.toUpperCase()}</strong><span>${chosen.attackDesc||'Klassische Nuss-Salven aus der Distanz.'}</span><span><b>Startwaffe:</b> ${weaponBook[chosen.starter].name} (${weaponBook[chosen.starter].max} Ladungen) · ${weaponBook[chosen.starter].desc}</span><small>${selectedCharacter==='snickers'?'Ausgeglichen und von Anfang an spielbar.':chosen.hint}</small></div><div class="skin-grid character-choices">${Object.entries(characterRoster).map(([id,c])=>`<button class="skin-card" id="char-${id}" style="--skin:${c.color}" ${characterUnlocked(id)?'':'disabled'} aria-pressed="${selectedCharacter===id}"><span class="skin-icon">${c.mark}</span><strong>${c.name}</strong><small>${c.attack} · ${weaponBook[c.starter].name}${characterUnlocked(id)?'':' · GESPERRT: '+c.hint}</small></button>`).join('')}</div><button class="secondary-button" id="characterBack">← ZUM MENÜ</button>`);
     for(const id of Object.keys(characterRoster))if(characterUnlocked(id))$('char-'+id).onclick=()=>{selectCharacter(id);showCharacters();};
     $('characterBack').onclick=()=>{mode='menu';hideOverlay();};
   }
@@ -5584,7 +5582,7 @@
   let worldArt=null, worldFloor=null, worldFloorKey='', worldMapReturn='playing';
   const worldRoomActive=()=>Boolean(exploration?.room);
   const worldOutside=()=>Boolean(exploration&&!exploration.arena&&!exploration.room&&!hasenbeinMode);
-  const wallet=()=>Math.max(0,Math.floor(score-worldSpent));
+  const wallet=()=>Math.max(0,Math.floor(score+(Number(player?.walletCarry31)||0)-worldSpent));
   function syncWorldPointer(){if(inputMode==='touch'||!pointer.active||!Number.isFinite(pointer.screenX+pointer.screenY))return;const x=clamp(player.x-viewW/2,0,Math.max(0,W-viewW)),y=clamp(player.y-viewH/2,0,Math.max(0,H-viewH));pointer.x=clamp(pointer.screenX+x,0,W);pointer.y=clamp(pointer.screenY+y,0,H);}
   const worldRandom=seed=>{let a=seed>>>0;return()=>{a=(Math.imul(a,1664525)+1013904223)>>>0;return a/4294967296;};};
   const worldBuildingNames=['KNACK & SOHN','ZUM HOHLEN STAMM','BRUCHBUDE','MÖHRENGLAS'];
@@ -7395,6 +7393,1227 @@
   const arenaHud28=updateHud;updateHud=function(){arenaHud28();paintArenaHud28();};
   document.addEventListener('keydown',e=>{if(e.code!=='Escape')return;if(mode==='gallery28'){e.preventDefault();galleryClose28();}else if(mode==='arenaBuilder28'){e.preventDefault();if(isTestArena28()){mode='playing';hideOverlay();resetInput();lastFrame=performance.now();}else{mode='menu';hideOverlay();}}});
 
+  // Edition 31: pressure follows the journey; cheap bodies form the horde.
+  // Spawn/crowd limits grow by combat wave, independently of the old act index.
+  const HORDE31={
+    normal:{cap:80,capWave:5.2,interval:.82,size:3,specials:5,bossHp:1.48},
+    hard:{cap:96,capWave:6,interval:.76,size:3,specials:7,bossHp:1.56},
+    impossible:{cap:112,capWave:6.4,interval:.73,size:4,specials:9,bossHp:1.64}
+  };
+  function hordeRules31(){return HORDE31[impossibleMode?'impossible':hardMode?'hard':'normal'];}
+  function hordeTier31(){return endlessMode?Math.min(2,endlessFromHall?endlessBuildTier:0):Math.min(2,Math.max(0,gamePlusLevel));}
+  function hordeWave31(){return endlessMode?Math.min(24,Math.max(0,wave)*.28):Math.min(14,Math.max(0,wave));}
+  function hordePressure31(kind){return isTestArena28()?({interval:{quiet:1.8,standard:1,busy:.7},cap:{quiet:.5,standard:1,busy:1.2}}[kind][arenaPressure28]||1):1;}
+  let hordeTravel31={player:null,speed:0,angle:0,until:0},hordeSpawnPoint31=null;
+  function hordeMoving31(){return hordeTravel31.player===player&&runTime<hordeTravel31.until&&hordeTravel31.speed>45;}
+  balanceSpawnCap=function(){
+    const h=hordeRules31(),tier=hordeTier31();
+    const cap=h.cap+h.capWave*hordeWave31()+[0,34,68][tier]-(getMiniBoss()?10:0);
+    return Math.min(288,Math.max(24,Math.round(cap*hordePressure31('cap'))));
+  };
+  balanceSpawnInterval=function(){
+    const h=hordeRules31(),progress=clamp(waveTime/currentWaveLength(),0,1);
+    const growth=1+.025*hordeWave31()+.11*hordeTier31();
+    const recovery=waveTime%55>47?1.55:1,mini=getMiniBoss()?1.28:1,moving=hordeMoving31()?.93:1;
+    return Math.max(.36,h.interval*(1-.16*progress)/growth)*recovery*mini*moving*hordePressure31('interval');
+  };
+  function hordeBatch31(){return Math.min(8,hordeRules31().size+Math.floor(hordeWave31()/5)+hordeTier31());}
+  function outsideHordeView31(p,pad=0){
+    return p.x<camX-pad||p.x>camX+viewW+pad||p.y<camY-pad||p.y>camY+viewH+pad;
+  }
+  // Test the actual camera rectangle, including at world edges. A failed search
+  // delays a spawn; it never substitutes a visible or blocked position.
+  function findHordeSpawn31(r=40){
+    const margin=Math.max(100,r+64),minDistance=Math.min(420,Math.min(viewW,viewH)*.62);
+    const valid=p=>p.x>r+5&&p.x<W-r-5&&p.y>r+5&&p.y<H-r-5&&outsideHordeView31(p,r+42)&&dist(player,p)>minDistance&&!worldBlocked(p.x,p.y,r);
+    for(let i=0;i<48;i++){
+      const angle=hordeMoving31()&&Math.random()<.62?hordeTravel31.angle+rnd(-Math.PI*.48,Math.PI*.48):rnd(0,TAU),dx=Math.cos(angle),dy=Math.sin(angle);
+      const rx=Math.abs(dx)>.001?((dx>0?camX+viewW+margin:camX-margin)-player.x)/dx:Infinity;
+      const ry=Math.abs(dy)>.001?((dy>0?camY+viewH+margin:camY-margin)-player.y)/dy:Infinity;
+      const radius=Math.min(rx,ry)+rnd(15,100),p={x:player.x+dx*radius,y:player.y+dy*radius};
+      if(valid(p))return p;
+    }
+    // A bounded perimeter sweep also finds safe entries beside crowded props.
+    for(let ring=0;ring<3;ring++){
+      const pad=margin+ring*90,left=camX-pad,right=camX+viewW+pad,top=camY-pad,bottom=camY+viewH+pad;
+      for(let i=0;i<16;i++){
+        const t=(i+.5)/16;
+        for(const p of [{x:left+(right-left)*t,y:top},{x:left+(right-left)*t,y:bottom},{x:left,y:top+(bottom-top)*t},{x:right,y:top+(bottom-top)*t}])if(valid(p))return p;
+      }
+    }
+    return null;
+  }
+  const spawnPointBefore31=safeSpawnPoint;
+  safeSpawnPoint=function(){return hordeSpawnPoint31||(worldOutside()?findHordeSpawn31():null)||spawnPointBefore31();};
+  const enemySpawnBefore31=spawnEnemy;
+  spawnEnemy=function(...args){
+    const e=enemySpawnBefore31(...args);
+    if(e&&worldOutside()&&!boss&&!e.dead){
+      // Extra challenge comes mainly from numbers. Grunts remain fragile even in NG+2.
+      const hp=1+.012*hordeWave31()+.10*hordeTier31();e.hp*=hp;e.maxHp=e.hp;
+      e.speed*=1+.0018*hordeWave31()+.018*hordeTier31();
+    }
+    return e;
+  };
+  tickHordes24=function(dt){
+    if(boss||worldRoomActive()||hasenbeinMode||waveTime>=currentWaveLength())return;
+    spawnTimer-=dt;if(spawnTimer>0)return;
+    spawnTimer=Math.max(-.08,spawnTimer)+balanceSpawnInterval();
+    const live=enemies.filter(e=>!e.dead),cap=balanceSpawnCap(),basic=new Set(['bunny','runner','parcelWasp','pigDrone']);
+    let specials=live.filter(e=>!basic.has(e.type)&&!e.miniBoss).length;
+    const specialLimit=hordeRules31().specials+hordeTier31()*2+Math.floor(hordeWave31()/7),count=Math.min(hordeBatch31(),cap-live.length);
+    for(let i=0;i<count;i++){
+      let type=i===0&&waveTime>15&&specials<specialLimit&&Math.random()<.60?hordeSpecial24():Math.random()<.22?'parcelWasp':Math.random()<.48?'runner':campaignProgress25()>=6?'pigDrone':'bunny';
+      if(type==='cardCrow'&&live.filter(e=>e.type===type).length>=(hardMode?2:1))type='runner';
+      const point=worldOutside()?findHordeSpawn31():null;if(worldOutside()&&!point)break;
+      hordeSpawnPoint31=point;let e;try{e=spawnEnemy(type);}finally{hordeSpawnPoint31=null;}
+      if(e&&!e.dead){live.push(e);if(!basic.has(e.type)&&!e.miniBoss)specials++;}
+    }
+  };
+  // Pursuit assistance is only outside contact range and only during actual travel.
+  // Original attack, charge, slow/freeze and collision rules remain authoritative.
+  const motionBefore31=resolveWorldMotion;
+  resolveWorldMotion=function(actor,from,navigate=false){
+    if(navigate&&worldOutside()&&hordeMoving31()&&actor!==player&&!actor.miniBoss&&!actor.dead&&!(actor.spawnGrace>0||actor.windup>0||actor.charge>0||actor.discussTime>0)&&actor.speed>0){
+      const distance=dist(from,player),blend=clamp((distance-170)/150,0,1),dx=actor.x-from.x,dy=actor.y-from.y;
+      if(blend>0&&Math.hypot(dx,dy)>0){
+        const factor=1+(Math.min(3.5,Math.max(1.08,hordeTravel31.speed*1.16/actor.speed))-1)*blend;
+        actor.x=from.x+dx*factor;actor.y=from.y+dy*factor;
+      }
+    }
+    return motionBefore31(actor,from,navigate);
+  };
+  const keepBefore31=keepEnemiesInArena;
+  keepEnemiesInArena=function(){
+    if(!worldOutside())return keepBefore31();
+    worldArenaKeep();let recycled=0;
+    for(const e of enemies){
+      if(e.dead)continue;
+      if(!e.miniBoss&&!e.knoll&&!e.troll&&!e.worldPoi){
+        const distant=outsideHordeView31(e,125)&&dist(e,player)>Math.max(620,Math.min(viewW,viewH)*.82);
+        if(!distant)e.hordeOutsideSince31=null;
+        else if(e.hordeOutsideSince31==null)e.hordeOutsideSince31=runTime;
+        else if(recycled<2&&runTime-e.hordeOutsideSince31>.8&&runTime-(e.hordeRecycled31??-99)>5){
+          const p=findHordeSpawn31(Math.max(40,e.r));
+          if(p){Object.assign(e,p);e.worldSafe25={...p};e.worldFrom={...p};e.worldPath25=null;e.worldRepath25=0;e.spawnGrace=Math.max(e.spawnGrace||0,.9);e.windup=0;e.charge=0;e.burstLeft=0;e.hordeRecycled31=runTime;e.hordeOutsideSince31=null;recycled++;}
+        }
+      }
+      if(worldBlocked(e.x,e.y,e.r)||!Number.isFinite(e.x+e.y))resolveWorldMotion(e,e.worldSafe25||e.worldFrom||player);
+    }
+  };
+  const updateBefore31=update;
+  update=function(dt){
+    const who=player,playing=mode==='playing',from=who?{x:who.x,y:who.y}:null;
+    if(hordeTravel31.player!==who)hordeTravel31={player:who,speed:0,angle:0,until:0};
+    const result=updateBefore31(dt);
+    if(playing&&who===player&&from&&worldOutside()&&dt>0){
+      const dx=player.x-from.x,dy=player.y-from.y,d=Math.hypot(dx,dy);
+      if(d>.5&&d<Math.max(60,dt*950)&&!(player.dashTime>0)){
+        hordeTravel31.speed=Math.min(effectiveSpeed(player),d/dt);hordeTravel31.angle=Math.atan2(dy,dx);hordeTravel31.until=runTime+.16;
+      }
+    }
+    return result;
+  };
+  // Called by the shared update loop in place of its all-pairs separation.
+  // Each body only visits adjacent grid cells; world collision is swept afterwards.
+  let hordeSeparationChecks31=0;
+  function separateEnemies31(dt){
+    hordeSeparationChecks31=0;const alive=enemies.filter(e=>!e.dead),maxR=alive.reduce((n,e)=>Math.max(n,e.r||18),18),cell=Math.max(96,maxR*2),grid=new Map();
+    for(const a of alive){
+      const gx=Math.floor(a.x/cell),gy=Math.floor(a.y/cell);
+      for(let x=gx-1;x<=gx+1;x++)for(let y=gy-1;y<=gy+1;y++)for(const b of grid.get(x+','+y)||[]){
+        hordeSeparationChecks31++;const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=(a.r+b.r)*.82;
+        if(d>0&&d<min){const force=(min-d)*dt*2;a.x-=dx/d*force;a.y-=dy/d*force;b.x+=dx/d*force;b.y+=dy/d*force;}
+      }
+      const key=gx+','+gy;if(!grid.has(key))grid.set(key,[]);grid.get(key).push(a);
+    }
+  }
+  // Main-boss tuning is fixed by encounter/tier, never by a player's current DPS.
+  function strengthenBoss31(e){
+    if(!e||e.balance31||hasenbeinMode)return;
+    const factor=(e.herbert?1.20:e.endlessBoss?1.34:hordeRules31().bossHp)*(endlessMode?1:1+.10*hordeTier31());
+    e.hp*=factor;e.maxHp*=factor;if(e.balanceInitialHp)e.balanceInitialHp*=factor;e.balance31=true;
+  }
+  for(const name of ['boss','ottah','endless']){
+    if(name==='boss'){const prior=spawnBoss;spawnBoss=function(...args){const r=prior(...args);strengthenBoss31(boss);saveRunNow();return r;};}
+    if(name==='ottah'){const prior=spawnOttah;spawnOttah=function(...args){const r=prior(...args);strengthenBoss31(boss);strengthenBoss31(paftiBoss);saveRunNow();return r;};}
+    if(name==='endless'){const prior=spawnEndlessBoss;spawnEndlessBoss=function(...args){const r=prior(...args);strengthenBoss31(boss);saveRunNow();return r;};}
+  }
+  // Hook after all species/skill multipliers, immediately before HP subtraction.
+  // First 16% of a life bar and its replenishing budget hit at full strength;
+  // excess burst still deals 12%. No immunity, minimum fight timer or DPS scaling.
+  function bossImpact31(e,amount){
+    if(hasenbeinMode||!e||e.dead||(e!==boss&&e!==paftiBoss)||!Number.isFinite(amount)||amount<=0)return amount;
+    const phase=[e.phaseTwo,e.phaseThree,e.ottahPhase,e.herbertPhase,e.paftiPhase,e.hardFinal,e.impossibleFinal,e.maxHp].join(':'),capacity=e.maxHp*.16;
+    const horizon=(impossibleMode?19:hardMode?17:15)+(gamePlusLevel===2?2:gamePlusLevel===1?1:0);
+    if(e.burstPhase31!==phase){e.burstPhase31=phase;e.burstCredit31=capacity;e.burstClock31=runTime;}
+    const elapsed=clamp(runTime-(e.burstClock31??runTime),0,2);e.burstClock31=runTime;
+    e.burstCredit31=Math.min(capacity,Math.max(0,e.burstCredit31||0)+elapsed*e.maxHp/horizon);
+    const full=Math.min(amount,e.burstCredit31);e.burstCredit31-=full;
+    return full+(amount-full)*.12;
+  }
+  const helpBeforeBalance31=helpMarkup;
+  helpMarkup=function(){return helpBeforeBalance31()+`<section class="build-section"><h3>Die Horde bleibt dran</h3><p>Jede Kampfwelle bringt mehr leichte Gegner. NG+ und NG+2 erhöhen Gruppengröße, Nachschub und das gleichzeitige Gegnerlimit; Hard und Impossible legen weiter zu. Schützen und Flächenangreifer bleiben eine kleine Minderheit. Beim Laufen kommt Nachschub häufiger von vorne und den Flanken. Unsichtbare Nachzügler kehren außerhalb des Bildes zurück; ihre Verletzungen bleiben erhalten.</p><p>Hauptbosse haben mehr Ausdauer. Sehr dicht aufeinanderfolgende Treffer werden nach einem anfänglichen Schadenspolster gedämpft; das Polster lädt laufend nach. Jeder Treffer verursacht weiter Schaden. Gute Builds bleiben schnell, einzelne Spezialwaffensalven überspringen aber nicht mehr mühelos den ganzen Kampf.</p></section>`;};
+
+  // Edition 31: a carried purse is not a carried score. Purchases never reduce high score.
+  const ECONOMY_MAX31=1e12;
+  function safeCoins31(value){const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(ECONOMY_MAX31,Math.floor(n))):0;}
+  function freeShopCredits31(p=player){return Math.max(0,Math.min(5,Math.floor(Number(p?.freeShopUpgrades31)||0)));}
+  function grantFreeShopUpgrades31(p){if(!p||p.eyesTradeClaimed31)return;p.eyesTradeClaimed31=true;p.freeShopUpgrades31=5;}
+  for(const key of ['walletCarry31','freeShopUpgrades31','eyesTradeClaimed31','shopPurchases31'])if(!ngPlusCarryKeys.includes(key))ngPlusCarryKeys.push(key);
+  const economyCapture31=captureNGPlusBuild;
+  captureNGPlusBuild=function(p){const b=economyCapture31(p);b.walletCarry31=p===player?safeCoins31(wallet()):safeCoins31(p?.walletCarry31);b.freeShopUpgrades31=freeShopCredits31(p);b.eyesTradeClaimed31=Boolean(p?.eyesTradeClaimed31);b.shopPurchases31=Math.max(0,Math.min(10000,Math.floor(Number(p?.shopPurchases31)||0)));return b;};
+  const economyRestore31=restoreBuildValues;
+  restoreBuildValues=function(b){const p=economyRestore31(b);p.walletCarry31=safeCoins31(b.walletCarry31);p.freeShopUpgrades31=freeShopCredits31(b);p.eyesTradeClaimed31=Boolean(b.eyesTradeClaimed31||b.skills?.e31AugenAusstechen);p.shopPurchases31=Math.max(0,Math.min(10000,Math.floor(Number(b.shopPurchases31)||0)));return p;};
+  const economySanitize31=sanitizeSharedBuild;
+  sanitizeSharedBuild=function(raw){const b=economySanitize31(raw);b.walletCarry31=safeCoins31(raw.walletCarry31);b.freeShopUpgrades31=freeShopCredits31(raw);b.eyesTradeClaimed31=Boolean(raw.eyesTradeClaimed31||b.skills?.e31AugenAusstechen);b.shopPurchases31=Math.max(0,Math.min(10000,Math.floor(Number(raw.shopPurchases31)||0)));return b;};
+  function economyTier31(){return Math.max(0,Math.min(2,endlessMode?(endlessFromHall?endlessBuildTier:0):gamePlusLevel));}
+  function economyWave31(){return Math.max(0,(endlessMode?wave+1:displayWave25())-1);}
+  worldStatPrice=function(id){
+    const base={damage:4400,speed:3500,fireRate:4600,dash:4100,powerLuck:3400,dodge:4000,heart:5100,ammo:4400,shuffle:2900}[id]||4100;
+    const purchases=Math.min(40,Math.max(0,Number(player?.shopPurchases31)||0)),same=Math.min(12,Math.max(0,Number(player?.scorePerks?.[id])||0));
+    const phase=1+.028*Math.min(45,economyWave31())+.15*Math.log2(1+Math.max(0,economyWave31()-45)/15);
+    const tier=[1,2.25,4.5][economyTier31()],difficulty=impossibleMode?1.65:hardMode?1.4:1;
+    return Math.max(100,Math.round(base*(1+.08*purchases)*(1+.06*same)*phase*tier*difficulty/100)*100);
+  };
+  const economyStock31=prepareStatShop;
+  prepareStatShop=function(p){economyStock31(p);const free=freeShopCredits31();for(const offer of p.offers||[])if(!offer.bought&&offer.stat){offer.regularPrice31=worldStatPrice(offer.stat);offer.price=free>0&&scorePerkAvailable(offer.stat)?0:offer.regularPrice31;}};
+  const economyInterior31=renderWorldInterior;
+  renderWorldInterior=function(){const r=economyInterior31(),p=exploration?.pois.find(p=>p.id===exploration.interior);if(mode!=='worldShop'||p?.outcome!=='shop')return r;const credits=freeShopCredits31();
+    if(credits){const walletNode=$('overlayContent').querySelector('.shop-wallet');if(walletNode)walletNode.insertAdjacentHTML('afterend',`<p class="shop-free31" role="status"><strong>${credits} GRATIS-UPGRADE${credits===1?'':'S'} ÜBRIG</strong> · Die nächsten ${credits} gültigen Einkäufe kosten 0 Punkte. Ungenutzte Gutscheine bleiben erhalten.</p>`);for(let i=0;i<(p.offers||[]).length;i++){const o=p.offers[i],button=$('worldBuy'+i);if(button&&!o.bought&&o.stat&&scorePerkAvailable(o.stat)){button.disabled=false;const price=button.querySelector('em');if(price)price.textContent='0 PUNKTE · GRATIS-UPGRADE';}}}
+    return r;
+  };
+  const economyBuy31=buyWorldOffer;
+  buyWorldOffer=function(p,index){
+    if(mode!=='worldShop'||exploration?.interior!==p?.id)return;
+    prepareStatShop(p);const offer=p.offers?.[index];if(!offer||offer.bought||!offer.stat||!scorePerkAvailable(offer.stat)||wallet()<offer.price)return;
+    const credits=freeShopCredits31(),wasFree=credits>0&&offer.price===0,before=Boolean(offer.bought),r=economyBuy31(p,index);
+    if(!before&&offer.bought){player.shopPurchases31=Math.max(0,Math.floor(Number(player.shopPurchases31)||0))+1;if(wasFree){player.freeShopUpgrades31=credits-1;offer.free31=true;offer.paid31=0;}else offer.paid31=offer.price;
+      if(wasFree&&player.notices28?.length){const receipt=player.notices28[player.notices28.length-1];receipt.kind='GRATIS-UPGRADE · '+player.freeShopUpgrades31+' GUTSCHEINE ÜBRIG';}
+      // The old purchase path saves before its receipt opens. Commit credits with that receipt,
+      // so reload, double click and reopening the shop cannot mint an extra purchase.
+      updateHud();saveRunNow();if(mode==='worldShop')renderWorldInterior();else if(wasFree&&mode==='worldReward28')showDiscovery28();
+    }return r;
+  };
+  function worldCacheValue31(p){const base=Math.max(1,Number(p.basePoints31??p.points)||450),phase=1+.18*Math.min(60,economyWave31())+.35*Math.log2(1+Math.max(0,economyWave31()-60)/15);return Math.max(10,Math.round(base*phase*[1,2.2,4.6][economyTier31()]*(impossibleMode?1.75:hardMode?1.55:1)/10)*10);}
+  const economyCollect31=collectWorldPoint;
+  collectWorldPoint=function(p){if(p?.kind==='cache'&&!p.done&&mode==='playing'){p.basePoints31??=Math.max(1,Number(p.points)||450);p.points=worldCacheValue31(p);p.economyVersion31=31;}return economyCollect31(p);};
+
+  // Imported and archived builds keep their hero. Only a deliberately fresh run asks again.
+  const economyFresh31=freshReworkBuild;
+  freshReworkBuild=function(...args){const b=economyFresh31(...args);b.fresh31=true;b.walletCarry31=0;b.freeShopUpgrades31=0;b.eyesTradeClaimed31=false;b.shopPurchases31=0;return b;};
+  const economyCharacterPick31=showRunCharacterPick;
+  showRunCharacterPick=function(level,hard=false,impossible=false,build=null){
+    if(!build||build.fresh31)return economyCharacterPick31(level,hard,impossible,build);
+    const hero=Object.hasOwn(characterRoster,build.characterId)?build.characterId:'snickers';
+    if(!characterUnlocked(hero)){toast('Dieser Build gehört zu '+characterRoster[hero].name+'. Schalte die Figur zuerst frei.');return;}
+    selectCharacter(hero);endlessSelectedBuild=level===3?build:null;endlessFromHall=Boolean(level===3&&build);startGame(level,hard,impossible,level===1||level===2?build:null);
+  };
+  const economyStart31=startGame;
+  startGame=function(level=0,hard=false,impossible=false,build=null){const inherited=level===3?endlessSelectedBuild:build;
+    if(inherited&&!inherited.fresh31&&!(typeof isTestArena28==='function'&&isTestArena28())){if(!canStartMode(Number(level)||0,hard,inherited,impossible))return;const hero=Object.hasOwn(characterRoster,inherited.characterId)?inherited.characterId:'snickers';if(!characterUnlocked(hero))return;selectedCharacter=hero;selectedSkin=selectedSkins[hero]||(hero==='snickers'?'classic':hero+'__classic');}
+    return economyStart31(level,hard,impossible,build);
+  };
+  showCampaignBuildSelect=function(level,hard=false,impossible=false){
+    if(!canStartMode(level,hard,null,impossible))return;campaignChoice={level,hard:Boolean(hard||impossible),impossible:Boolean(impossible)};mode='campaignSelect';const entries=campaignSources(level,hard,impossible),difficulty=impossible?'IMPOSSIBLE':hard?'HARD':'NORMAL';
+    showOverlay(`<span class="eyebrow">${difficulty} · ${tierName(level)} · BUILD ÜBERNEHMEN</span><h2 id="overlayTitle">DEIN BUILD ZIEHT WEITER.</h2><p>Wähle einen abgeschlossenen Build. Seine Figur, Waffen, Skills, dauerhaften Boni und sein übriges Guthaben reisen mit. Die Ladenpreise steigen passend zur neuen Runde.</p>${entries.length?`<button class="primary-button" id="campaignCarry31">NEUESTEN SIEGER-BUILD ÜBERNEHMEN ↗</button>`:''}<div class="hall-run-list">${entries.map(({r,i})=>runSummary(r,i,'campaign')).join('')}</div><button class="secondary-button" id="campaignFresh">${tierName(level)} FRISCH STARTEN · OHNE BUILD & GUTHABEN</button><button class="secondary-button" id="campaignBack">ZURÜCK</button>`);
+    if(entries.length)$('campaignCarry31').onclick=()=>requestRunStart(level,hard,hallBuild(entries[0].r),impossible);
+    $('campaignFresh').onclick=()=>requestRunStart(level,hard,freshReworkBuild(level,hard,impossible),impossible);for(const {i}of entries)$('campaignRun'+i).onclick=()=>showRunDetail(i,'campaign');$('campaignBack').onclick=goMenu;
+  };
+  const economyFinish31=finish;
+  finish=function(won){const r=economyFinish31(won);if(!won||mode!=='won'||endlessMode||hasenbeinMode||gamePlusLevel>=2)return r;
+    const level=gamePlusLevel+1,hard=hardMode,impossible=impossibleMode,build=captureNGPlusBuild(player);build.sourceTier=gamePlusLevel;
+    const primary=$('retryButton');if(primary){primary.textContent=tierName(level)+' MIT DIESEM BUILD WEITER ↗';primary.onclick=()=>requestRunStart(level,hard,build,impossible);primary.insertAdjacentHTML('afterend',`<button id="freshVictory31" class="secondary-button">${tierName(level)} FRISCH STARTEN · OHNE BUILD & GUTHABEN</button>`);$('freshVictory31').onclick=()=>requestRunStart(level,hard,freshReworkBuild(level,hard,impossible),impossible);}return r;
+  };
+  const economyDetails31=buildDetailsMarkup;
+  buildDetailsMarkup=function(p,live=false){return economyDetails31(p,live)+`<section class="build-section"><h3>Guthaben & Laden</h3><p><strong>${(live&&p===player?wallet():safeCoins31(p?.walletCarry31)).toLocaleString('de-DE')} Punkte Guthaben</strong> · Bleibt beim Übernehmen dieses Builds erhalten. Der Highscore der nächsten Runde beginnt bei null.${freeShopCredits31(p)?' '+freeShopCredits31(p)+' Gratis-Upgrades warten auf den nächsten Laden.':''}</p></section>`;};
+
+  // Edition 31: readable companions, the map-for-shop bargain and honest scenery collision.
+  // The old soapedRat identifiers deliberately remain stable in saves and gallery records.
+  function companionKind31(id){
+    if(!id)return null;
+    const c=allSkillInfo(id),meta=cardMap24[id]||cardMap28[id];
+    if((companionGroups[id]&&id!=='orbit')||['ronnySquirrel','eiterWesen','beagle','endlessSwarm'].includes(id)||meta?.kind==='companion')return 'companion';
+    if(meta?.kind==='companionUpgrade'||c?.requires&&companionKind31(c.requires)==='companion')return 'companionUpgrade';
+    return null;
+  }
+  Object.assign(skillBook.soapedRat,{kind:'companion',companion:true,short:'Ratte der Eingeseiften',desc:'BEGLEITER · Eine eingeseifte Ratte folgt dir und jagt nahe Gegner. Alle 4,2 s hinterlässt sie beim Ziel eine Seifenlache: 1,3× passive Angriffskraft je 0,8 s über 3,1 s und kurze Verlangsamung. Fünf eigene Ausbauten verbessern Tempo, Schaden, Flächenwirkung, Bremse und Heilung.'});
+  for(let rank=1;rank<=5;rank++)Object.assign(skillBook['soapedRatUp'+rank],{kind:'companionUpgrade',companionUpgrade:true});
+  skillBook.e31AugenAusstechen={icon:'◉',title:'AUGEN AUSSTECHEN',short:'Augen ausstechen',rarity28:'purple',maxStacks:1,desc:'Ein dauerhafter Handel: Weltkarte und Minimap verschwinden, auch in übernommenen Builds. Dafür sind deine nächsten fünf gültigen Shop-Werteupgrades gratis. Nicht verbrauchte Käufe bleiben erhalten. Der Quizmaster darf dich weiterhin teleportieren.',apply:p=>{p.mapBlind31=true;grantFreeShopUpgrades31(p);}};
+  purpleRewards.add('e31AugenAusstechen');
+  for(const pool of upgradePools)if(!pool.includes('e31AugenAusstechen'))pool.push('e31AugenAusstechen');
+  if(!ngPlusCarryKeys.includes('mapBlind31'))ngPlusCarryKeys.push('mapBlind31');
+  const normalizeContent31=normalizeBuild;
+  normalizeBuild=function(p){const r=normalizeContent31(p);if(p?.skills?.e31AugenAusstechen)p.mapBlind31=true;return r;};
+  function mapBlind31(p=player){return Boolean(p&&(p.mapBlind31||p.skills?.e31AugenAusstechen));}
+  const mapContent31=showWorldMap;
+  showWorldMap=function(...args){if(mapBlind31()){if(mode==='worldMap')closeWorldMap();else if(['playing','paused'].includes(mode))toast('AUGEN AUSGESTOCHEN · Die Karte ist Teil des Handels.');return;}return mapContent31(...args);};
+  function hideBlindMapControls31(){
+    if(!mapBlind31())return;
+    for(const id of ['worldMapButton','miniMap27','pauseWorldMap'])$(id)?.classList.add('hidden');
+  }
+  const hudContent31=updateHud;
+  updateHud=function(...args){const r=hudContent31(...args);hideBlindMapControls31();return r;};
+  const pauseContent31=pauseGame;
+  pauseGame=function(...args){const r=pauseContent31(...args);hideBlindMapControls31();return r;};
+  // Existing reward templates all call this entry point, so labels stay consistent
+  // in ordinary waves, boss choices, and companion upgrades without another UI tree.
+  const overlayContent31=showOverlay;
+  showOverlay=function(html,...args){
+    if(typeof html==='string')html=html.replace(/(<button\b[^>]*\bdata-skill="([^"]+)"[^>]*>)([\s\S]*?)(<\/button>)/g,(all,start,id,body,end)=>{
+      const kind=companionKind31(id);if(!kind)return all;
+      return start+body.replace(/(<small\b[^>]*class="[^"]*upgrade-kind[^\"]*"[^>]*>)[\s\S]*?(<\/small>)/,(match,a,b)=>a+(kind==='companion'?'BEGLEITER':'BEGLEITER-AUSBAU')+b)+end;
+    });
+    const r=overlayContent31(html,...args);hideBlindMapControls31();return r;
+  };
+  const discoveryContent31=queueDiscovery28;
+  queueDiscovery28=function(item,...args){const kind=companionKind31(item?.icon);return discoveryContent31(kind?{...item,kind:kind==='companion'?'NEUER BEGLEITER':'BEGLEITER VERBESSERT'}:item,...args);};
+  const detailsContent31=buildDetailsMarkup;
+  buildDetailsMarkup=function(p,...args){
+    const friends=Object.keys(p?.skills||{}).filter(id=>companionKind31(id)),skills=Object.fromEntries(Object.entries(p?.skills||{}).filter(([id])=>!companionKind31(id)));
+    let result=detailsContent31(p,...args);
+    if(friends.length)result=result.replace(/<section class="build-section" id="currentSkills">[\s\S]*?<\/section>/,`<section class="build-section" id="currentSkills"><h3>Deine Skills <span>${Object.keys(skills).length}</span></h3>${buildCards(Object.keys(skills),id=>({...allSkillInfo(id),title:allSkillInfo(id)?.title+(skills[id]>1?' · '+skills[id]+'× gewählt':'')}),'skill')}</section>`);
+    if(friends.length){result=result.replace('<button data-jump="currentSkills">SKILLS</button>','<button data-jump="currentSkills">SKILLS</button><button data-jump="currentCompanions31">BEGLEITER</button>');result+=`<section class="build-section" id="currentCompanions31"><h3>Deine Begleiter und ihre Ausbauten <span>${friends.length}</span></h3>${buildCards(friends,id=>allSkillInfo(id),'companion')}</section>`;}
+    if(mapBlind31(p))result+=`<section class="build-section"><h3>Augen ausstechen</h3><p>Weltkarte und Minimap sind dauerhaft verloren. Noch <b>${Math.max(0,Math.floor(p.freeShopUpgrades31||0))} kostenlose Shop-Upgrades</b> verfügbar.</p></section>`;
+    return result;
+  };
+  // A gate has two grounded supports, never an invisible wall across its opening.
+  // Rendering keeps the complete source image once; every movement, shot and A*
+  // query uses the same two cached collision footprints instead of the old AABB.
+  const openScenery31=new Set(['quarry-prop1','broken-arch']);
+  const collisionPartsCache31=new WeakMap();
+  function worldCollisionParts31(o){
+    if(!openScenery31.has(o.sprite28||o.sprite27))return [o];
+    let parts=collisionPartsCache31.get(o);if(parts)return parts;
+    const draw=o.drawSize28||PROP_SIZE28[o.sprite28||o.sprite27]?.[0]||o.w*1.3;
+    const dx=draw*.325,w=draw*.205;
+    parts=[-1,1].map(side=>({x:o.x+side*dx,y:o.y,w,h:o.h,passage31:true,source31:o.sprite28||o.sprite27}));
+    collisionPartsCache31.set(o,parts);return parts;
+  }
+  const obstaclesContent31=nearbyWorldObstacles;
+  nearbyWorldObstacles=function(x,y,r=80){const nearby=obstaclesContent31(x,y,r+48);let split=null;for(let i=0;i<nearby.length;i++){const o=nearby[i];if(openScenery31.has(o.sprite28||o.sprite27)){split??=nearby.slice(0,i);split.push(...worldCollisionParts31(o));}else if(split)split.push(o);}return split||nearby;};
+
+  // Native, small-scale pixel vegetation fills the edges of authored scenes.
+  // Important routes, building entrances and pickups retain their existing clearance.
+  const NATURE31={
+    garden:['fern','bellflowers','fallenBranch'],sewer:['sewerReeds','mould','rustGrate'],
+    kitchen:['basil','spilledGrain','pepperMill'],quarry:['dryGrass','stoneCairn','mineLantern'],
+    lab:['glassFern','cableCoil','sampleCrate'],swamp:['cattails','lotus','hollowLog'],
+    astral:['moonFlower','starGrass','crystalRing'],stage:['stageWeeds','lostBottle','cableBasket']
+  };
+  const sceneryBuildContent31=rebuildWorldGeometry;
+  rebuildWorldGeometry=function(...args){
+    const r=sceneryBuildContent31(...args);if(!exploration||!sceneryScenes28?.length)return r;
+    const key=biome25(),random=worldRandom(exploration.seed^0x31c07e),ids=NATURE31[key];if(!ids)return r;
+    const free=(x,y,w=14,h=14)=>x>100&&y>130&&x<WORLD_SIZE-100&&y<WORLD_SIZE-100&&!nearPath27(x,y,95+Math.max(w,h)/2)&&!exploration.pois.some(p=>dist({x,y},p)<(p.kind==='building'?360:180))&&!worldBlocked(x,y,Math.max(w,h)/2+14)&&dist({x,y},exploration.entry)>210;
+    const addDecor=(id,x,y,size)=>{if(!free(x,y))return;const p={x:Math.round(x),y:Math.round(y),size,sprite:'nature31-'+id,flip:random()<.5,scene28:-1};decorations28.push(p);sceneGridAdd28(decorationGrid28,p,90);};
+    for(const [i,s] of sceneryScenes28.entries()){
+      if(i%2===0)for(let n=0;n<3;n++){const a=random()*TAU,d=260+random()*180;addDecor(ids[n%2],s.x+Math.cos(a)*d,s.y+Math.sin(a)*d*.72,44+Math.floor(random()*13));}
+      if(i%5!==1)continue;
+      const x=s.x+(random()<.5?-1:1)*(240+random()*75),y=s.y+135+random()*100,w=key==='swamp'?83:key==='garden'?77:49,h=key==='garden'?21:32;
+      if(!free(x,y,w,h))continue;
+      const o={x:Math.round(x),y:Math.round(y),w,h,sprite28:'nature31-'+ids[2],sprite27:'nature31-'+ids[2],drawSize28:key==='swamp'?124:key==='garden'?114:89,flip27:random()<.5,scene28:s.id};
+      worldObstacles.push(o);for(let gy=Math.floor((o.y-h/2)/WORLD_CELL);gy<=Math.floor((o.y+h/2)/WORLD_CELL);gy++)for(let gx=Math.floor((o.x-w/2)/WORLD_CELL);gx<=Math.floor((o.x+w/2)/WORLD_CELL);gx++){const k=gx+','+gy;if(!worldGrid.has(k))worldGrid.set(k,[]);worldGrid.get(k).push(o);}
+    }
+    return r;
+  };
+
+  // Edition 31: ten roaming minibosses. Queen is a separate, optional encounter.
+  // Every attack locks its aim before a visible windup; hazards and volleys are bounded.
+  const MINI_BOSSES31={
+    randgruppenFeind31:{name:'DER ERZFEIND DER RANDGRUPPEN',hp:96,speed:92,r:47,color:'#b395ab',icon:'!',tier:0,minWave:4,windup:.94,cooldown:3.7,stop:160,design:'Grantiger Dachs-Türsteher mit zerrissenem Samtmantel und Klemmbrett.',note:'Stempelt drei angekündigte Felder oder stürmt auf einer vorher festgelegten Linie.'},
+    aloanSchnueperich31:{name:'ALOAN-SCHNÜPERICH',hp:88,speed:112,r:44,color:'#edc54f',icon:'!',tier:0,minWave:4,windup:1.0,cooldown:3.6,stop:245,design:'Eine Wespe steckt in einem schwarzen Autoreifen; ihre Flügel ragen seitlich heraus.',note:'Ein Stachelring lässt eine breite Lücke. Danach rollt der Reifen geradeaus.'},
+    moosvogt31:{name:'DER MOOSVOGT',hp:106,speed:76,r:48,color:'#a2c879',icon:'!',tier:0,minWave:6,windup:1.04,cooldown:4.2,stop:280,design:'Bemooster Igel mit einer Krone aus drei Pilzen.',note:'Sporen markieren ein Dreieck am Ziel; sein langsamer Nadelring besitzt einen Fluchtkorridor.'},
+    pfandbaron31:{name:'BARON PFANDFLASCHE',hp:99,speed:86,r:45,color:'#77c7af',icon:'!',tier:0,minWave:6,windup:.95,cooldown:3.7,stop:295,design:'Waschbär in Kronkorkenrüstung mit einem Bündel grünlicher Flaschen.',note:'Wirft versetzte Flaschenfächer und kündigt zwei kleine Scherbenfelder an.'},
+    knoedelwalze31:{name:'DIE KNÖDELWALZE',hp:116,speed:80,r:54,color:'#e4bd83',icon:'!',tier:0,minWave:8,windup:1.12,cooldown:4.15,stop:180,design:'Rundes Meerschweinchen in einem dampfenden Kochtopf.',note:'Rollt eine feste Linie entlang und hinterlässt angekündigte Dampfstellen. Beim Abblasen Abstand halten.'},
+    distelwitwe31:{name:'DIE DISTELWITWE',hp:94,speed:100,r:45,color:'#c38fce',icon:'!',tier:0,minWave:8,windup:1.0,cooldown:3.6,stop:285,design:'Violette Spinne mit dornigen Distelblüten am Hinterleib.',note:'Drei getrennte Dornenfelder oder ein schmaler Fächer: Die andere Seite bleibt offen.'},
+    senfpropst31:{name:'DER SENFPROPST',hp:122,speed:85,r:48,color:'#d8b63f',icon:'!',tier:1,minWave:6,windup:.96,cooldown:3.8,stop:270,design:'Mönchartiger Kröterich mit grober Kutte und einem gelben Senffass.',note:'Legt eine angekündigte Zickzackspur oder feuert zwei zeitlich versetzte Senffächer.'},
+    schrottgans31:{name:'SCHROTTGANS HILDEGARD',hp:112,speed:108,r:46,color:'#c49e87',icon:'!',tier:1,minWave:8,windup:.93,cooldown:3.5,stop:205,design:'Gans mit rostigen Sägeflügeln, Schraubenfedern und bösem Blick.',note:'Sägekreuze lassen breite Zwischenräume; der anschließende Anflug bleibt geradlinig.'},
+    nullwalter31:{name:'DER NULLWALTER',hp:135,speed:91,r:46,color:'#adb5e7',icon:'!',tier:2,minWave:8,windup:1.05,cooldown:3.9,stop:310,design:'Schwebender schwarzer Uhrwerk-Maulwurf mit einer zerbrochenen Uhr.',note:'Zwei versetzte Uhrenringe teilen denselben offenen Korridor. Zeitmarken schlagen verzögert ein.'},
+    astralzecke31:{name:'DIE ASTRALZECKE',hp:142,speed:94,r:49,color:'#ba8ef0',icon:'!',tier:2,minWave:10,windup:1.08,cooldown:4.1,stop:305,design:'Kristalline Zecke mit einer leuchtenden Sternensphäre im Körper.',note:'Kristallringe lassen ein großes Fluchtfenster; vier Sternpunkte markieren den nächsten Angriff.'}
+  };
+  const QUEEN_INNIES31={name:'KÖNIGIN DER INNIES',hp:118,speed:88,r:48,color:'#e5a1bf',icon:'!',tier:0,minWave:0,windup:1.1,cooldown:4.0,stop:255,encounter:true,design:'Königin im Brokatkleid; eine Krone auf einem augenlosen Kopf mit einem mittigen senkrechten Schlitz.',note:'Die Krone feuert einen Fächer; ihr Schrei markiert vier getrennte Felder.'};
+  for(const [id,definition]of Object.entries({...MINI_BOSSES31,queenInnies31:QUEEN_INNIES31}))miniBossBook[id]={...definition,spriteKey:id,edition31:true};
+  function miniBossPool31(w=wave,difficulty=impossibleMode?'impossible':hardMode?'hard':'normal'){
+    const tier=difficulty==='impossible'?2:difficulty==='hard'?1:0;
+    return Object.keys(miniBossBook).filter(id=>!worldGuardians[id]&&!miniBossBook[id].encounter&&(!MINI_BOSSES31[id]||(MINI_BOSSES31[id].tier<=tier&&w>=MINI_BOSSES31[id].minWave)));
+  }
+  planMiniBoss=function(w){
+    if(w<(endlessMode?3:4)||w-lastMiniWave<(endlessMode?3:4)||trollQuest||knollQuest)return null;
+    const span=endlessMode?15:5,epoch=Math.floor(w/span),random=worldRandom((exploration?.seed||12345)^Math.imul(epoch+1,2654435761)),eligible=epoch*span+Math.floor(random()*span);
+    if(w!==eligible||random()>.55)return null;
+    const pool=miniBossPool31(w);return pool.length?{kind:pool[Math.floor(random()*pool.length)],time:endlessMode?40:65,spawned:false}:null;
+  };
+  function configureMini31(e,id){
+    const cfg=miniBossBook[id];
+    Object.assign(e,{miniKind:id,miniBoss:true,worldLarge:true,spriteKey31:id,r:cfg.r,speed:cfg.speed*(impossibleMode?1.1:hardMode?1.05:1),fireCd:1.9,windup:0,charge:0,pattern:0,miniVolley31:[],miniRest31:0,miniAttacks31:0});
+    e.hp*=difficulty23().hp;e.maxHp=e.hp;
+    if(worldOutside()||worldRoomActive()){Object.assign(e,freeWorldPoint(e.x,e.y,e.r));e.worldSafe25={x:e.x,y:e.y};}
+    return e;
+  }
+  const spawnMiniBefore31=spawnWaveMini;
+  spawnWaveMini=function(kind){
+    if(kind==='queenInnies31')return null;
+    if(MINI_BOSSES31[kind]&&!miniBossPool31(Math.max(wave,MINI_BOSSES31[kind].minWave)).includes(kind))return null;
+    const e=spawnMiniBefore31(kind);return MINI_BOSSES31[kind]?configureMini31(e,kind):e;
+  };
+  function miniShot31(e,a,speed=230){
+    const limit=impossibleMode?64:hardMode?48:36;
+    if(enemyBullets.filter(b=>b.mini31&&b.life>0).length>=limit)return;
+    const before=enemyBullets.length;enemyShot(e.x,e.y,a,speed,true,'mini31');
+    if(enemyBullets.length>before)Object.assign(enemyBullets.at(-1),{mini31:true,miniKind31:e.miniKind,life:3.4,r:7,color31:miniBossBook[e.miniKind].color});
+  }
+  function miniFan31(e,a,count=3,spread=.2,speed=235){for(let i=0;i<count;i++)miniShot31(e,a+(i-(count-1)/2)*spread,speed);}
+  function miniRing31(e,count,gap,a,speed=195){
+    // Gap is centered on the stored aim. Both halves remain clear in a double ring.
+    for(let i=gap;i<count;i++)miniShot31(e,a+TAU*(i-(gap-1)/2)/count,speed);
+  }
+  function miniHazard31(e,x,y,r=58,wait=1.15,type='shock',damage=1.5){
+    if(hazards.filter(h=>h.mini31&&(h.wait>0||h.life>0)).length>=18)return;
+    hazards.push({type,x:clamp(x,r+6,W-r-6),y:clamp(y,r+6,H-r-6),r,wait:Math.max(wait,1.05),life:.30,hit:false,damage,mini31:true,miniKind31:e.miniKind});
+  }
+  function miniCharge31(e,duration=.58,speed=410){e.charge=duration;e.chargeSpeed31=speed;e.miniTrail31=0;}
+  function miniQueue31(e,wait,a,count,spread,speed){if(e.miniVolley31.length<3)e.miniVolley31.push({wait,a,count,spread,speed});}
+  function executeMiniAttack31(e){
+    const id=e.miniKind,a=e.aim,p=e.miniTarget31||{x:player.x,y:player.y},side={x:-Math.sin(a),y:Math.cos(a)},odd=++e.pattern%2;
+    e.miniAttacks31=(e.miniAttacks31||0)+1;e.miniRest31=.58;
+    if(id==='randgruppenFeind31'){
+      if(odd)miniCharge31(e,.60,400);else for(let i=-1;i<=1;i++)miniHazard31(e,p.x+side.x*i*125,p.y+side.y*i*125,47,1.15+Math.abs(i)*.14,'rockfall');
+    }else if(id==='aloanSchnueperich31'){
+      if(odd)miniRing31(e,12,4,a,205);else{miniCharge31(e,.70,390);miniFan31(e,a+Math.PI,3,.28,175);}
+    }else if(id==='moosvogt31'){
+      if(odd)for(let i=0;i<3;i++){const t=a+TAU*i/3;miniHazard31(e,p.x+Math.cos(t)*100,p.y+Math.sin(t)*100,53,1.25+i*.12,'mortar');}else miniRing31(e,12,4,a,180);
+    }else if(id==='pfandbaron31'){
+      miniFan31(e,a,3,.22,220);if(odd)miniQueue31(e,.52,a+.13,3,.22,220);else for(const d of [-1,1])miniHazard31(e,p.x+side.x*d*92,p.y+side.y*d*92,49,1.3,'mortar');
+    }else if(id==='knoedelwalze31'){
+      if(odd)miniCharge31(e,.82,365);else{miniHazard31(e,e.x,e.y,150,1.25,'shock',2);miniFan31(e,a,3,.35,195);}
+    }else if(id==='distelwitwe31'){
+      if(odd)for(let i=0;i<3;i++){const t=a+TAU*i/3;miniHazard31(e,p.x+Math.cos(t)*125,p.y+Math.sin(t)*125,54,1.2+i*.1,'sapperMine');}else miniFan31(e,a,5,.19,255);
+    }else if(id==='senfpropst31'){
+      if(odd)for(let i=0;i<4;i++)miniHazard31(e,p.x+Math.cos(a)*(i-1.5)*110+side.x*(i%2?58:-58),p.y+Math.sin(a)*(i-1.5)*110+side.y*(i%2?58:-58),48,1.2+i*.16,'mortar',2);else{miniFan31(e,a-.16,3,.2,230);miniQueue31(e,.62,a+.16,3,.2,230);}
+    }else if(id==='schrottgans31'){
+      if(odd)for(let i=0;i<4;i++)miniFan31(e,a+Math.PI/4+i*Math.PI/2,2,.12,265);else{miniCharge31(e,.62,440);miniFan31(e,a+Math.PI/2,2,.25,180);miniFan31(e,a-Math.PI/2,2,.25,180);}
+    }else if(id==='nullwalter31'){
+      if(odd){miniRing31(e,14,5,a,205);e.miniSecondRing31={wait:.78,count:14,gap:5,a,speed:235};}else for(let i=-1;i<=1;i++)miniHazard31(e,p.x+side.x*i*128,p.y+side.y*i*128,52,1.25+(i+1)*.24,'rockfall',2);
+    }else if(id==='astralzecke31'){
+      if(odd)miniRing31(e,18,7,a,240);else for(let i=0;i<4;i++){const t=a+Math.PI/4+i*Math.PI/2;miniHazard31(e,p.x+Math.cos(t)*140,p.y+Math.sin(t)*140,61,1.25+i*.09,'rockfall',2);}
+    }else if(id==='queenInnies31'){
+      if(odd)miniFan31(e,a,5,.18,205);else for(let i=0;i<4;i++){const t=a+i*Math.PI/2;miniHazard31(e,p.x+Math.cos(t)*145,p.y+Math.sin(t)*145,59,1.35+i*.07,'shock',1.5);}
+    }
+  }
+  const extraBeforeMini31=updateExtraEnemy;
+  updateExtraEnemy=function(e,dt){
+    if(!MINI_BOSSES31[e.miniKind]&&!e.queenInnies31)return extraBeforeMini31(e,dt);
+    if(e.dead||e.spawnGrace>0)return;
+    const cfg=miniBossBook[e.miniKind],d=dist(e,player),slow=(e.slow>0?.72:1)*(player.powerups.freeze>0?.68:1);
+    e.miniVolley31=e.miniVolley31||[];
+    // No remote artillery. Queues are dropped when the player has left the encounter.
+    if(d>1050){e.miniVolley31=[];e.miniSecondRing31=null;e.windup=0;e.charge=0;e.fireCd=Math.max(e.fireCd,1.25);const from={x:e.x,y:e.y},a=Math.atan2(player.y-e.y,player.x-e.x);e.x+=Math.cos(a)*e.speed*1.45*slow*dt;e.y+=Math.sin(a)*e.speed*1.45*slow*dt;resolveWorldMotion(e,from);return;}
+    for(const v of e.miniVolley31){v.wait-=dt;if(v.wait<=0)miniFan31(e,v.a,v.count,v.spread,v.speed);}e.miniVolley31=e.miniVolley31.filter(v=>v.wait>0);
+    if(e.miniSecondRing31){const v=e.miniSecondRing31;v.wait-=dt;if(v.wait<=0){miniRing31(e,v.count,v.gap,v.a,v.speed);e.miniSecondRing31=null;}}
+    if(e.charge>0){
+      e.charge=Math.max(0,e.charge-dt);const from={x:e.x,y:e.y};e.x+=Math.cos(e.aim)*e.chargeSpeed31*slow*dt;e.y+=Math.sin(e.aim)*e.chargeSpeed31*slow*dt;resolveWorldMotion(e,from);
+      if(e.miniKind==='knoedelwalze31'){e.miniTrail31-=dt;if(e.miniTrail31<=0){e.miniTrail31=.27;miniHazard31(e,e.x,e.y,44,1.1,'mortar',1.5);}}
+      return;
+    }
+    if(e.windup>0){e.windup=Math.max(0,e.windup-dt);if(e.windup===0)executeMiniAttack31(e);return;}
+    e.miniRest31=Math.max(0,(e.miniRest31||0)-dt);if(e.miniRest31>0)return;
+    if(d>cfg.stop){const a=Math.atan2(player.y-e.y,player.x-e.x),from={x:e.x,y:e.y};e.x+=Math.cos(a)*e.speed*slow*dt;e.y+=Math.sin(a)*e.speed*slow*dt;resolveWorldMotion(e,from);}
+    if(e.fireCd<=0&&d<760){e.aim=Math.atan2(player.y-e.y,player.x-e.x);e.miniTarget31={x:player.x,y:player.y};e.windup=Math.max(cfg.windup,difficulty23().warning);e.miniWarningMax31=e.windup;e.fireCd=cfg.cooldown/(impossibleMode?1.12:hardMode?1.05:1);}
+  };
+  // Called by the edition-31 sprite layer so charge direction is visible before movement.
+  function drawMiniWarning31(e){
+    if(!e||!(MINI_BOSSES31[e.miniKind]||e.queenInnies31)||e.dead||!(e.windup>0))return;
+    const cfg=miniBossBook[e.miniKind],c=ctx,a=e.aim||0,charge=['randgruppenFeind31','knoedelwalze31'].includes(e.miniKind)?e.pattern%2===0:['aloanSchnueperich31','schrottgans31'].includes(e.miniKind)&&e.pattern%2===1;
+    c.save();c.globalAlpha=.7;c.strokeStyle=cfg.color;c.lineWidth=3;c.setLineDash([7,6]);c.beginPath();c.arc(e.x,e.y,e.r+15,0,TAU);c.stroke();
+    if(charge){const length=e.miniKind==='knoedelwalze31'?310:285,width=e.r*.75;for(const sign of [-1,1]){c.beginPath();c.moveTo(e.x-Math.sin(a)*width*sign,e.y+Math.cos(a)*width*sign);c.lineTo(e.x+Math.cos(a)*length-Math.sin(a)*width*sign,e.y+Math.sin(a)*length+Math.cos(a)*width*sign);c.stroke();}}
+    else{c.beginPath();c.moveTo(e.x,e.y);c.lineTo(e.x+Math.cos(a)*125,e.y+Math.sin(a)*125);c.stroke();}c.restore();
+  }
+  function spawnInnieQueen31(poi){
+    if(!poi||poi.done||poi.defeated31||boss||!player)return null;
+    const existing=enemies.find(e=>!e.dead&&e.queenInnies31&&e.worldPoi===poi.id);if(existing)return existing;
+    const cfg=QUEEN_INNIES31,e=spawnEnemy('brute'),scale=endlessMode?endlessCarryFactor()*endlessHpScale(wave):campaignHpScale();
+    Object.assign(e,{type:'queenInnies31',queenInnies31:true,worldPoi:poi.id,hp:cfg.hp*2.2*scale,maxHp:cfg.hp*2.2*scale,points:0,spawnGrace:1.2});
+    Object.assign(e,freeWorldPoint(poi.x,poi.y,cfg.r));configureMini31(e,'queenInnies31');
+    if(Number.isFinite(poi.hp)&&poi.hp>0)e.hp=Math.min(e.maxHp,poi.hp);
+    poi.active=true;poi.hp=e.hp;announce('OUTIE? DIE KRONE IST NICHT AMÜSIERT.',cfg.name);updateHud();return e;
+  }
+  const damageBeforeQueen31=damageEnemy;
+  damageEnemy=function(e,...args){
+    const alive=e&&!e.dead,r=damageBeforeQueen31(e,...args);
+    if(e?.queenInnies31&&alive){
+      const poi=exploration?.pois?.find(p=>p.id===e.worldPoi);if(poi)poi.hp=Math.max(0,e.hp);
+      if(e.dead&&!e.queenRewarded31){e.queenRewarded31=true;e.miniVolley31=[];e.miniSecondRing31=null;if(typeof onInnieQueenDefeated31==='function')onInnieQueenDefeated31(poi,e);else if(poi){poi.done=true;poi.active=false;poi.defeated31=true;}}
+    }return r;
+  };
+
+  // Edition 31: once-only, persisted encounters. Facts were checked against primary sources.
+  const hamsterQuizSources31={"rspca-facts":{"name":"RSPCA · Hamster fact file","url":"https://www.rspca.org.uk/adviceandwelfare/pets/rodents/hamsters"},"rspca-diet":{"name":"RSPCA · What to feed a hamster","url":"https://www.rspca.org.uk/adviceandwelfare/pets/rodents/hamsters/diet"},"rspca-home":{"name":"RSPCA · Creating a good home","url":"https://www.rspca.org.uk/adviceandwelfare/pets/rodents/hamsters/environment"},"rspca-behaviour":{"name":"RSPCA · Understanding hamster behaviour","url":"https://www.rspca.org.uk/adviceandwelfare/pets/rodents/hamsters/behaviour"},"rspca-company":{"name":"RSPCA · Keeping hamsters together","url":"https://www.rspca.org.uk/adviceandwelfare/pets/rodents/hamsters/company"},"pdsa":{"name":"PDSA · Hamsters as pets","url":"https://www.pdsa.org.uk/pet-help-and-advice/looking-after-your-pet/small-pets/hamsters-as-pets"},"wildtier":{"name":"Deutsche Wildtier Stiftung · Feldhamster","url":"https://www.deutschewildtierstiftung.de/wildtiere/feldhamster"},"nrw":{"name":"LANUK NRW · Feldhamster","url":"https://artenschutz.naturschutzinformationen.nrw.de/artenschutz/de/arten/gruppe/saeugetiere/kurzbeschreibung/152014"},"leipzig":{"name":"Zoo Leipzig · Artenschutzprojekt Feldhamster","url":"https://www.zoo-leipzig.de/artenschutz-bildung/artenschutz/artenschutzprojekt-feldhamster/"},"lubw":{"name":"LUBW · Feldhamster","url":"https://www.lubw.baden-wuerttemberg.de/en/natur-und-landschaft/feld-hamster"}};
+  const hamsterQuiz31=[
+  {
+    "id": "hamster01",
+    "source": "rspca-facts",
+    "q": "Zu welcher Tiergruppe gehören Hamster?",
+    "answers": [
+      "Nagetiere",
+      "Raubkatzen",
+      "Beuteltiere",
+      "Amphibien"
+    ],
+    "correct": 0,
+    "fact": "Hamster sind Nagetiere."
+  },
+  {
+    "id": "hamster02",
+    "source": "rspca-facts",
+    "q": "Welche Hamsterzähne wachsen lebenslang?",
+    "answers": [
+      "Schneidezähne",
+      "Milchzähne",
+      "Stoßzähne",
+      "Keine Zähne"
+    ],
+    "correct": 0,
+    "fact": "Die Schneidezähne wachsen ständig nach."
+  },
+  {
+    "id": "hamster03",
+    "source": "rspca-facts",
+    "q": "Wobei helfen Hamstern ihre Tasthaare?",
+    "answers": [
+      "Hindernisse ertasten",
+      "Fliegen",
+      "Fotosynthese",
+      "Wasser filtern"
+    ],
+    "correct": 0,
+    "fact": "Tasthaare erfassen die unmittelbare Umgebung."
+  },
+  {
+    "id": "hamster04",
+    "source": "rspca-facts",
+    "q": "Wo transportieren Hamster gesammeltes Futter?",
+    "answers": [
+      "In Backentaschen",
+      "Unter den Ohren",
+      "Im Schwanz",
+      "Auf dem Rücken"
+    ],
+    "correct": 0,
+    "fact": "Die Backentaschen dienen als Transportbehälter."
+  },
+  {
+    "id": "hamster05",
+    "source": "rspca-facts",
+    "q": "Was tun Hamster mit Futterüberschüssen?",
+    "answers": [
+      "Vorräte anlegen",
+      "Alles vergraben und vergessen",
+      "Nester damit waschen",
+      "Damit schwimmen"
+    ],
+    "correct": 0,
+    "fact": "Hamster horten Nahrung für später."
+  },
+  {
+    "id": "hamster06",
+    "source": "rspca-facts",
+    "q": "Welchen Schall können Hamster zur Kommunikation nutzen?",
+    "answers": [
+      "Ultraschall",
+      "Nur menschliche Sprache",
+      "Nur Infraschall",
+      "Gar keinen"
+    ],
+    "correct": 0,
+    "fact": "Manche Hamsterrufe liegen im Ultraschallbereich."
+  },
+  {
+    "id": "hamster07",
+    "source": "rspca-facts",
+    "q": "Wohin zieht sich ein verängstigter Wildhamster oft zurück?",
+    "answers": [
+      "In seinen Bau",
+      "Auf die höchste Baumkrone",
+      "Ins offene Wasser",
+      "Auf freies Gelände"
+    ],
+    "correct": 0,
+    "fact": "Der Bau bietet Schutz."
+  },
+  {
+    "id": "hamster08",
+    "source": "rspca-facts",
+    "q": "Welche Lichtart können Hamster zusätzlich wahrnehmen?",
+    "answers": [
+      "Ultraviolett",
+      "Röntgenstrahlen",
+      "Radiowellen",
+      "Mikrowellen"
+    ],
+    "correct": 0,
+    "fact": "Hamster können UV-Licht wahrnehmen."
+  },
+  {
+    "id": "hamster09",
+    "source": "rspca-diet",
+    "q": "Was gehört zur natürlichen Hamsternahrung?",
+    "answers": [
+      "Samen und Insekten",
+      "Nur Fleisch",
+      "Nur Früchte",
+      "Nur Gras"
+    ],
+    "correct": 0,
+    "fact": "Wildhamster fressen Pflanzliches und Insekten."
+  },
+  {
+    "id": "hamster10",
+    "source": "rspca-diet",
+    "q": "Wie fressen Hamster ein größeres Futterstück häufig?",
+    "answers": [
+      "Mit den Vorderpfoten gehalten",
+      "Im Flug",
+      "Mit dem Schwanz gehalten",
+      "Auf dem Rücken liegend"
+    ],
+    "correct": 0,
+    "fact": "Sie halten und benagen ihr Futter."
+  },
+  {
+    "id": "hamster11",
+    "source": "rspca-diet",
+    "q": "Was fördert verstreutes Futter im Gehege?",
+    "answers": [
+      "Natürliches Suchverhalten",
+      "Winterschlaf im Sommer",
+      "Flugfähigkeit",
+      "Farbwechsel"
+    ],
+    "correct": 0,
+    "fact": "Futtersuche beschäftigt Hamster."
+  },
+  {
+    "id": "hamster12",
+    "source": "rspca-diet",
+    "q": "Wo fressen Hamster besonders gern?",
+    "answers": [
+      "In einem Versteck",
+      "Im hellsten Scheinwerferlicht",
+      "Auf schwimmendem Holz",
+      "Mitten im Menschengewimmel"
+    ],
+    "correct": 0,
+    "fact": "Hamster bevorzugen geschützte Fressplätze."
+  },
+  {
+    "id": "hamster13",
+    "source": "rspca-diet",
+    "q": "Was brauchen Hamster zum Trinken?",
+    "answers": [
+      "Frisches Wasser",
+      "Salzwasser",
+      "Milch als einziges Getränk",
+      "Fruchtsirup"
+    ],
+    "correct": 0,
+    "fact": "Frisches Trinkwasser muss verfügbar sein."
+  },
+  {
+    "id": "hamster14",
+    "source": "rspca-home",
+    "q": "Welche Wohnumgebung entspricht Hamstern eher?",
+    "answers": [
+      "Trocken und zugfrei",
+      "Dauerhaft nass",
+      "Ständig im Luftzug",
+      "Direkt neben Lautsprechern"
+    ],
+    "correct": 0,
+    "fact": "Nässe und Zugluft sind ungeeignet."
+  },
+  {
+    "id": "hamster15",
+    "source": "rspca-home",
+    "q": "Wofür brauchen Hamster tiefes Bodensubstrat?",
+    "answers": [
+      "Zum Graben",
+      "Zum Tauchen",
+      "Zum Fliegen",
+      "Zum Häuten"
+    ],
+    "correct": 0,
+    "fact": "Hamster legen Gänge im Boden an."
+  },
+  {
+    "id": "hamster16",
+    "source": "rspca-home",
+    "q": "Welchen Ort benötigen Hamster zum Ruhen?",
+    "answers": [
+      "Ein dunkles Versteck",
+      "Eine beleuchtete Bühne",
+      "Eine offene Glasschale",
+      "Eine schaukelnde Stange"
+    ],
+    "correct": 0,
+    "fact": "Ein Nest schützt vor Licht und Störungen."
+  },
+  {
+    "id": "hamster17",
+    "source": "rspca-home",
+    "q": "Warum ist gleichmäßiger Tag-Nacht-Wechsel sinnvoll?",
+    "answers": [
+      "Hamster haben einen Tagesrhythmus",
+      "Damit ihr Fell blau wird",
+      "Damit Zähne nicht wachsen",
+      "Damit sie schwimmen lernen"
+    ],
+    "correct": 0,
+    "fact": "Regelmäßige Lichtzeiten unterstützen ihren Rhythmus."
+  },
+  {
+    "id": "hamster18",
+    "source": "rspca-home",
+    "q": "Welcher Sinn macht vertraute Nestgerüche wichtig?",
+    "answers": [
+      "Geruchssinn",
+      "Magnetsinn",
+      "Geschmack im Schwanz",
+      "Elektrosinn"
+    ],
+    "correct": 0,
+    "fact": "Gerüche sind für Hamster besonders bedeutsam."
+  },
+  {
+    "id": "hamster19",
+    "source": "rspca-behaviour",
+    "q": "Wann sind viele Wildhamster besonders aktiv?",
+    "answers": [
+      "In Dämmerung und Nacht",
+      "Nur mittags",
+      "Nur bei Schneefall",
+      "Ausschließlich im Hochsommer"
+    ],
+    "correct": 0,
+    "fact": "Viele Hamster sind dämmerungs- und nachtaktiv."
+  },
+  {
+    "id": "hamster20",
+    "source": "rspca-behaviour",
+    "q": "Was tun Heimhamster tagsüber häufig?",
+    "answers": [
+      "Schlafen",
+      "Sonnenbaden auf Dächern",
+      "Im Rudel jagen",
+      "Bäume fällen"
+    ],
+    "correct": 0,
+    "fact": "Ihr Schlaf sollte ungestört bleiben."
+  },
+  {
+    "id": "hamster21",
+    "source": "rspca-behaviour",
+    "q": "Welche Laufstrecke können Wildhamster pro Tag erreichen?",
+    "answers": [
+      "Mehrere Kilometer",
+      "Höchstens zehn Zentimeter",
+      "Tausend Kilometer",
+      "Nie mehr als einen Meter"
+    ],
+    "correct": 0,
+    "fact": "Einige schaffen etwa acht Kilometer."
+  },
+  {
+    "id": "hamster22",
+    "source": "rspca-behaviour",
+    "q": "Welchem natürlichen Bedürfnis dient ein Laufrad?",
+    "answers": [
+      "Bewegung",
+      "Schwimmen",
+      "Fliegen",
+      "Kiemenpflege"
+    ],
+    "correct": 0,
+    "fact": "Ein Laufrad ermöglicht zusätzliche Bewegung."
+  },
+  {
+    "id": "hamster23",
+    "source": "rspca-behaviour",
+    "q": "Was ist neben Laufen ebenfalls typisches Hamsterverhalten?",
+    "answers": [
+      "Erdgänge graben",
+      "Korallen bauen",
+      "Netze weben",
+      "Im Flug schlafen"
+    ],
+    "correct": 0,
+    "fact": "Hamster sind grabende Bodenbewohner."
+  },
+  {
+    "id": "hamster24",
+    "source": "rspca-company",
+    "q": "Wie leben erwachsene Goldhamster normalerweise?",
+    "answers": [
+      "Allein",
+      "Im Wolfsrudel",
+      "In Bienenstaaten",
+      "In festen Schwärmen"
+    ],
+    "correct": 0,
+    "fact": "Goldhamster sind Einzelgänger."
+  },
+  {
+    "id": "hamster25",
+    "source": "rspca-company",
+    "q": "Was kann bei unverträglichen Hamstern zusammen passieren?",
+    "answers": [
+      "Ernsthafte Kämpfe",
+      "Sie verschmelzen",
+      "Sie verlieren sofort ihr Fell",
+      "Sie werden eine neue Art"
+    ],
+    "correct": 0,
+    "fact": "Zusammenhaltung kann zu Aggression führen."
+  },
+  {
+    "id": "hamster26",
+    "source": "pdsa",
+    "q": "Wie nennt man Tiere, die Pflanzen und Tiere fressen?",
+    "answers": [
+      "Allesfresser",
+      "Reine Pflanzenfresser",
+      "Reine Fleischfresser",
+      "Filtrierer"
+    ],
+    "correct": 0,
+    "fact": "Hamster zählen zu den Allesfressern."
+  },
+  {
+    "id": "hamster27",
+    "source": "pdsa",
+    "q": "Welche Insektenlarven werden als Hamsterfutter verwendet?",
+    "answers": [
+      "Mehlwürmer",
+      "Glaswürmer aus Kunststoff",
+      "Regenbogenwürmer",
+      "Metallmaden"
+    ],
+    "correct": 0,
+    "fact": "Mehlwürmer liefern tierisches Eiweiß."
+  },
+  {
+    "id": "hamster28",
+    "source": "pdsa",
+    "q": "Welche Laufrad-Lauffläche ist für Hamster geeignet?",
+    "answers": [
+      "Geschlossen und durchgehend",
+      "Mit weiten Gitterlücken",
+      "Aus scharfen Drähten",
+      "Mit offenen Speichen als Trittfläche"
+    ],
+    "correct": 0,
+    "fact": "Eine feste Fläche vermeidet eingeklemmte Beine."
+  },
+  {
+    "id": "hamster29",
+    "source": "pdsa",
+    "q": "Wie sollte der Rücken beim Laufen im Rad bleiben?",
+    "answers": [
+      "Möglichst gerade",
+      "Stark durchgebogen",
+      "Zu einem Kreis gebogen",
+      "Immer seitlich geknickt"
+    ],
+    "correct": 0,
+    "fact": "Ein ausreichend großes Rad ermöglicht gerades Laufen."
+  },
+  {
+    "id": "hamster30",
+    "source": "pdsa",
+    "q": "Warum verstecken Hamster sich zum Schlafen?",
+    "answers": [
+      "Sie sind Beutetiere",
+      "Sie brauchen Meereswasser",
+      "Sie schlafen nur im Flug",
+      "Sie besitzen keine Ohren"
+    ],
+    "correct": 0,
+    "fact": "Ein verborgenes Nest schützt vor Feinden."
+  },
+  {
+    "id": "hamster31",
+    "source": "wildtier",
+    "q": "Wie lautet der wissenschaftliche Name des Feldhamsters?",
+    "answers": [
+      "Cricetus cricetus",
+      "Mus musculus",
+      "Rattus norvegicus",
+      "Sciurus vulgaris"
+    ],
+    "correct": 0,
+    "fact": "Cricetus cricetus ist der Feldhamster."
+  },
+  {
+    "id": "hamster32",
+    "source": "wildtier",
+    "q": "Was macht der Feldhamster im Winter?",
+    "answers": [
+      "Winterschlaf mit Fresspausen",
+      "Zug nach Afrika",
+      "Dauerhaft jagen",
+      "Ein Geweih bilden"
+    ],
+    "correct": 0,
+    "fact": "Er wacht zwischendurch zum Fressen auf."
+  },
+  {
+    "id": "hamster33",
+    "source": "wildtier",
+    "q": "Wo lagert der Feldhamster seine Wintervorräte?",
+    "answers": [
+      "In unterirdischen Kammern",
+      "In Baumwipfeln",
+      "In Vogelnestern",
+      "Auf offenen Steinen"
+    ],
+    "correct": 0,
+    "fact": "Sein Bau enthält Vorratskammern."
+  },
+  {
+    "id": "hamster34",
+    "source": "wildtier",
+    "q": "Welche Farbe hat der Bauch eines typischen Feldhamsters?",
+    "answers": [
+      "Schwarz",
+      "Leuchtend blau",
+      "Durchsichtig",
+      "Knallgrün"
+    ],
+    "correct": 0,
+    "fact": "Der dunkle Bauch kontrastiert mit dem Rücken."
+  },
+  {
+    "id": "hamster35",
+    "source": "wildtier",
+    "q": "Wie droht ein Feldhamster bei Gefahr unter anderem?",
+    "answers": [
+      "Aufrichten und Fauchen",
+      "Singen wie eine Amsel",
+      "Radschlagen",
+      "Trommeln mit Flossen"
+    ],
+    "correct": 0,
+    "fact": "Er kann auf den Hinterbeinen drohen."
+  },
+  {
+    "id": "hamster36",
+    "source": "wildtier",
+    "q": "Wie lange dauert die Tragzeit beim Feldhamster ungefähr?",
+    "answers": [
+      "20 Tage",
+      "20 Monate",
+      "Zwei Jahre",
+      "Ein Tag"
+    ],
+    "correct": 0,
+    "fact": "Junge werden nach rund zwanzig Tagen geboren."
+  },
+  {
+    "id": "hamster37",
+    "source": "wildtier",
+    "q": "Welches Tier jagt Feldhamster?",
+    "answers": [
+      "Rotmilan",
+      "Blauwal",
+      "Pinguin",
+      "Seepferdchen"
+    ],
+    "correct": 0,
+    "fact": "Greifvögel gehören zu seinen natürlichen Feinden."
+  },
+  {
+    "id": "hamster38",
+    "source": "nrw",
+    "q": "Welche Böden eignen sich für Feldhamsterbaue?",
+    "answers": [
+      "Tiefe Löss- und Lehmböden",
+      "Dauerhaft überfluteter Schlamm",
+      "Blanker Fels",
+      "Dünnes Meereis"
+    ],
+    "correct": 0,
+    "fact": "Grabbarer, nicht zu nasser Boden ist wichtig."
+  },
+  {
+    "id": "hamster39",
+    "source": "nrw",
+    "q": "Warum liegen Winterbaue oft tiefer als Sommerbaue?",
+    "answers": [
+      "Schutz vor Frost",
+      "Bessere Aussicht",
+      "Nähe zu Baumkronen",
+      "Mehr Sonnenlicht"
+    ],
+    "correct": 0,
+    "fact": "In größerer Tiefe bleibt der Bau frostfrei."
+  },
+  {
+    "id": "hamster40",
+    "source": "nrw",
+    "q": "Wie tief können Winterbaue von Feldhamstern reichen?",
+    "answers": [
+      "Etwa zwei Meter",
+      "Etwa hundert Meter",
+      "Nur einen Zentimeter",
+      "Zehn Kilometer"
+    ],
+    "correct": 0,
+    "fact": "Winterbaue können rund zwei Meter tief sein."
+  },
+  {
+    "id": "hamster41",
+    "source": "nrw",
+    "q": "Welche Form haben Feldhamsterohren?",
+    "answers": [
+      "Rund",
+      "Wie Hirschgeweihe",
+      "Wie lange Hasenohren",
+      "Spiralförmig"
+    ],
+    "correct": 0,
+    "fact": "Die Ohren sind mittelgroß und rund."
+  },
+  {
+    "id": "hamster42",
+    "source": "nrw",
+    "q": "Wie viele Baue nutzt ein Feldhamster im Sommer durchschnittlich?",
+    "answers": [
+      "Etwa zwei bis fünf",
+      "Genau hundert",
+      "Immer nur einen einzigen",
+      "Gar keinen"
+    ],
+    "correct": 0,
+    "fact": "Ein Tier kann mehrere Sommerbaue nutzen."
+  },
+  {
+    "id": "hamster43",
+    "source": "leipzig",
+    "q": "Wie beeinflusst das Graben von Feldhamstern den Boden?",
+    "answers": [
+      "Es durchmischt und belüftet ihn",
+      "Es verwandelt ihn in Glas",
+      "Es versiegelt ihn",
+      "Es salzt ihn vollständig"
+    ],
+    "correct": 0,
+    "fact": "Grabende Hamster lockern den Boden."
+  },
+  {
+    "id": "hamster44",
+    "source": "leipzig",
+    "q": "Welche Tiere können von Feldhamsterbauen mit profitieren?",
+    "answers": [
+      "Reptilien und Amphibien",
+      "Haie und Rochen",
+      "Delfine und Wale",
+      "Tintenfische"
+    ],
+    "correct": 0,
+    "fact": "Baue bieten auch anderen Tieren Lebensraum."
+  },
+  {
+    "id": "hamster45",
+    "source": "leipzig",
+    "q": "Welche Maßnahme hilft beim Feldhamsterschutz?",
+    "answers": [
+      "Blühstreifen und teilweise Ernteverzicht",
+      "Alle Feldränder versiegeln",
+      "Jeden Halm sofort entfernen",
+      "Baue mit Beton füllen"
+    ],
+    "correct": 0,
+    "fact": "Deckung und Nahrung sollen erhalten bleiben."
+  },
+  {
+    "id": "hamster46",
+    "source": "leipzig",
+    "q": "Wozu dient eine Erhaltungszucht für Feldhamster?",
+    "answers": [
+      "Bedrohte Bestände stützen",
+      "Hamster zu Meerestieren machen",
+      "Alle Wildtiere ersetzen",
+      "Das Graben abgewöhnen"
+    ],
+    "correct": 0,
+    "fact": "Nachzuchten können Schutzprojekte unterstützen."
+  },
+  {
+    "id": "hamster47",
+    "source": "lubw",
+    "q": "Welcher Hamster ist größer als der bekannte Goldhamster?",
+    "answers": [
+      "Feldhamster",
+      "Ein frisch geborenes Goldhamsterbaby",
+      "Keiner",
+      "Alle Hamster sind gleich groß"
+    ],
+    "correct": 0,
+    "fact": "Feldhamster sind vergleichsweise große Hamster."
+  },
+  {
+    "id": "hamster48",
+    "source": "lubw",
+    "q": "Was geht Feldhamstern bei vollständig abgeernteten Feldern verloren?",
+    "answers": [
+      "Nahrung und Deckung",
+      "Die Fähigkeit zu hören",
+      "Ihre Backentaschen",
+      "Ihre gesamte Artzugehörigkeit"
+    ],
+    "correct": 0,
+    "fact": "Stoppeln und Restkörner sind wertvoll."
+  },
+  {
+    "id": "hamster49",
+    "source": "lubw",
+    "q": "Welche Feldkulturen können Feldhamstern Rückzugsräume bieten?",
+    "answers": [
+      "Luzerne und Klee",
+      "Nur Schnittblumen in Vasen",
+      "Plastikrasen",
+      "Ausschließlich Algen"
+    ],
+    "correct": 0,
+    "fact": "Mehrjährige Futterkulturen können Schutz bieten."
+  },
+  {
+    "id": "hamster50",
+    "source": "lubw",
+    "q": "Was hilft Feldhamstern am Rand von Ackerflächen?",
+    "answers": [
+      "Nahrungsreiche Ackerrandstreifen",
+      "Eine lückenlose Betondecke",
+      "Völlig kahler Asphalt",
+      "Täglich neues Flutlicht"
+    ],
+    "correct": 0,
+    "fact": "Ackerrandstreifen ergänzen das Nahrungsangebot."
+  }
+];
+
+  // A normal five-second pickup refreshes Roter Blick, but must never shorten
+  // the Queen's thirty-second blessing. Durations still tick only in combat.
+  const overdrivePickup31=powerBook.overdrive.apply;
+  powerBook.overdrive.apply=function(p,...args){const remaining=Math.max(0,Number(p.powerups?.overdrive)||0),r=overdrivePickup31(p,...args);p.powerups.overdrive=Math.max(remaining,p.powerups.overdrive||0);return r;};
+
+  function encounterHash31(value){let n=2166136261;for(const c of String(value))n=Math.imul(n^c.charCodeAt(0),16777619);return n>>>0;}
+  function extendBuildings31(map){
+    if(!map||map.encountersVersion31||map.testArena28||typeof isTestArena28==='function'&&isTestArena28())return map;
+    for(const p of map.pois){if(p.kind!=='building'||p.visited||p.done)continue;const r=worldRandom(map.seed^encounterHash31(p.id)^0x31cab)();p.outcome=p.id==='building0'?'shop':r<.55?'shop':r<.75?'nuts':r<.90?'guardian':'quiz31';}
+    map.encountersVersion31=1;return map;
+  }
+  const createEncounters31=createExploration;
+  createExploration=function(...args){return extendBuildings31(createEncounters31(...args));};
+  function quizState31(p){
+    if(!p.quiz31){const rand=worldRandom(exploration.seed^encounterHash31(p.id)^0x31fabc),used=new Set((player.encounters31?.quizUsed||[])),available=hamsterQuiz31.filter(q=>!used.has(q.id)),pool=available.length?available:hamsterQuiz31,q=pool[Math.floor(rand()*pool.length)],order=[0,1,2,3];for(let i=3;i>0;i--){const j=Math.floor(rand()*(i+1));[order[i],order[j]]=[order[j],order[i]];}p.quiz31={id:q.id,order,status:'question'};}
+    return p.quiz31;
+  }
+  function quizQuestion31(p){return hamsterQuiz31.find(q=>q.id===quizState31(p).id)||hamsterQuiz31[0];}
+  function quizPortrait31(){const c=$('quizPortrait31'),art=window.PixelStudio;if(!c||!art)return;const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,c.width,c.height);x.fillStyle='#172b33';x.fillRect(0,0,c.width,c.height);if(art.companion)art.draw(x,art.companion('narrath',0),96,166,154,.85);x.fillStyle='#f4d788';x.font='24px NuttyPixel';x.textAlign='center';x.fillText('?',163,51);}
+  function renderQuiz31(p){
+    const s=quizState31(p),q=quizQuestion31(p),source=hamsterQuizSources31[q.source];mode='worldQuiz31';resetInput();
+    showOverlay(`<span class="eyebrow">QUIZMASTER · ZEIT PAUSIERT</span><h2 id="overlayTitle">DIE HAMSTERPRÜFUNG.</h2><div style="display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap"><canvas id="quizPortrait31" width="192" height="192" style="width:112px;height:112px;image-rendering:pixelated" aria-label="Der gelehrte Quizmaster"></canvas><p style="max-width:560px">Eine Frage, vier Antworten, ein Versuch. Bei richtiger Antwort darfst du dich einmal zu einem frei gewählten Punkt dieser Karte teleportieren.</p></div>${s.status==='question'?`<h3>${escapeHTML(q.q)}</h3><div class="upgrades" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">${s.order.map((a,i)=>`<button class="upgrade rarity-blue" id="quizAnswer31${i}" style="min-height:88px"><small>${'ABCD'[i]}</small><strong>${escapeHTML(q.answers[a])}</strong></button>`).join('')}</div>`:`<p class="world-result"><b>${s.status==='wrong'?'LEIDER FALSCH.':s.status==='used'?'REISE BEREITS EINGELÖST.':'RICHTIG!'}</b> ${escapeHTML(q.fact)}</p><p><small>Quelle: ${escapeHTML(source.name)} · ${escapeHTML(q.id)}</small></p>${s.status==='ready'?'<button class="primary-button" id="quizTravel31">TELEPORTZIEL WÄHLEN</button>':''}`}<button class="secondary-button" id="quizLeave31">${s.status==='ready'?'REISE AUFHEBEN · GEBÄUDE VERLASSEN':'GEBÄUDE VERLASSEN'}</button>`);
+    for(let i=0;i<4;i++)bindWorldButton('quizAnswer31'+i,()=>answerQuiz31(p,i));bindWorldButton('quizTravel31',()=>showQuizTeleport31(p));bindWorldButton('quizLeave31',worldCloseInterior);quizPortrait31();
+  }
+  function answerQuiz31(p,index){
+    if(mode!=='worldQuiz31'||exploration?.interior!==p.id||!Number.isInteger(index)||index<0||index>3)return false;
+    const s=quizState31(p);if(s.status!=='question')return false;const q=quizQuestion31(p);s.status=s.order[index]===q.correct?'ready':'wrong';s.answer=index;p.done=s.status==='wrong';
+    const state=encounterRunState31();if(state&&!state.quizUsed.includes(q.id))state.quizUsed.push(q.id);
+    saveRunNow();if(s.status==='ready')victoryFanfare();else tone(150,.18,'triangle',.035,100);renderQuiz31(p);return true;
+  }
+  const interiorEncounters31=renderWorldInterior;
+  renderWorldInterior=function(...args){const p=exploration?.pois.find(p=>p.id===exploration.interior);if(p?.outcome==='quiz31')return renderQuiz31(p);return interiorEncounters31(...args);};
+  function safeTeleport31(x,y,r=player?.r||18){
+    if(!exploration||!Number.isFinite(x+y))return null;
+    x=clamp(x,Math.max(80,r+2),exploration.width-Math.max(80,r+2));y=clamp(y,Math.max(130,r+2),exploration.height-Math.max(80,r+2));
+    const valid=(px,py)=>px>=80&&py>=130&&px<=exploration.width-80&&py<=exploration.height-80&&!worldBlocked(px,py,r+3)&&!exploration.pois.some(p=>p.kind==='building'&&Math.hypot(px-p.x,py-p.y-48)<115);
+    if(valid(x,y))return{x,y};
+    for(let rad=16;rad<=1024;rad+=16)for(let i=0;i<48;i++){const a=i*TAU/48,px=x+Math.cos(a)*rad,py=y+Math.sin(a)*rad;if(valid(px,py))return{x:px,y:py};}
+    const p=freeWorldPoint(exploration.entry.x,exploration.entry.y,r+3);return valid(p.x,p.y)?p:null;
+  }
+  function paintTeleport31(){
+    const c=$('teleport31');if(!c||!exploration)return;const z=worldMapZoom,center=worldMapCenter;worldMapZoom=1;worldMapCenter={x:exploration.width/2,y:exploration.height/2};try{paintMap27(c,false);}finally{worldMapZoom=z;worldMapCenter=center;}
+    const p=exploration.pois.find(p=>p.id===exploration.interior),target=p?.quiz31?.target;if(target){const x=c.getContext('2d'),px=30+target.x/exploration.width*(c.width-60),py=30+target.y/exploration.height*(c.height-60);x.strokeStyle='#f5fcb4';x.lineWidth=3;x.strokeRect(px-10,py-10,20,20);x.beginPath();x.moveTo(px-17,py);x.lineTo(px+17,py);x.moveTo(px,py-17);x.lineTo(px,py+17);x.stroke();}
+  }
+  function chooseTeleport31(p,x,y){if(mode!=='quizTeleport31'||exploration?.interior!==p.id||p.quiz31?.status!=='ready')return false;const safe=safeTeleport31(x,y);if(!safe)return false;p.quiz31.target=safe;saveRunNow();paintTeleport31();$('quizConfirm31').disabled=false;$('quizTarget31').textContent='Ziel gewählt · nächster freier Boden. Bestätigen zum Teleportieren.';return true;}
+  function showQuizTeleport31(p){
+    if(!exploration||exploration.interior!==p.id||p.quiz31?.status!=='ready')return;mode='quizTeleport31';resetInput();
+    showOverlay(`<span class="eyebrow">QUIZ GEWONNEN · ZEIT PAUSIERT</span><h2 id="overlayTitle">WOHIN SOLL DIE REISE GEHEN?</h2><p>Tippe auf einen beliebigen Punkt der Karte. Hindernisse werden auf den nächsten freien Boden versetzt. Dieser Reiseplan funktioniert auch mit „Augen ausstechen“.</p><canvas id="teleport31" width="700" height="700" tabindex="0" aria-label="Teleportziel auf der Karte auswählen" style="display:block;max-width:100%;width:min(100%,540px);max-height:51vh;object-fit:contain;margin:12px auto;image-rendering:pixelated;touch-action:none"></canvas><p id="quizTarget31">${p.quiz31.target?'Ziel gewählt · bereit zum Teleportieren.':'Noch kein Ziel gewählt.'}</p><button class="primary-button" id="quizConfirm31" ${p.quiz31.target?'':'disabled'}>HIERHIN TELEPORTIEREN</button><button class="secondary-button" id="quizBack31">ZURÜCK · REISE BEHALTEN</button>`);
+    const c=$('teleport31');c.onpointerup=e=>{e.preventDefault();const b=c.getBoundingClientRect(),scale=Math.min(b.width/c.width,b.height/c.height),left=b.left+(b.width-c.width*scale)/2,top=b.top+(b.height-c.height*scale)/2,px=(e.clientX-left)/scale,py=(e.clientY-top)/scale;if(px<30||py<30||px>c.width-30||py>c.height-30)return;chooseTeleport31(p,(px-30)/(c.width-60)*exploration.width,(py-30)/(c.height-60)*exploration.height);};
+    c.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.key))return;e.preventDefault();if(e.key==='Enter'){if(p.quiz31.target)completeTeleport31(p);return;}const target=p.quiz31.target||{...player},step=e.shiftKey?128:512;target.x+=(e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0)*step;target.y+=(e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0)*step;chooseTeleport31(p,target.x,target.y);};
+    bindWorldButton('quizConfirm31',()=>completeTeleport31(p));bindWorldButton('quizBack31',()=>renderQuiz31(p));paintTeleport31();saveRunNow();
+  }
+  function completeTeleport31(p){
+    if(mode!=='quizTeleport31'||exploration?.interior!==p.id||p.quiz31?.status!=='ready'||!p.quiz31.target)return false;const target=safeTeleport31(p.quiz31.target.x,p.quiz31.target.y);if(!target)return false;
+    p.quiz31.status='used';p.done=true;exploration.interior=null;houseEntry27=null;Object.assign(player,target);player.invuln=Math.max(player.invuln||0,2);player.dashTime=0;player.trail=[];resetWorldCompanions();resetInput();pointer.active=false;camX=clamp(player.x-viewW/2,0,Math.max(0,W-viewW));camY=clamp(player.y-viewH/2,0,Math.max(0,H-viewH));mode='playing';hideOverlay();lastFrame=performance.now();updateHud();saveRunNow();burst(player.x,player.y,'#c8e88a',28,150);tone(700,.25,'triangle',.06,1200);return true;
+  }
+  function encounterRunState31(){
+    if(!player||!exploration||hasenbeinMode||typeof isTestArena28==='function'&&isTestArena28())return null;
+    const id=runSessionId||'unsaved';if(!player.encounters31||player.encounters31.session!==id){const seed=encounterHash31(id+':'+exploration.seed);player.encounters31={session:id,seed,queenMap:Math.floor(worldRandom(seed)()*3),maps:[],queenPlaced:false,queenDone:false,quizUsed:[]};}return player.encounters31;
+  }
+  function ensureEncounters31(){
+    if(!worldOutside()||typeof isTestArena28==='function'&&isTestArena28())return;extendBuildings31(exploration);const state=encounterRunState31();if(!state)return;
+    const key=String(exploration.seed)+':'+exploration.epoch;if(!state.maps.includes(key))state.maps.push(key);
+    if(!state.queenPlaced&&state.maps.indexOf(key)===state.queenMap){
+      const rand=worldRandom(state.seed^0x31a11),origin=exploration.entry;let point=null;for(let i=0;i<60;i++){const a=rand()*TAU,r=1600+rand()*900,p=safeTeleport31(origin.x+Math.cos(a)*r,origin.y+Math.sin(a)*r,50);if(p&&exploration.pois.every(q=>dist(q,p)>240)){point=p;break;}}
+      if(!point)point=safeTeleport31(origin.x+650,origin.y+480,50);if(point){exploration.pois.push({...point,id:'queenInnies31',kind:'queen31',verdict:worldRandom(state.seed^0x31f00d)()<.5?'innie':'outie',status:'waiting',done:false,active:false});state.queenPlaced=true;state.queenMapKey=key;saveRunNow();}
+    }
+  }
+  function queenPoi31(){return exploration?.pois.find(p=>p.kind==='queen31');}
+  function openQueen31(p){if(!p||p.done||p.status==='fighting'||!worldOutside()||!['playing','queenDialog31'].includes(mode))return;exploration.queenDialog31=p.id;mode='queenDialog31';resetInput();player.moving=false;saveRunNow();renderQueen31(p);}
+  function renderQueen31(p){
+    const resolved=p.status==='blessed';mode='queenDialog31';
+    showOverlay(`<span class="eyebrow">DIE KÖNIGIN DER INNIES · ZEIT PAUSIERT</span><h2 id="overlayTitle">${resolved?'EINE VON UNS.':'INNIE ODER OUTIE?'}</h2><canvas id="queenPortrait31" width="256" height="256" style="width:180px;height:180px;image-rendering:pixelated" aria-label="Gekrönte Gestalt ohne Augen, mit senkrechtem Schlitz im Gesicht"></canvas><p><b>„Ich bin die Königin der Innies!“</b></p><p>${resolved?'Die Königin erkennt dich als Innie an. Du erhältst 30 Sekunden ROTER BLICK. Die Zeit beginnt erst beim Weitergehen.':'Die augenlose Königin legt den Kopf schief. „Ich werde prüfen, ob du zu uns gehörst.“ Innie: 30 Sekunden Roter Blick. Outie: ein Minibosskampf um ein paar zusätzliche Nüsse. Beide Ergebnisse sind gleich wahrscheinlich.'}</p>${resolved?'<button class="primary-button" id="queenLeave31">MIT ROTEM BLICK WEITER</button>':'<button class="primary-button" id="queenCheck31">PRÜFUNG ZULASSEN</button><button class="secondary-button" id="queenLeave31">SPÄTER WIEDERKOMMEN</button>'}`);
+    const c=$('queenPortrait31'),art=window.PixelStudio;if(c&&art){const x=c.getContext('2d');x.imageSmoothingEnabled=false;art.draw(x,art.enemy('queenInnies31',0,'idle'),128,230,230,.8);}bindWorldButton('queenCheck31',()=>resolveQueen31(p));bindWorldButton('queenLeave31',closeQueen31);
+  }
+  function closeQueen31(){if(mode!=='queenDialog31'||!exploration)return;const p=queenPoi31();exploration.queenDialog31=null;mode='playing';hideOverlay();resetInput();if(p&&!p.done){const a=Math.atan2(player.y-p.y,player.x-p.x);Object.assign(player,freeWorldPoint(p.x+Math.cos(a)*170,p.y+Math.sin(a)*170,player.r));p.reopenAfter31=runTime+2;}player.invuln=Math.max(player.invuln||0,1.3);lastFrame=performance.now();saveRunNow();}
+  function resolveQueen31(p){
+    if(mode!=='queenDialog31'||exploration?.queenDialog31!==p?.id||p.status!=='waiting')return false;
+    if(p.verdict==='innie'){p.status='blessed';p.done=true;const state=encounterRunState31();if(state)state.queenDone=true;player.powerups.overdrive=Math.max(player.powerups.overdrive||0,30);updatePowerHud();saveRunNow();victoryFanfare();renderQueen31(p);}
+    else{p.status='fighting';p.active=false;exploration.queenDialog31=null;mode='playing';hideOverlay();resetInput();if(typeof spawnInnieQueen31==='function')spawnInnieQueen31(p);player.invuln=Math.max(player.invuln||0,1.5);saveRunNow();announce('OUTIE!', 'Die Königin verlangt eine Audienz mit Gewalt.');}return true;
+  }
+  function onInnieQueenDefeated31(p,e){
+    if(!p||p.done||p.status!=='fighting')return;p.done=true;p.active=false;p.hp=0;p.status='defeated';const state=encounterRunState31();if(state)state.queenDone=true;
+    const amount=Math.round((1600+campaignProgress25()*85)*2*1.25*runScoreMultiplier());score+=amount;p.reward31=amount;setAchievementProgress('score_hog',score);floater(e.x,e.y-60,'+'+amount+' NÜSSE','#ffe3a0');toast('Königin besiegt · '+amount.toLocaleString('de-DE')+' Nüsse');updateHud();saveRunNow();
+  }
+  function updateEncounters31(){
+    if(mode!=='playing'||!worldOutside())return;ensureEncounters31();const p=queenPoi31();if(!p||p.done)return;
+    if(p.status==='fighting'){const e=enemies.find(e=>!e.dead&&e.queenInnies31&&e.worldPoi===p.id);if(e){p.hp=e.hp;p.maxHp=e.maxHp;p.active=true;}else if(dist(player,p)<1000&&typeof spawnInnieQueen31==='function'){p.active=false;spawnInnieQueen31(p);}return;}
+    const d=dist(player,p);if(d<560&&!p.shouted31){p.shouted31=true;p.shoutUntil31=runTime+7;announce('KÖNIGIN DER INNIES','Ich bin die Königin der Innies!');saveRunNow();}if(d<120&&runTime>=(p.reopenAfter31||0))openQueen31(p);
+  }
+  const updateEncountersBase31=update;
+  update=function(dt){updateEncountersBase31(dt);updateEncounters31();};
+  const collectEncountersBase31=collectWorldPoint;
+  collectWorldPoint=function(p){if(p?.kind==='queen31')return;return collectEncountersBase31(p);};
+  const groundEncounters31=drawWorldGround;
+  drawWorldGround=function(...args){if(!exploration)return groundEncounters31(...args);const pois=exploration.pois;exploration.pois=pois.filter(p=>p.kind!=='queen31');try{groundEncounters31(...args);}finally{exploration.pois=pois;}drawEncounters31();};
+  function drawEncounters31(){
+    const p=queenPoi31(),art=window.PixelStudio;if(!p||p.done||p.status==='fighting'||!worldOutside()||!worldVisible(p,180)||!art)return;
+    art.draw(ctx,art.enemy('queenInnies31',Math.floor(ambientTime*4)%4,'idle'),p.x,p.y+36,148,.8);ctx.save();ctx.font='13px NuttyPixel';ctx.textAlign='center';ctx.fillStyle='#f4d498';ctx.fillText('KÖNIGIN DER INNIES',p.x,p.y-114);ctx.fillStyle='#f7edc9';ctx.fillText('?',p.x,p.y-136);ctx.restore();
+  }
+  const landmarkEncounters31=landmarkName27;
+  landmarkName27=function(p){return p.kind==='queen31'?'KÖNIGIN DER INNIES':p.kind==='building'&&p.outcome==='quiz31'&&p.visited?'QUIZMASTER':landmarkEncounters31(p);};
+  const glyphEncounters31=mapGlyph27;
+  mapGlyph27=function(x,p,px,py,size=1){if(p.kind!=='queen31'&&!(p.kind==='building'&&p.outcome==='quiz31'&&p.visited))return glyphEncounters31(x,p,px,py,size);x.save();x.translate(Math.round(px),Math.round(py));x.scale(size,size);x.fillStyle='#10242e';x.fillRect(-11,-11,22,22);x.strokeStyle=p.done?'#80948b':p.kind==='queen31'?'#f7b4c9':'#c3ddff';x.strokeRect(-10.5,-10.5,21,21);x.fillStyle=x.strokeStyle;if(p.kind==='queen31'){x.fillRect(-7,1,14,5);x.fillRect(-7,-5,3,7);x.fillRect(-1,-8,3,10);x.fillRect(5,-5,3,7);}else{x.font='18px NuttyPixel';x.textAlign='center';x.fillText('?',0,7);}x.restore();};
+  const resumableEncounters31=resumableMode;
+  resumableMode=function(){if(['worldQuiz31','quizTeleport31','queenDialog31'].includes(mode))return 'playing';return resumableEncounters31();};
+  const resumeEncounters31=resumeSavedRun;
+  resumeSavedRun=function(...args){const r=resumeEncounters31(...args);if(player&&exploration&&mode!=='menu'){ensureEncounters31();const queen=queenPoi31();if(exploration.queenDialog31&&queen&&['waiting','blessed'].includes(queen.status)){mode='queenDialog31';renderQueen31(queen);}saveRunNow();}return r;};
+  document.addEventListener('keydown',e=>{if(e.code!=='Escape'||!['worldQuiz31','quizTeleport31','queenDialog31'].includes(mode))return;e.preventDefault();e.stopImmediatePropagation();if(mode==='queenDialog31')closeQueen31();else if(mode==='quizTeleport31'){const p=exploration.pois.find(p=>p.id===exploration.interior);if(p)renderQuiz31(p);}else worldCloseInterior();},true);
+  const helpEncounters31=helpMarkup;
+  helpMarkup=function(){return helpEncounters31().replaceAll('65 % Shop, 20 % Nusshaufen, 15 % Minibossraum','55 % Shop, 20 % Nusshaufen, 15 % Minibossraum, 10 % Quizmaster').replaceAll('zu 65 % einen Shop, zu 20 % drei Nusshaufen und zu 15 % einen Miniboss','zu 55 % einen Shop, zu 20 % drei Nusshaufen, zu 15 % einen Miniboss und zu 10 % einen Quizmaster')+`<section class="build-section"><h3>Quizmaster und Königin</h3><p>Der erste Laden bleibt garantiert. Weitere Gebäude würfeln mit 55 % Shop, 20 % Nusshaufen, 15 % Miniboss und 10 % Quizmaster. Ein Quiz hat vier Antworten und einen Versuch. Richtig gelöst: ein frei gewählter, sicherer Teleport auf derselben Karte. Die 50 Fragen beruhen auf echten Hamsterfakten; Quellen stehen in docs/hamster-quiz31-sources.json.</p><p>Auf einer der ersten drei Karten wartet einmal pro Run die Königin der Innies, auf der Karte als Krone markiert. Ihre Prüfung hat je 50 % Chance: Innie erhält 30 Sekunden Roter Blick; Outie kämpft gegen die Königin um 25 % mehr Nüsse als bei einem normalen wandernden Miniboss. Das Ergebnis bleibt beim Fortsetzen bestehen.</p></section>`;};
+
   // PIXELWERK_WORLD_END
   // PIXELWERK_INTEGRATION_BEGIN · installed by tools/build_pixel_edition.py
   function installPixelEdition(){
@@ -7430,7 +8649,8 @@
     function enemyId(e){if(e.pafti)return 'pafti';if(e.knoll)return 'knoll';if(e.troll)return 'bergTroll';if(e.miniKind)return e.miniKind;if(e.hardType)return e.hardType;if(e.endlessBoss)return ({general:'hasenbein',cyber:'cyberHasenbein'})[e.endlessKind]||e.endlessKind;if(e.ottah)return 'ottah';if(e.karnil)return 'karnil';if(e.cyber||e.cyberMini)return 'cyberHasenbein';if(e.type==='boss')return 'hasenbein';return e.type;}
     drawRabbit=function(e){if(!e||e.dead)return;const id=enemyId(e),large=e.type==='boss'||e.pafti||e.endlessBoss,mid=e.miniKind||e.troll||e.type==='zombieBoss';const size=large?(id==='karnil'?182:id==='ottah'?164:154):mid?118:e.type==='brute'||e.type==='pigJuggernaut'?104:86;
       const moving=motionOf(e),pose=e.hit>0?'hurt':id==='hasenbein'&&e.windup>0?'windup':e.charge>0?'dash':e.windup>0||e.attack25>0||e.attackPulse26>0||e.burstLeft>0||e.fireCd<.2?'attack':moving.speed>3?'walk':'idle',f=Math.floor(moving.phase)%(id==='hasenbein'?8:4);
-      art.draw(ctx,art.enemy(id,f,pose,hardMode&&!e.hasenbeinAlly),e.x,e.y,size,.73,e.hasenbeinControlled?e.face<0:Boolean(player&&player.x<e.x),e.spawnGrace>0?.7:1);
+      drawMiniWarning31(e);
+      art.draw(ctx,art.enemy(e.spriteKey31||id,f,pose,hardMode&&!e.hasenbeinAlly),e.x,e.y,size,.73,e.hasenbeinControlled?e.face<0:Boolean(player&&player.x<e.x),e.spawnGrace>0?.7:1);
       if(e.slow>0)pixelRing(e.x,e.y+12,e.r+5,'#9bcbd8',3,.7);
       if(e.shieldTime>0)pixelRing(e.x,e.y,e.r+8,'#afdcdf',4,.8);
       if(e.hp<e.maxHp&&!large)drawPixelHpBar(e.x,e.y-size*.76,mid?58:38,e.hp/e.maxHp,hardMode?'#cf8888':'#b5c696');
@@ -7454,7 +8674,7 @@
       if(enabled.soapedRat)draw('soapedRat',player.soapX??player.x+55,player.soapY??player.y+28,62);
       if(enabled.eiterWesen)draw('eiterWesen',player.eiterX??player.x+48,player.eiterY??player.y-42,64);
       if(enabled.ronnySquirrel)draw('ronnySquirrel',player.ronnyX??player.x-70,player.ronnyY??player.y+16,70);
-      if(enabled.daimDuo)for(const side of [-1,1])draw('daimDuo',player.x+side*48,player.y+27,44);
+      if(enabled.daimDuo)draw('daimDuo',player.x,player.y+37,84);
       if(enabled.pigPatrol)for(const side of [-1,1])draw('pigPatrol',player.x+side*43,player.y+24,42);
       if(enabled.troutDormian)draw('troutDormian',player.x+Math.cos(ambientTime*1.6)*116,player.y+Math.sin(ambientTime*1.6)*72,68);
       if(enabled.eichelkopf)draw('eichelkopf',player.x+Math.cos(ambientTime*2)*42,player.y+Math.sin(ambientTime*2)*27,36);
@@ -8133,6 +9353,113 @@
     updateHud=function(){questHud28();const q=mapQuest28();let hint=$('questHud28');if(!hint){hint=document.createElement('div');hint.id='questHud28';hint.className='quest-hud28 hidden';shell.appendChild(hint);}const visible=worldOutside()&&q?.status==='active'&&mode==='playing'&&!isTestArena28();hint.classList.toggle('hidden',!visible);if(visible){const spec=questSpecs28[q.questType],text='! '+spec.name+' · '+Math.floor(Math.min(q.progress,spec.goal))+'/'+spec.goal;if(hint.textContent!==text)hint.textContent=text;}};
     const storyMotto28=document.querySelector('.header-motto');if(storyMotto28)storyMotto28.textContent='Wer die Nuss nicht ehrt, ist die absolute Vernichtung wert!!!';
     if(typeof installGalleryMenu28==='function')installGalleryMenu28();
+
+    // Edition 31 presentation is installed after the existing world and HUD layers.
+    const mapRender31=render;
+    render=function(...args){const r=mapRender31(...args);hideBlindMapControls31();return r;};
+    const mapPause31=pauseGame;
+    pauseGame=function(...args){const r=mapPause31(...args);hideBlindMapControls31();return r;};
+    const skillsPresentation31=updateSkills;
+    updateSkills=function(...args){const r=skillsPresentation31(...args);for(const chip of $('skillHud')?.querySelectorAll('[title]')||[]){const id=Object.keys(player?.skills||{}).find(id=>allSkillInfo(id)?.title===chip.title),kind=companionKind31(id);if(kind)chip.title=(kind==='companion'?'BEGLEITER · ':'BEGLEITER-AUSBAU · ')+chip.title;}return r;};
+
+    // Front-facing authored sprites previously returned before Madelpulator's eye
+    // recolour. Keep the original pose, body shading and silhouette; glow only the
+    // facial pupils. A back-facing character naturally has no visible eyes.
+    const heroEyes31=art.hero,eyeFrames31=new WeakMap();
+    const frontEyes31={snickers:[[61,65],[78,65]],raffzahn:[[66,65],[80,65]],krustenbraten:[[61,64],[76,65]],slanny:[[62,64],[80,64]],koettitroeter:[[62,41],[73,41]]};
+    art.hero=function(id,pose='idle',frame=0,skin='classic',madel=false,facing='right'){
+      const base=heroEyes31(id,pose,frame,skin,id==='koettitroeter'?false:madel,facing);
+      if(!base||!madel||pose==='death'||facing==='up'||!frontEyes31[id])return base;
+      if(eyeFrames31.has(base))return eyeFrames31.get(base);
+      const c=art.surface(base.width,base.height),x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(base,0,0);
+      const data=x.getImageData(0,0,c.width,c.height),pixels=data.data,w=c.width,h=c.height,eyes=[];
+      const light=(px,py)=>{if(px<0||py<0||px>=w||py>=h)return 0;const q=(py*w+px)*4;return pixels[q+3]>160?pixels[q]*.3+pixels[q+1]*.59+pixels[q+2]*.11:0;};
+      if(facing==='down'||id==='koettitroeter'){
+        let hints=frontEyes31[id];
+        if(id==='koettitroeter'){
+          let brow=33;for(let yy=24;yy<66;yy++){let green=0;for(let xx=60;xx<83;xx++){const q=(yy*w+xx)*4;if(pixels[q+3]>160&&pixels[q]>65&&pixels[q+1]>85&&pixels[q+1]>pixels[q]*1.04&&pixels[q+2]<pixels[q+1]*.75)green++;}if(green>=7){brow=yy;break;}}
+          hints=facing==='down'?[[62,brow+7],[73,brow+7]]:[[68,brow+7],[78,brow+7]];
+        }
+        for(const [hx,hy]of hints){let best=-Infinity,ex=hx,ey=hy;const ry=id==='koettitroeter'?3:7,rx=id==='koettitroeter'?3:5;
+          for(let yy=hy-ry;yy<=hy+ry;yy++)for(let xx=hx-rx;xx<=hx+rx;xx++){
+            if(xx<4||xx>w-5||yy<4||yy>h-5)continue;const q=(yy*w+xx)*4,dark=light(xx,yy);if(pixels[q+3]<160||dark>105)continue;
+            const ring=[[3,0],[-3,0],[0,3],[0,-3],[2,2],[-2,2],[2,-2],[-2,-2]].reduce((n,[u,v])=>n+light(xx+u,yy+v),0)/8;
+            const rank=ring-dark-Math.hypot(xx-hx,yy-hy)*6;if(rank>best){best=rank;ex=xx;ey=yy;}
+          }eyes.push([ex,ey]);
+        }
+      }else{
+        const plain=heroEyes31(id,pose,frame,skin,false,facing),other=plain.getContext('2d').getImageData(0,0,w,h).data;
+        let sx=0,sy=0,count=0;for(let yy=20;yy<96;yy++)for(let xx=24;xx<111;xx++){const q=(yy*w+xx)*4;if(pixels[q]>190&&pixels[q+1]<145&&pixels[q+2]<170&&pixels[q]-other[q]>35){sx+=xx;sy+=yy;count++;}}
+        if(count)eyes.push([Math.round(sx/count),Math.round(sy/count)]);
+      }
+      for(const [ex,ey]of eyes){
+        x.save();x.globalCompositeOperation='source-atop';
+        for(const [radius,alpha]of [[6,.10],[4,.20],[2,.58]]){x.globalAlpha=alpha;x.fillStyle='#ff263c';x.fillRect(ex-radius,ey-1,radius*2+1,3);x.fillRect(ex-1,ey-radius,3,radius*2+1);x.fillRect(ex-radius+1,ey-radius+1,radius*2-1,radius*2-1);}
+        x.globalAlpha=1;x.fillStyle='#ff2540';x.fillRect(ex-1,ey-1,3,3);x.fillStyle='#ffe4ae';x.fillRect(ex,ey,1,1);x.restore();
+      }
+      c.pixelOrigin=base.pixelOrigin;c.pixelActor=base.pixelActor;c.actorBounds=base.actorBounds;eyeFrames31.set(base,c);return c;
+    };
+
+    const iconPresentation31=art.icon;let bargainIcon31=null;
+    art.icon=function(id){if(id!=='e31AugenAusstechen')return iconPresentation31(id);if(bargainIcon31)return bargainIcon31;
+      const c=art.surface(64),x=c.getContext('2d');x.imageSmoothingEnabled=false;
+      x.fillStyle='#182b33';x.fillRect(9,20,38,21);x.fillRect(14,15,28,31);x.fillStyle='#e5d5b0';x.fillRect(12,24,33,13);x.fillRect(18,20,22,21);x.fillStyle='#41323d';x.fillRect(26,20,10,21);x.fillStyle='#d34d51';for(let i=0;i<8;i++)x.fillRect(12+i*4,43-i*4,6,5);
+      x.fillStyle='#261f26';x.fillRect(40,38,21,22);x.fillStyle='#d7a850';x.fillRect(42,40,17,18);x.fillStyle='#ffdf8a';x.fillRect(44,41,11,2);x.fillStyle='#48392b';x.font='16px NuttyPixel';x.textAlign='center';x.fillText('5',51,55);bargainIcon31=c;return c;
+    };
+
+    const worldPresentation31=art.world,natureFrames31=new Map();
+    const naturePalette31={garden:['#274532','#456c36','#779441','#bfd069'],sewer:['#223d3f','#416956','#74a079','#bfd59e'],kitchen:['#334b2b','#5c7c39','#9ea854','#e4c17b'],quarry:['#514936','#827151','#b1a36d','#d2c596'],lab:['#294452','#417e80','#79b7b2','#c0e5d3'],swamp:['#243e32','#3c6849','#6c9860','#b0bd79'],astral:['#38334f','#665483','#9b84b2','#d3bee1'],stage:['#353e2d','#596d36','#8d984b','#c4b067']};
+    function natureSprite31(id){
+      if(natureFrames31.has(id))return natureFrames31.get(id);
+      const item=id.replace('nature31-',''),biome=Object.keys(NATURE31).find(k=>NATURE31[k].includes(item));if(!biome)return null;
+      const c=art.surface(128),x=c.getContext('2d'),p=naturePalette31[biome],seed=[...item].reduce((s,a)=>Math.imul(s^a.charCodeAt(0),16777619),2166136261),rnd=worldRandom(seed),b=(xx,yy,ww,hh,color)=>{x.fillStyle=color;x.fillRect(Math.round(xx)*2,Math.round(yy)*2,Math.round(ww)*2,Math.round(hh)*2);};
+      const poly=(points,color)=>{x.fillStyle=color;x.beginPath();points.forEach(([xx,yy],i)=>i?x.lineTo(xx*2,yy*2):x.moveTo(xx*2,yy*2));x.closePath();x.fill();};
+      const line=(ax,ay,bx,by,color,width=1)=>{const n=Math.max(Math.abs(bx-ax),Math.abs(by-ay));for(let i=0;i<=n;i++)b(ax+(bx-ax)*i/Math.max(1,n),ay+(by-ay)*i/Math.max(1,n),width,width,color);};
+      const leaf=(xx,yy,side,shade=2)=>{poly([[xx,yy],[xx+side*5,yy-5],[xx+side*9,yy-4],[xx+side*5,yy]],p[shade]);b(xx+side*4,yy-3,3,1,p[3]);};
+      const grass=(count=12)=>{for(let i=0;i<count;i++){const xx=14+rnd()*36,yy=49+rnd()*8,top=yy-8-rnd()*20;line(xx,yy,xx+(rnd()-.5)*14,top,p[1],2);line(xx+1,yy,xx+(rnd()-.5)*10,top+4,p[2]);}};
+      const bloom=(xx,yy,color)=>{b(xx-3,yy-1,7,3,p[0]);b(xx-1,yy-3,3,7,p[0]);b(xx-2,yy-1,5,3,color);b(xx-1,yy-2,3,5,color);b(xx,yy,1,1,'#f7da87');};
+      const fern=(xx=32,yy=55,height=30)=>{line(xx,yy,xx,yy-height,p[1],2);for(let i=0;i<5;i++){const py=yy-5-i*5;leaf(xx,py,-1,i%2+1);leaf(xx+1,py,1,i%2+1);}b(xx,yy-height,2,5,p[3]);};
+      const wood=(left,top,ww,hh)=>{b(left-1,top+2,ww+2,hh-3,'#2b2824');b(left,top,ww,hh,'#72543a');b(left+2,top+2,ww-4,3,'#b39766');for(let i=0;i<9;i++)b(left+3+rnd()*(ww-8),top+5+rnd()*(hh-8),4+rnd()*6,1,i%2?'#8c704b':'#4d3d2e');};
+      // A narrow, textured contact patch keeps these small props grounded.
+      b(17,55,29,3,'#14251b38');b(21,58,22,2,'#14251b25');
+      if(['fern','glassFern','stageWeeds'].includes(item)){
+        if(item==='glassFern'){b(19,47,27,12,'#294755');b(22,49,20,8,'#6a9b9a');b(22,49,2,7,'#bbe4d7');}fern(32,55,29);fern(21,55,18);fern(43,55,22);
+      }else if(['bellflowers','moonFlower'].includes(item)){
+        for(let i=0;i<5;i++){const xx=16+i*7,top=22+(i%3)*6;line(xx,55,xx+2,top,p[1],2);leaf(xx,43,i%2?1:-1);bloom(xx+2,top,item==='moonFlower'?'#d8c9ed':['#8e91ce','#c2a9db','#758ebb'][i%3]);}
+      }else if(['sewerReeds','cattails'].includes(item)){
+        grass(11);for(let i=0;i<5;i++){const xx=20+i*6,top=17+(i%3)*5;line(xx,56,xx-2,top,p[2],1);b(xx-3,top,3,9,item==='sewerReeds'?'#b1c884':'#745139');b(xx-2,top,1,6,item==='sewerReeds'?'#dce9ad':'#aa8454');}
+      }else if(['mould','lotus'].includes(item)){
+        for(let i=0;i<7;i++){const xx=12+rnd()*39,yy=37+rnd()*19;poly([[xx-6,yy],[xx-3,yy-4],[xx+5,yy-3],[xx+8,yy+1],[xx+3,yy+5],[xx-5,yy+3]],p[i%2+1]);b(xx-3,yy,6,1,p[3]);if(i%3===0)bloom(xx+1,yy-2,item==='lotus'?'#d8b2c1':'#c1d7a5');}
+      }else if(item==='basil'){
+        b(21,45,26,5,'#483129');poly([[23,49],[45,49],[42,59],[26,59]],'#8d5434');b(25,49,17,2,'#d09456');fern(32,47,23);fern(39,46,18);fern(25,46,15);
+      }else if(item==='spilledGrain'){
+        wood(12,40,18,17);for(let i=0;i<32;i++)b(27+rnd()*28,46+rnd()*13,2,1,i%3?'#d5b673':'#f1dba0');
+      }else if(['dryGrass','starGrass'].includes(item)){
+        grass(15);for(let i=0;i<8;i++){const xx=15+rnd()*34,yy=26+rnd()*20;b(xx,yy,2,2,p[3]);if(item==='starGrass'){b(xx-1,yy+1,4,1,'#dce4d0');b(xx+1,yy-1,1,4,'#dce4d0');}}
+      }else if(item==='lostBottle'){
+        b(30,22,7,10,'#c8b270');b(29,31,10,4,'#38523f');b(26,36,16,21,'#243b35');b(28,36,12,19,'#44694c');b(29,37,2,16,'#7b9f69');b(28,43,12,8,'#d1b077');b(31,45,6,2,'#6a523c');
+      }else if(['fallenBranch','hollowLog'].includes(item)){
+        wood(8,42,48,16);poly([[9,44],[18,43],[18,55],[10,55]],'#cfab71');b(11,46,4,6,item==='hollowLog'?'#272b28':'#8c643e');line(25,46,36,34,'#594a32',4);line(37,35,45,36,'#82653e',2);leaf(36,38,1);leaf(20,49,-1);for(let i=0;i<6;i++)b(20+rnd()*32,44+rnd()*7,3,2,p[1]);
+      }else if(item==='rustGrate'){
+        poly([[11,42],[48,37],[56,50],[17,58]],'#242f32');poly([[13,43],[47,40],[52,49],[18,55]],'#64726a');for(let i=0;i<7;i++)line(17+i*4,43-i*.3,21+i*4,53-i*.6,'#283c3d',2);b(16,45,6,2,'#aa7551');b(41,50,8,2,'#89603f');
+      }else if(item==='pepperMill'){
+        poly([[23,56],[26,45],[25,36],[29,30],[28,21],[38,21],[38,30],[42,36],[40,46],[45,56]],'#5b3b2b');b(25,55,20,4,'#352b25');b(27,51,14,3,'#a37348');b(27,33,13,5,'#b18655');b(30,21,7,9,'#be975e');b(29,19,10,3,'#d1b57b');b(32,16,4,3,'#c7c4a6');
+      }else if(item==='stoneCairn'){
+        for(const [xx,yy,ww,hh]of [[15,46,35,13],[20,35,27,14],[25,26,17,10],[29,19,9,9]]){poly([[xx,yy+4],[xx+5,yy],[xx+ww-4,yy+1],[xx+ww,yy+hh-3],[xx+ww-7,yy+hh],[xx+2,yy+hh-1]],'#555650');b(xx+5,yy+2,ww-9,3,'#b4ad91');b(xx+4,yy+7,ww-10,2,'#81816d');}
+      }else if(item==='mineLantern'){
+        b(22,53,24,6,'#363a36');b(24,32,20,20,'#715e3e');b(27,34,14,16,'#edc46b');b(30,37,6,10,'#fff3b7');b(23,28,22,5,'#8e907a');b(28,19,12,3,'#4d5650');b(26,22,3,7,'#848875');b(38,22,3,7,'#848875');b(24,33,3,20,'#3c4540');b(41,33,3,20,'#3c4540');
+      }else if(item==='sampleCrate'){
+        wood(17,34,33,24);b(19,43,28,4,'#364f57');b(25,23,5,18,'#5e9e92');b(34,18,6,23,'#83b2a4');b(26,20,3,4,'#d3d7b8');b(35,16,4,3,'#cec4a6');b(35,22,2,13,'#c5e4d6');b(28,47,13,7,'#b8c3a6');b(31,49,6,2,'#315e64');
+      }else if(item==='crystalRing'){
+        for(let i=0;i<8;i++){const a=i*TAU/8,xx=32+Math.cos(a)*19,yy=46+Math.sin(a)*9;poly([[xx-4,yy],[xx-2,yy-8],[xx+2,yy-12],[xx+5,yy-3],[xx+3,yy+2]],'#7767a0');poly([[xx-2,yy-8],[xx+2,yy-12],[xx+1,yy]],'#c6bbe0');b(xx+1,yy-6,1,5,'#e2dced');}
+      }else if(['cableCoil','cableBasket'].includes(item)){
+        if(item==='cableBasket'){wood(13,42,41,16);for(let i=0;i<5;i++)b(17+i*7,44,2,13,'#302d2b');}
+        for(let ring=0;ring<4;ring++)for(let i=0;i<32;i++){const a=i*TAU/32,xx=32+Math.cos(a)*(19-ring*3),yy=45+Math.sin(a)*(10-ring);b(xx,yy,2,2,i%4?'#293c40':'#6f8b88');}line(48,46,53,34,'#273a3f',3);b(50,31,7,5,'#bcac79');
+      }
+      // Sparse two-pixel highlights match the authored foliage's broken contours.
+      natureFrames31.set(id,c);return c;
+    }
+    art.world=function(id){return String(id).startsWith('nature31-')?natureSprite31(id)||worldPresentation31(id):worldPresentation31(id);};
 
     // Fixed source grid makes pixel density independent of HiDPI display resolution.
     makeGround();

@@ -1,0 +1,5 @@
+/* The global fullscreen control remains above paused room dialogs. */
+#gameShell[data-screen=worldShop] .game-tools,#gameShell[data-screen=worldReward28] .game-tools{z-index:35;pointer-events:none}
+#gameShell[data-screen=worldShop] #fullscreenButton,#gameShell[data-screen=worldReward28] #fullscreenButton{pointer-events:auto}
+#gameShell[data-screen=worldShop] .game-tools>.icon-button:not(#fullscreenButton),#gameShell[data-screen=worldReward28] .game-tools>.icon-button:not(#fullscreenButton){visibility:hidden}
+#gameShell[data-screen=worldShop] #overlay,#gameShell[data-screen=worldReward28] #overlay{padding-top:62px}
