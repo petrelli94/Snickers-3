@@ -1,0 +1,8 @@
+.start-content .menu-subtitle32{margin:-5px 0 1px;color:#ead09a;font-family:var(--pixel,inherit);font-size:clamp(11px,1.14vw,16px);font-weight:800;letter-spacing:.21em;line-height:1.3;text-align:center;text-shadow:0 2px #122329,1px 1px #122329,-1px 1px #122329}
+@media(max-height:650px){.start-content .menu-subtitle32{margin:-4px 0 0;font-size:11px}}
+@media(max-height:460px) and (min-width:600px){.start-content .menu-subtitle32{font-size:10px;letter-spacing:.14em}}
+.e32-cap-badge{display:inline-block;margin-left:5px;padding:2px 5px;border:1px solid #e1c27e;color:#ffe1a1;background:#3e442d;font:10px/1.2 var(--body);font-style:normal;vertical-align:middle;white-space:nowrap}
+.e32-synergies .build-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:9px}
+.e32-synergies .build-card-grid article{padding:12px;border:1px solid #b9aa78;background:#213744;box-shadow:inset 0 0 0 2px #314958;color:#efe5c7;text-align:left}
+.e32-synergies .build-card-grid strong,.e32-synergies .build-card-grid small{display:block}.e32-synergies .build-card-grid small{color:#d6bf8d;margin-top:4px}.e32-synergies .build-card-grid p{margin:8px 0 0}
+.e32-caps{border-top:1px solid #b8a46c75}.e32-caps p{color:#e9d4a4}

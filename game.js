@@ -1202,7 +1202,7 @@
   function formatTime(n) { return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(Math.floor(n%60)).padStart(2,'0')}`; }
   function updateHud() {
     if (!player) return;
-    $('healthBar').innerHTML = Array.from({length:Math.min(30,player.maxHp)},(_,i)=>`<i class="health-segment${i < player.hp ? '' : ' empty'}"></i>`).join('');
+    $('healthBar').innerHTML = Array.from({length:Math.min(34,player.maxHp)},(_,i)=>`<i class="health-segment${i < player.hp ? '' : ' empty'}"></i>`).join('');
     $('healthText').textContent = `${displayNumber(player.hp)}/${player.maxHp}`;
     $('scoreValue').textContent = String(score).padStart(6,'0');
     $('waveLabel').textContent = boss ? (endlessMode?`ENDLOS · BOSS · WELLE ${wave+1}`:`${gamePlusLevel===2?'NG+2 · ':newGamePlus?'NG+ · ':''}${boss.ottah?'BOSS 04 / 04':boss.karnil?'BOSS 03 / 03':boss.cyber?'BOSS 02 / 03':'BOSS 01 / 03'}`) : (endlessMode?`ENDLOS · WELLE ${String(displayWave25()).padStart(2,'0')}`:`${gamePlusLevel===2?'NG+2 · ':newGamePlus?'NG+ · ':''}WELLE ${String(displayWave25()).padStart(2,'0')} / 15`);
@@ -1255,7 +1255,7 @@
     let speciesBonus=(e.type==='boss'||e.miniBoss)?player.bossDamage||1:1;
     if(e.potencyMarked>0)amount*=isBoss(e)?1.08:1.14;
     const rabbit=isRabbit(e);
-    if(rabbit)speciesBonus*=player.rabbitDamage||1;amount*=Math.min(3,speciesBonus);
+    if(rabbit)speciesBonus*=player.rabbitDamage||1;amount*=Math.min(3.4,speciesBonus);
     amount*=contentDamageMultiplier(e);amount=bossImpact31(e,amount);e.hp -= amount; e.hit = .1;
     burst(e.x,e.y, e.type === 'boss' ? '#ffa977' : '#cad8b7', blast ? 12 : 4, 110);
     if(isBoss(e))maybeDropBossSupply(e);
@@ -1667,7 +1667,7 @@
     }
     thrownWeapons=thrownWeapons.filter(t=>t.life>0&&(!t.returning||dist(t,player)>25));
     for(const p of pickups){
-      p.life-=dt;p.phase+=dt*3;const d=dist(player,p),magnetRadius=Math.min(380,player.magnet+(runTime<(player.e24?.magnetUntil||0)?45:0))*(player.powerups.magnet>0?2.2:1);
+      p.life-=dt;p.phase+=dt*3;const d=dist(player,p),magnetRadius=Math.min(480,player.magnet+(runTime<(player.e24?.magnetUntil||0)?45:0))*(player.powerups.magnet>0?2.2:1);
       if((d<magnetRadius||p.permanentHeart)&&d>1){p.x+=(player.x-p.x)/d*310*dt;p.y+=(player.y-p.y)/d*310*dt;}
       if(d<25){p.life=0;event24(p.type==='heart'?'heartPickup':p.type==='nut'?'nutPickupCount':'pickup',p);if(p.permanentHeart){collectPermanentHeart(p);}else if(p.type==='heart'){player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-35,'+1 ♥',accent());tone(700,.13,'sine',.055,1050);}else if(p.type==='power'){collectPowerup(p);}else if(p.type==='ammo'){grantSpecialAmmo();}else{score+=Math.round((player.powerups.jackpot>0?16:4)*(player.powerups.scoreRush>0?2:1)*runScoreMultiplier());setAchievementProgress('score_hog',score);tone(1000,.045,'sine',.022,1400);}}
     }
@@ -7157,7 +7157,7 @@
     if(!player?.notices28?.length||!['playing','paused','worldShop','worldNuts','upgrade','bossUpgrade','worldReward28'].includes(mode))return;
     if(mode!=='worldReward28'&&!player.noticeReturn28)player.noticeReturn28=mode;
     mode='worldReward28';resetInput();const n=player.notices28[0];
-    showOverlay(`<span class="eyebrow">${escapeHTML(n.kind)} · ZEIT PAUSIERT</span><h2 id="overlayTitle">DAS BLEIBT BEI DIR.</h2><article class="discovery-card28 rarity-${n.rarity}"><img src="${worldArt?.url('icon',n.icon)||''}" alt=""><div><strong>${escapeHTML(n.title)}</strong><p>${escapeHTML(n.desc)}</p><small>Bereits erhalten. Gilt für diesen Run und einen daraus übernommenen Build.</small></div></article><button class="primary-button" id="discoveryContinue28">${player.notices28.length>1?'NÄCHSTEN FUND ANSEHEN':'WEITER GEHT’S'} ↗</button>`);
+    showOverlay(`<span class="eyebrow">${escapeHTML(n.kind)} · ZEIT PAUSIERT</span><h2 id="overlayTitle">DAS BLEIBT BEI DIR.</h2><article class="discovery-card28 rarity-${n.rarity}"><img src="${worldArt?.url('icon',n.icon)||''}" alt=""><div><strong>${escapeHTML(n.title)}</strong><p>${escapeHTML(n.desc)}</p></div></article><button class="primary-button" id="discoveryContinue28">${player.notices28.length>1?'NÄCHSTEN FUND ANSEHEN':'WEITER GEHT’S'} ↗</button>`);
     bindWorldButton('discoveryContinue28',closeDiscovery28);saveRunNow();
   }
   function closeDiscovery28(){
@@ -8614,6 +8614,812 @@
   const helpEncounters31=helpMarkup;
   helpMarkup=function(){return helpEncounters31().replaceAll('65 % Shop, 20 % Nusshaufen, 15 % Minibossraum','55 % Shop, 20 % Nusshaufen, 15 % Minibossraum, 10 % Quizmaster').replaceAll('zu 65 % einen Shop, zu 20 % drei Nusshaufen und zu 15 % einen Miniboss','zu 55 % einen Shop, zu 20 % drei Nusshaufen, zu 15 % einen Miniboss und zu 10 % einen Quizmaster')+`<section class="build-section"><h3>Quizmaster und Königin</h3><p>Der erste Laden bleibt garantiert. Weitere Gebäude würfeln mit 55 % Shop, 20 % Nusshaufen, 15 % Miniboss und 10 % Quizmaster. Ein Quiz hat vier Antworten und einen Versuch. Richtig gelöst: ein frei gewählter, sicherer Teleport auf derselben Karte. Die 50 Fragen beruhen auf echten Hamsterfakten; Quellen stehen in docs/hamster-quiz31-sources.json.</p><p>Auf einer der ersten drei Karten wartet einmal pro Run die Königin der Innies, auf der Karte als Krone markiert. Ihre Prüfung hat je 50 % Chance: Innie erhält 30 Sekunden Roter Blick; Outie kämpft gegen die Königin um 25 % mehr Nüsse als bei einem normalen wandernden Miniboss. Das Ergebnis bleibt beim Fortsetzen bestehen.</p></section>`;};
 
+  // Edition 32: vegetation follows the edges of authored places in softly
+  // joined clumps. This replaces Edition31's isolated, evenly spaced tufts.
+  // The already tested scenery footprints stay put: routes, entrances and
+  // pickups have the same clearance and the same collision grid as before.
+  const buildNature32=rebuildWorldGeometry;
+  rebuildWorldGeometry=function(...args){
+    const result=buildNature32(...args);
+    if(!exploration||!sceneryScenes28?.length)return result;
+    const key=biome25(),ids=NATURE31[key];if(!ids)return result;
+    decorations28=decorations28.filter(o=>!String(o.sprite||'').startsWith('nature31-'));
+    for(const [cell,objects] of decorationGrid28){
+      const kept=objects.filter(o=>!String(o.sprite||'').startsWith('nature31-'));
+      if(kept.length!==objects.length){if(kept.length)decorationGrid28.set(cell,kept);else decorationGrid28.delete(cell);}
+    }
+    const rand=worldRandom((exploration.seed^0x32f047ac)>>>0);
+    const safe=(x,y)=>x>114&&y>138&&x<WORLD_SIZE-114&&y<WORLD_SIZE-114&&
+      dist({x,y},exploration.entry)>220&&!nearPath27(x,y,100)&&
+      !exploration.pois.some(p=>Math.abs(x-p.x)<(p.kind==='building'?290:165)&&Math.abs(y-p.y)<(p.kind==='building'?315:165))&&
+      !worldBlocked(x,y,12);
+    const plant=(id,x,y,size,scene)=>{
+      if(!safe(x,y))return false;
+      const p={x:Math.round(x),y:Math.round(y),size,sprite:'nature31-'+id,flip:rand()<.5,scene28:scene};
+      decorations28.push(p);sceneGridAdd28(decorationGrid28,p,75);return true;
+    };
+    for(const s of sceneryScenes28){
+      if(rand()<.76)continue;
+      // Each local patch has one prevailing growth direction and several
+      // staggered seedlings. Two overlapping patches create irregular
+      // borders, with occasional open breathing space between them.
+      const patches=(key==='garden'||key==='swamp'||key==='astral')?2:1;
+      for(let j=0;j<patches;j++){
+        if(rand()<.13)continue;
+        const a=rand()*TAU,d=.68+rand()*.54;
+        const cx=s.x+Math.cos(a)*s.rx*d,cy=s.y+Math.sin(a)*s.ry*d;
+        const spread=42+rand()*44,anisotropy=.52+rand()*.28,count=4+Math.floor(rand()*4);
+        for(let n=0;n<count;n++){
+          const along=(rand()+rand()+rand()-1.5)*spread*1.5;
+          const across=(rand()+rand()-1)*spread*anisotropy;
+          const x=cx+Math.cos(a)*along-Math.sin(a)*across,y=cy+Math.sin(a)*along*.75+Math.cos(a)*across;
+          const id=rand()<(n===0?.45:.17)?ids[1]:ids[0];
+          plant(id,x,y,Math.round(38+rand()*17+(id===ids[1]?5:0)),s.id);
+        }
+      }
+    }
+    return result;
+  };
+
+  // Stambouli Edition: each world has a small local ecology. The three creatures
+  // enter on Normal, Hard and Impossible respectively; later modes retain the
+  // earlier creatures, so the map still feels like the same place.
+  const ENEMIES32={
+    hedgeSnail32:{name:'HECKEN-SCHNECK',biome:'garden',tier:0,stats:[4.0,67,21,155],species:'snail',color:'#93b873',attack:'fan',shots:2,spread:.22,shotSpeed:150,stop:205,note:'Spuckt zwei langsame Samenkörner mit einer Lücke in der Mitte.'},
+    thornRook32:{name:'DORNKRÄHE',biome:'garden',tier:1,stats:[8.2,88,22,280],species:'crow',color:'#889b77',attack:'scatter',shots:3,spread:.24,shotSpeed:205,stop:270,note:'Markiert einen Brombeerfächer, dann fliegen drei Dornen.'},
+    rootWidow32:{name:'WURZELWITWE',biome:'garden',tier:2,stats:[14.0,72,29,440],species:'spider',color:'#a78d71',attack:'mark',radius:45,stop:215,note:'Lässt am zuvor markierten Ort Wurzeln aus dem Boden schnellen.'},
+    drainCrab32:{name:'ABFLUSSKRABBE',biome:'sewer',tier:0,stats:[4.4,77,21,160],species:'crab',color:'#a88e77',attack:'charge',rushSpeed:245,stop:82,note:'Klappert mit den Scheren und sprintet nach einer sichtbaren Warnung los.'},
+    sludgeEel32:{name:'SCHLAMM-AAL',biome:'sewer',tier:1,stats:[7.2,92,19,280],species:'eel',color:'#8db6a0',attack:'fan',shots:3,spread:.29,shotSpeed:165,stop:230,note:'Spuckt drei träge Kanalpfropfen mit ausweichbaren Zwischenräumen.'},
+    valveLeech32:{name:'VENTIL-EGEL',biome:'sewer',tier:2,stats:[14.0,64,30,435],species:'leech',color:'#c8937d',attack:'ring',shots:10,shotSpeed:180,stop:260,note:'Das Ventil pfeift vor einem Druckring. Zum Spieler bleibt eine Lücke.'},
+    flourMoth32:{name:'MEHLMOTTE',biome:'kitchen',tier:0,stats:[3.7,94,18,150],species:'moth',color:'#e1d3a7',attack:'fan',shots:3,spread:.29,shotSpeed:160,stop:260,note:'Stäubt drei Mehlflocken in einem langsamen Fächer.'},
+    cleaverFerret32:{name:'HACKFRETTCHEN',biome:'kitchen',tier:1,stats:[8.8,103,22,300],species:'ferret',color:'#d19b7b',attack:'charge',rushSpeed:310,stop:84,note:'Hält das Hackbeil hoch und saust dann auf der markierten Linie vorbei.'},
+    ovenGolem32:{name:'OFEN-OTTOMAT',biome:'kitchen',tier:2,stats:[16.0,58,31,465],species:'golem',color:'#d99367',attack:'mark',radius:48,stop:285,note:'Ein heller Glutfleck kündigt den Ofeneinschlag an.'},
+    pebbleHermit32:{name:'KIESEL-EINSIEDLER',biome:'quarry',tier:0,stats:[4.6,68,21,165],species:'crab',color:'#b2a488',attack:'charge',rushSpeed:230,stop:78,note:'Schiebt seinen Kieselpanzer auf einer kurzen, markierten Bahn vor.'},
+    drillBadger32:{name:'BOHRDACHS',biome:'quarry',tier:1,stats:[9.0,80,24,315],species:'badger',color:'#b7a886',attack:'mark',radius:36,stop:220,note:'Markiert einen kleinen Steinschlag neben deinem alten Standort.'},
+    shardScorpion32:{name:'QUARZSKORPION',biome:'quarry',tier:2,stats:[13.0,89,25,455],species:'scorpion',color:'#beaacf',attack:'scatter',shots:5,spread:.30,shotSpeed:205,stop:255,note:'Der Kristallstachel schickt fünf sichtbare Splitter in den Fächer.'},
+    coilMite32:{name:'SPULENMILBE',biome:'lab',tier:0,stats:[3.6,102,17,155],species:'mite',color:'#a8d9cf',attack:'single',shotSpeed:165,stop:265,note:'Lädt kurz auf und schickt einen langsamen Funken.'},
+    flaskHeron32:{name:'KOLBENREIHER',biome:'lab',tier:1,stats:[7.4,75,24,295],species:'heron',color:'#9fc2c6',attack:'fan',shots:3,spread:.37,shotSpeed:185,stop:270,note:'Drei Reagenzgläser fliegen erst nach dem deutlich leuchtenden Aufladen.'},
+    teslaAxolotl32:{name:'TESLALOTL',biome:'lab',tier:2,stats:[14.2,76,27,445],species:'axolotl',color:'#86dad7',attack:'ring',shots:12,shotSpeed:195,stop:255,note:'Entlädt einen Blitzring mit einer Lücke in Blickrichtung.'},
+    bogGnat32:{name:'MOOR-MÜCKE',biome:'swamp',tier:0,stats:[3.5,107,17,150],species:'gnat',color:'#acb67c',attack:'single',shotSpeed:160,stop:245,note:'Steigt auf und spuckt einen einzelnen träge fliegenden Moortropfen.'},
+    lanternToad32:{name:'LATERNENKRÖTE',biome:'swamp',tier:1,stats:[9.0,63,26,310],species:'toad',color:'#b5ae73',attack:'ring',shots:8,shotSpeed:155,stop:235,note:'Ihre Laterne warnt vor einem langsamen Lichtkranz mit Fluchtlücke.'},
+    peatStag32:{name:'TORF-HIRSCH',biome:'swamp',tier:2,stats:[15.0,94,28,450],species:'stag',color:'#9da475',attack:'charge',rushSpeed:315,stop:90,note:'Senkt das Schilfgeweih und stürmt entlang einer markierten Bahn.'},
+    starJelly32:{name:'STERNQUALLE',biome:'astral',tier:0,stats:[3.9,74,20,160],species:'jelly',color:'#afa2d2',attack:'ring',shots:6,shotSpeed:145,stop:250,note:'Schleudert einen langsamen Sternenkranz mit großer Lücke.'},
+    cometHare32:{name:'KOMETENHASE',biome:'astral',tier:1,stats:[7.3,112,22,305],species:'rabbit',color:'#c7add7',attack:'charge',rushSpeed:325,stop:88,note:'Zieht seinen Schweif vor einem kurzen, geradlinigen Kometensprint.'},
+    eclipseMantis32:{name:'FINSTERNISMANTIS',biome:'astral',tier:2,stats:[12.6,104,25,445],species:'mantis',color:'#c2a9cf',attack:'scatter',shots:5,spread:.23,shotSpeed:230,stop:245,note:'Zielt auf eine feste Linie und schickt fünf Mondsplitter los.'},
+    cymbalCricket32:{name:'BECKEN-GRILLE',biome:'stage',tier:0,stats:[4.0,91,19,155],species:'cricket',color:'#c9b987',attack:'fan',shots:3,spread:.42,shotSpeed:145,stop:260,note:'Schlägt drei breite, langsame Klangwellen.'},
+    cableWeasel32:{name:'KABELWIESEL',biome:'stage',tier:1,stats:[8.1,97,22,300],species:'weasel',color:'#a4b8ac',attack:'mark',radius:38,stop:220,note:'Ein kleiner Verstärkerkreis warnt vor dem kurzen Stromschlag.'},
+    encorePhantom32:{name:'ZUGABE-GEIST',biome:'stage',tier:2,stats:[13.2,76,26,440],species:'ghost',color:'#d9a0b1',attack:'blink',shots:8,shotSpeed:175,stop:245,note:'Die Bühne glimmt, bevor der Geist an einer freien Stelle erscheint und einen Ring mit Fluchtlücke wirft.'}
+  };
+  const ENEMY32_BY_BIOME=Object.fromEntries(window.PixelWorlds25.keys.map(key=>[key,Object.keys(ENEMIES32).filter(id=>ENEMIES32[id].biome===key)]));
+  for(const [id,c]of Object.entries(ENEMIES32))extraEnemyBook[id]={...c,icon:'!',unlock:`${c.biome} · ${['Normal','Hard','Impossible'][c.tier]}`};
+  function enemyTier32(){return impossibleMode?2:hardMode?1:0;}
+  const priorBiomeSpecial32=hordeSpecial24;
+  hordeSpecial24=function(){
+    const row=ENEMY32_BY_BIOME[biome25()];
+    if(!row||Math.random()>=.54)return priorBiomeSpecial32();
+    const tier=enemyTier32(),weights=tier===2?[0,1,1,2,2]:tier===1?[0,1,1]:[0];
+    const valid=weights.map(index=>row[index]).filter(id=>enemies.filter(e=>!e.dead&&e.type===id).length<(ENEMIES32[id].tier?2:3));
+    return valid.length?valid[Math.floor(Math.random()*valid.length)]:priorBiomeSpecial32();
+  };
+  const priorEnemySpawn32=spawnEnemy;
+  spawnEnemy=function(type,...args){
+    // Save imports, arena spawn tools and story callbacks may call spawnEnemy
+    // directly. Keep difficulty restrictions at the final creation boundary.
+    if(ENEMIES32[type]&&ENEMIES32[type].tier>enemyTier32())type='runner';
+    return priorEnemySpawn32(type,...args);
+  };
+  const priorEnemyUpdate32=updateExtraEnemy;
+  function shot32(e,a,speed){
+    if(worldShotBlocked(e,{x:e.x+Math.cos(a)*50,y:e.y+Math.sin(a)*50},4))return;
+    enemyShot(e.x,e.y,a,speed,e.tier32===2,'burst32:'+e.type);
+  }
+  function attack32(e,c){
+    let a=e.aim32;
+    if(c.attack==='charge'){e.charge32=.38;e.chargeSpeed32=c.rushSpeed;return;}
+    if(c.attack==='mark'){
+      const p=freeWorldPoint(e.targetX32,e.targetY32,c.radius+5);
+      hazards.push({type:'shock',x:p.x,y:p.y,r:c.radius,wait:.70,life:.30,hit:false,damage:c.tier===2?1.5:1});
+      return;
+    }
+    if(c.attack==='blink'){
+      const target=freeWorldPoint(e.targetX32,e.targetY32,e.r+8);
+      if(dist(target,player)>110){e.x=target.x;e.y=target.y;e.worldSafe25={...target};e.worldPath25=null;}
+      a=Math.atan2(player.y-e.y,player.x-e.x);
+    }
+    if(c.attack==='ring'||c.attack==='blink'){
+      const count=c.shots;
+      for(let i=0;i<count;i++){
+        const dir=i*TAU/count+(e.pattern32%2)*.12;
+        if(Math.abs(angleDelta(dir,a))<TAU/count*.9)continue;
+        shot32(e,dir,c.shotSpeed);
+      }
+      e.pattern32=(e.pattern32||0)+1;return;
+    }
+    const count=c.shots||1,spread=c.spread||0;
+    for(let i=0;i<count;i++)shot32(e,a+(i-(count-1)/2)*spread,c.shotSpeed||175);
+  }
+  updateExtraEnemy=function(e,dt){
+    const c=ENEMIES32[e.type];if(!c)return priorEnemyUpdate32(e,dt);
+    if(e.dead||e.spawnGrace>0)return;
+    const d=dist(e,player),a=Math.atan2(player.y-e.y,player.x-e.x),slow=(e.slow>0?.65:1)*(player.powerups.freeze>0?.6:1);
+    e.tier32=c.tier;
+    if(e.charge32>0){
+      e.charge32=Math.max(0,e.charge32-dt);e.x+=Math.cos(e.aim32)*e.chargeSpeed32*slow*dt;e.y+=Math.sin(e.aim32)*e.chargeSpeed32*slow*dt;return;
+    }
+    if(e.windup>0){e.windup-=dt;if(e.windup<=0){attack32(e,c);e.rest32=.65;}return;}
+    if(e.rest32>0){e.rest32-=dt;return;}
+    if(d>c.stop){e.x+=Math.cos(a)*e.speed*slow*dt;e.y+=Math.sin(a)*e.speed*slow*dt;}
+    e.cd32=(e.cd32??(1.7+Math.random()*1.1))-dt*(e.actionRate||1);
+    if(e.cd32<=0&&d<560&&!worldShotBlocked(e,player,5)&&hordeVisible24(e,30)){
+      e.aim32=a;e.aim=a;e.targetX32=player.x;e.targetY32=player.y;
+      if(c.attack==='blink'){
+        const side=(e.pattern32||0)%2?-1:1,spot=freeWorldPoint(player.x+Math.cos(a+side*1.7)*190,player.y+Math.sin(a+side*1.7)*190,e.r+8);
+        e.targetX32=spot.x;e.targetY32=spot.y;
+      }
+      e.windup=Math.max(c.tier===0?.83:c.tier===1?1.03:1.15,difficulty23().warning);
+      e.cd32=c.tier===0?4.9:c.tier===1?5.2:5.6;
+    }
+  };
+
+  // Stambouli Edition: more room to grow, with predictable ten-stage shop paths.
+  Object.assign(BALANCE,{maxDamage:21,maxSpeed:465,minInterval:.105,minDash:.88,
+    maxHearts:34,maxAmmoBonus:10,maxPowerLuck:3.6});
+  const STAT_CAPS32={dodgeChance:.34,damageGuard:.39,crit:.54,specialDamage:7,
+    bossDamage:2.8,rabbitDamage:1.95,ammoDropLuck:3.5,powerDuration:1.9,
+    pierce:9,magnet:480};
+  // The companion/synergy formula had its own sixfold special-damage clamp.
+  // Extend the effective formula with the new sevenfold build ceiling.
+  abilitySpecial=function(p=player){return Math.sqrt(Math.max(.2,Math.min(7,p.specialDamage||1)))*
+    abilityPower(p)/Math.sqrt(1.4);};
+  const normalizeBefore32=normalizeBuild;
+  normalizeBuild=function(p){
+    const raw=Object.fromEntries(Object.keys(STAT_CAPS32).map(id=>[id,p?.[id]]));
+    normalizeBefore32(p);
+    for(const [id,limit]of Object.entries(STAT_CAPS32)){
+      const n=Number(raw[id]);if(Number.isFinite(n)&&n>0)p[id]=Math.min(limit,n);
+    }
+    return p;
+  };
+  const capValue32=(p,id)=>id==='pickupRange'?p?.magnet:id==='heart'?p?.maxHp:id==='ammo'?p?.ammoBonus:
+    id==='dodge'?p?.dodgeChance:p?.[id];
+  function statCap32(p,id){
+    if(!p)return false;
+    const n=Number(capValue32(p,id));if(!Number.isFinite(n))return false;
+    const caps={damage:BALANCE.maxDamage,speed:BALANCE.maxSpeed,fireRate:BALANCE.minInterval,
+      dash:BALANCE.minDash,powerLuck:BALANCE.maxPowerLuck,dodge:STAT_CAPS32.dodgeChance,
+      heart:BALANCE.maxHearts,ammo:BALANCE.maxAmmoBonus,pickupRange:STAT_CAPS32.magnet};
+    if(!Object.hasOwn(caps,id))return false;
+    return ['fireRate','dash'].includes(id)?n<=caps[id]+.0001:n>=caps[id]-.0001;
+  }
+  const perkAvailableBefore32=scorePerkAvailable;
+  scorePerkAvailable=function(id){
+    if(id==='heart'||id==='pickupRange'||['damage','speed','fireRate','dash','powerLuck','dodge','ammo'].includes(id))
+      return !(player?.madelpulator&&id==='dash')&&!statCap32(player,id);
+    return perkAvailableBefore32(id);
+  };
+  scoreSkillBook.pickupRange={icon:'✧',title:'SAMMELRADIUS',
+    desc:'+32 Reichweite: Nüsse und Funde folgen dir schon aus größerer Entfernung (maximal 480). Der Staubsauger macht Überstunden.',
+    apply:p=>{p.magnet=Math.min(STAT_CAPS32.magnet,(p.magnet||125)+32);}};
+  scoreSkillBook.damage.desc='+10 % Angriffsschaden (maximal 21). Die Nüsse werden nicht höflicher.';
+  scoreSkillBook.speed.desc='+10 % Lauftempo (maximal 465). Renn der Rechnung davon.';
+  scoreSkillBook.fireRate.desc='+10 % Feuerrate (mindestens 0,105 s zwischen Salven).';
+  scoreSkillBook.dash.desc='10 % kürzerer Dash-Cooldown (mindestens 0,88 s).';
+  scoreSkillBook.powerLuck.desc='+10 % Chance auf temporäre Power-ups (Faktor maximal 3,6).';
+  scoreSkillBook.dodge.desc='+2 Prozentpunkte Ausweichchance (maximal 34 %).';
+  scoreSkillBook.ammo.desc='+1 maximale und aktuelle Ladung je Waffe (maximal +10).';
+  statIcons28.pickupRange='magnet';
+  // Magnet upgrades from earlier editions must respect the new ceiling too.
+  for(const id of ['e28Backensauger','e28BackensaugerUp1','e28BackensaugerUp2','e28BackensaugerUp3']){
+    const card=skillBook[id],bonus=cardMap28[id]?.effect?.magnet;
+    if(card&&bonus){
+      card.apply=p=>{p.magnet=Math.min(STAT_CAPS32.magnet,(p.magnet||125)+bonus);};
+      card.desc=card.desc.replace(/maximal 380/g,'maximal 480');
+      cardMap28[id].desc=cardMap28[id].desc.replace(/maximal 380/g,'maximal 480');
+    }
+  }
+  if(skillBook.e24ToastKompass)skillBook.e24ToastKompass.desc=
+    skillBook.e24ToastKompass.desc.replace('maximal 380 Radius','maximal 480 Radius');
+  if(typeof CARDS24!=='undefined')for(const c of CARDS24)if(c.id==='e24ToastKompass')
+    c.description=c.description.replace('maximal 380 Radius','maximal 480 Radius');
+  if(survivalSkillBook.endlessRadar)survivalSkillBook.endlessRadar.desc=
+    'Nur Endlosmodus: +9 % Tempo und +12 % Power-up-Dropfaktor. Mehr Fundstücke, weniger freie Hände.';
+
+  const createBefore32=createPlayer;
+  createPlayer=function(){const p=createBefore32();p.magnet=125;p.pickupBase32=true;p.shopLevels32={};return p;};
+  function migratePickupBase32(p){if(p&&!p.pickupBase32){p.magnet=Math.min(STAT_CAPS32.magnet,(Number(p.magnet)||90)+35);p.pickupBase32=true;}}
+  for(const key of ['pickupBase32','shopLevels32'])if(!ngPlusCarryKeys.includes(key))ngPlusCarryKeys.push(key);
+  const resumeBefore32=resumeSavedRun;
+  resumeSavedRun=function(...args){const r=resumeBefore32(...args);migratePickupBase32(player);return r;};
+  const restoreBefore32=restoreBuildValues;
+  restoreBuildValues=function(build){const p=restoreBefore32(build);p.shopLevels32=shopLevels32(p);
+    if(!build?.pickupBase32&&Number.isFinite(Number(build?.magnet))){p.pickupBase32=false;migratePickupBase32(p);}
+    return p;};
+  const sanitizeBefore32=sanitizeSharedBuild;
+  sanitizeSharedBuild=function(raw){const b=sanitizeBefore32(raw);b.shopLevels32=shopLevels32(raw);b.pickupBase32=Boolean(raw?.pickupBase32);return b;};
+  function shopLevels32(p){
+    return Object.fromEntries(Object.entries(p?.shopLevels32||{})
+      .filter(([id])=>id!=='heart'&&Object.hasOwn(scoreSkillBook,id))
+      .map(([id,n])=>[id,Math.max(0,Math.min(10,Math.floor(Number(n)||0)))]));
+  }
+  function migrateShopHistory32(){
+    if(!player||player.shopLegacyMigrated32)return;
+    const counts={};for(const site of exploration?.pois||[]){
+      if(site.stockVersion===32)continue;
+      for(const offer of site.offers||[])if(offer?.bought&&offer.stat&&offer.stat!=='heart')
+        counts[offer.stat]=(counts[offer.stat]||0)+1;
+    }
+    player.shopLevels32=shopLevels32(player);
+    for(const [id,n]of Object.entries(counts))player.shopLevels32[id]=Math.min(10,Math.max(n,player.shopLevels32[id]||0));
+    player.shopLegacyMigrated32=true;
+  }
+  if(!ngPlusCarryKeys.includes('shopLegacyMigrated32'))ngPlusCarryKeys.push('shopLegacyMigrated32');
+  const sanitizeLevelsBefore32=sanitizeSharedBuild;
+  sanitizeSharedBuild=function(raw){const b=sanitizeLevelsBefore32(raw);b.shopLegacyMigrated32=Boolean(raw?.shopLegacyMigrated32);return b;};
+  function shopLevel32(p,id){return Math.min(10,Math.max(0,Math.floor(Number(p?.shopLevels32?.[id])||0)));}
+  function shopAvailable32(id,p=player){return id!=='heart'&&shopLevel32(p,id)<10&&p===player&&scorePerkAvailable(id);}
+  // Each level-one offer has the same price at any given time. Price then
+  // climbs with its own level, the whole cart, the wave and the carried tier.
+  worldStatPrice=function(id){
+    const n=shopLevel32(player,id),purchases=Math.min(100,Math.max(0,Number(player?.shopPurchases31)||0));
+    const level=1+.18*n+.048*n*n+.0025*n*n*n;
+    const phase=1+.026*Math.min(45,economyWave31())+.13*Math.log2(1+Math.max(0,economyWave31()-45)/15);
+    const tier=[1,2.15,4.35][economyTier31()],difficulty=impossibleMode?1.5:hardMode?1.3:1;
+    return Math.max(100,Math.round(4100*level*(1+.027*purchases)*phase*tier*difficulty/100)*100);
+  };
+  let shopPurchaseInFlight32=false;
+  prepareStatShop=function(site){
+    if(!site||!player)return;
+    migrateShopHistory32();
+    if(site.stockVersion!==32){
+      site.offers=Object.keys(scoreSkillBook).filter(id=>id!=='heart')
+        .map(stat=>({stat,bought:false,price:0}));site.stockVersion=32;
+    }
+    for(const offer of site.offers||[]){
+      if(!offer.stat||offer.stat==='heart')continue;
+      const level=shopLevel32(player,offer.stat);
+      offer.bought=level>=10||(shopPurchaseInFlight32&&offer.bought);
+      offer.level32=level;
+      offer.regularPrice31=worldStatPrice(offer.stat);
+      offer.price=freeShopCredits31()>0&&shopAvailable32(offer.stat)?0:offer.regularPrice31;
+    }
+  };
+  const shopRenderBefore32=renderWorldInterior;
+  renderWorldInterior=function(){
+    const result=shopRenderBefore32(),site=exploration?.pois.find(p=>p.id===exploration?.interior);
+    if(mode!=='worldShop'||site?.outcome!=='shop')return result;
+    for(let i=0;i<(site.offers||[]).length;i++){
+      const offer=site.offers[i],button=$('worldBuy'+i);if(!offer?.stat||!button)continue;
+      const level=shopLevel32(player,offer.stat),kind=button.querySelector('.upgrade-kind'),value=button.querySelector('em');
+      const description=button.querySelector('strong + span');
+      if(kind)kind.textContent='DAUERHAFTER WERT · STUFE '+Math.min(10,level+1)+' / 10';
+      if(description&&offer.stat==='speed')description.textContent='+4,8 % Lauftempo je Ladenstufe (bis 465). Das Punkteschild rennt nicht weg.';
+      if(description&&offer.stat==='dash')description.textContent='8,8 % kürzerer Dash-Cooldown je Ladenstufe (mindestens 0,88 s).';
+      if(level>=10){button.disabled=true;if(value)value.textContent='MAXIMAL · STUFE 10 / 10';}
+      else if(!shopAvailable32(offer.stat)){button.disabled=true;if(value)value.textContent='WERT AUSGEREIZT';}
+      else if(value)value.textContent=(offer.price===0?'0 PUNKTE · GRATIS-UPGRADE':offer.price.toLocaleString('de-DE')+' PUNKTE');
+      if(offer.stat==='pickupRange'){
+        const img=button.querySelector('img');if(img)img.src=worldArt?.url('icon','magnet')||'';
+      }
+    }
+    return result;
+  };
+  const shopBuyBefore32=buyWorldOffer;
+  buyWorldOffer=function(site,index){
+    if(mode!=='worldShop'||exploration?.interior!==site?.id)return;
+    prepareStatShop(site);const offer=site.offers?.[index],id=offer?.stat;
+    if(!id||!shopAvailable32(id)||offer.bought||wallet()<offer.price)return;
+    // A ten-step speed/dash path stays useful through step ten without a
+    // large early stat jump. Milestone cards retain their original effects.
+    const card=scoreSkillBook[id],original=card.apply,originalDesc=card.desc;
+    if(id==='speed'){
+      card.apply=p=>{p.speed*=1.048;};
+      card.desc='+4,8 % Lauftempo je Ladenstufe (bis 465). Das Punkteschild rennt nicht weg.';
+    }
+    if(id==='dash'){
+      card.apply=p=>{p.dashCooldown*=.912;};
+      card.desc='8,8 % kürzerer Dash-Cooldown je Ladenstufe (mindestens 0,88 s).';
+    }
+    shopPurchaseInFlight32=true;
+    try{shopBuyBefore32(site,index);}finally{
+      shopPurchaseInFlight32=false;card.apply=original;card.desc=originalDesc;
+    }
+    if(!offer.bought)return;
+    player.shopLevels32??={};player.shopLevels32[id]=Math.min(10,shopLevel32(player,id)+1);
+    offer.level32=player.shopLevels32[id];
+    // Discovery and coupon receipt were already committed by the inherited
+    // transaction. Reopen the single card at its next price after closing it.
+    offer.bought=offer.level32>=10;
+    saveRunNow();
+    if(mode==='worldShop')renderWorldInterior();
+  };
+  const buildDetailsBeforeEconomy32=buildDetailsMarkup;
+  buildDetailsMarkup=function(p,live=false){
+    const previous=perkEffect;
+    perkEffect=function(id,n){
+      if(id==='pickupRange')return '+'+(32*n)+' Sammelradius';
+      if(id==='speed'||id==='dash'){
+        const bought=Math.min(n,shopLevel32(p,id)),other=Math.max(0,n-bought);
+        if(id==='speed')return '+'+displayNumber((Math.pow(1.048,bought)*Math.pow(1.10,other)-1)*100)+' %';
+        return '−'+displayNumber((1-Math.pow(.912,bought)*Math.pow(.90,other))*100)+' % Cooldown';
+      }
+      return previous(id,n);
+    };
+    try{return buildDetailsBeforeEconomy32(p,live);}finally{perkEffect=previous;}
+  };
+
+  // Base odds are multiplied, not flattened by the number of new enemies.
+  tryDropSpecialAmmo=function(x,y,life){
+    if(!player||!player.weapons.some(id=>weaponAmmo(id)<maxWeaponAmmo(id)))return false;
+    const budget=endlessMode?7:9;
+    if((player.ammoDropsThisWave||0)>=budget||runTime-(player.lastAmmoDrop??-99)<difficulty23().ammoGap)return false;
+    player.ammoDryKills=(player.ammoDryKills||0)+1;
+    const chance=Math.min(.312,.117*(player.ammoDropLuck||1)*
+      (player.skills?.corffelsBag&&(player.skills?.scavenger||player.beagle)?1.15:1));
+    if(player.ammoDryKills<18&&Math.random()>=chance)return false;
+    pickups.push({x,y,type:'ammo',life,phase:rnd(0,TAU)});
+    player.ammoDropsThisWave=(player.ammoDropsThisWave||0)+1;
+    player.ammoDryKills=0;player.lastAmmoDrop=runTime;return true;
+  };
+  regularDrop23=function(e){
+    if(!player||!e)return;
+    const life=32+(player.pickupLifeBonus||0);
+    if(tryDropSpecialAmmo(e.x,e.y,life))return;
+    if(runTime-(player.lastPowerDrop??-99)>=6){
+      player.powerDryKills=(player.powerDryKills||0)+1;
+      if(player.powerDryKills>=24||Math.random()<Math.min(.231,.07425*(player.powerLuck||1))){
+        pickups.push({x:e.x,y:e.y,type:'power',power:rollPowerupId(),life,phase:0});
+        player.powerDryKills=0;player.lastPowerDrop=runTime;return;
+      }
+    }
+    player.heartDryKills=(player.heartDryKills||0)+1;
+    const gap=impossibleMode?12:hardMode?11:10,
+      ready=runTime-(player.lastHeartDrop??-99)>=gap,
+      pity=player.hp/player.maxHp<.35&&player.heartDryKills>=40&&runTime-(player.lastHeartDrop??-99)>=20,
+      heart=player.hp<player.maxHp&&ready&&
+        (pity||Math.random()<(impossibleMode?.039:hardMode?.052:.065));
+    pickups.push({x:e.x,y:e.y,type:heart?'heart':'nut',life,phase:0});
+    if(heart){player.lastHeartDrop=runTime;player.heartDryKills=0;}
+  };
+  const startWaveBefore32=startWave;
+  startWave=function(...args){const r=startWaveBefore32(...args);if(player)player.ammoDropTarget=endlessMode?7:9;return r;};
+
+  let magnetSweep32=false;
+  function sweepMagnet32(){
+    if(magnetSweep32||!player)return;
+    magnetSweep32=true;let gathered=0;
+    try{for(const item of pickups){
+      if(!(item.life>0)||item.claimed||!['nut','power'].includes(item.type))continue;
+      item.life=0;item.x=player.x;item.y=player.y-12;gathered++;
+      event24(item.type==='nut'?'nutPickupCount':'pickup',item);
+      if(item.type==='nut'){
+        score+=Math.round(4*(player.powerups.jackpot>0?4:1)*
+          (player.powerups.scoreRush>0?2:1)*runScoreMultiplier());
+      }else collectPowerup(item);
+    }}finally{magnetSweep32=false;}
+    if(gathered){setAchievementProgress('score_hog',score);floater(player.x,player.y-54,
+      'MAGNET-MÖHRE · '+gathered+' FUNDE','#f8d58c');updateHud();}
+  }
+  const magnetApplyBefore32=powerBook.magnet.apply;
+  powerBook.magnet.apply=function(p){magnetApplyBefore32(p);if(p===player)sweepMagnet32();};
+  powerBook.magnet.desc='Zieht sofort alle noch liegenden Nüsse und temporären Power-ups auf der ganzen Karte zu dir und sammelt sie ein. Danach 10 s extra Sammelreichweite.';
+
+  // A few more bodies and a light encounter-scale point increase help a
+  // long-lived build fund later shop levels without flattening level one.
+  const capBefore32=balanceSpawnCap,intervalBefore32=balanceSpawnInterval;
+  balanceSpawnCap=function(){const old=capBefore32();if(isTestArena28())return old;
+    return Math.min(300,Math.round(old*(1.025+.0015*Math.min(18,Math.max(0,wave))+.004*hordeTier31())));};
+  balanceSpawnInterval=function(){const old=intervalBefore32();if(isTestArena28())return old;
+    return old/(1.012+.0017*Math.min(18,Math.max(0,wave))+.006*hordeTier31());};
+  const spawnBefore32=spawnEnemy;
+  spawnEnemy=function(...args){const e=spawnBefore32(...args);if(e&&!e.dead&&!e.miniBoss&&!isTestArena28()){
+    const growth=1+.010*Math.min(22,Math.max(0,wave))+.075*hordeTier31();
+    e.points=Math.max(1,Math.round((e.points||0)*growth));
+  }return e;};
+  function bossBuff32(e){if(!e||e.dead||e.balance32||hasenbeinMode)return;
+    e.hp*=1.07;e.maxHp*=1.07;if(e.balanceInitialHp)e.balanceInitialHp*=1.07;e.balance32=true;
+  }
+  for(const name of ['spawnBoss','spawnOttah','spawnEndlessBoss']){
+    if(name==='spawnBoss'){const previous=spawnBoss;spawnBoss=function(...a){const r=previous(...a);bossBuff32(boss);return r;};}
+    if(name==='spawnOttah'){const previous=spawnOttah;spawnOttah=function(...a){const r=previous(...a);bossBuff32(boss);bossBuff32(paftiBoss);return r;};}
+    if(name==='spawnEndlessBoss'){const previous=spawnEndlessBoss;spawnEndlessBoss=function(...a){const r=previous(...a);bossBuff32(boss);return r;};}
+  }
+
+  // Stambouli: eight shared, three-rank skills. All runtime clocks and actors live
+  // on the player, so a paused, saved or resumed run cannot duplicate a proc.
+  const SKILLS32=[
+    {id:'e32Pfandpfote',title:'PFANDPFOTE MIT LOCKSTOFF',short:'Pfandpfote',rarity:'green',icon:'▣',desc:'Alle 8 eingesammelten Nüsse legst du eine Brotmarke am Boden aus. Sie lockt bis zu 4 normale Gegner 3 s lang an und platzt dann für 2× passive Angriffskraft. Kein Boss wird verschoben. Stufe 2: alle 6 Nüsse, 5 Gegner. Stufe 3: alle 4 Nüsse, 6 Gegner. Die Kaution behalten wir.'},
+    {id:'e32KeksSpiegel',title:'RÜCKSPIEGEL AUS KEKS',short:'Keks-Spiegel',rarity:'green',icon:'◧',dash:true,desc:'Nach einem Dash werden bis zu 2 nahe feindliche Geschosse am Startpunkt zu harmlosen Keksreflexen: jedes trifft höchstens ein Ziel für 1,5× passive Angriffskraft. Mindestens 8 s Abstand. Ausbau: 3/4 Geschosse und 7/6 s. Reflektiert, bis der Keks bricht.'},
+    {id:'e32Wartemarke',title:'WARTEMARKE 404',short:'Wartemarke',rarity:'blue',icon:'⌑',desc:'Jede 7. normale Salve schickt eine wandernde Nummer durch bis zu 4 verschiedene Gegner. Alle 0,18 s erhält der Nächste 2,5× passive Angriffskraft und eine kurze Bremse. Mindestens 9 s Abstand. Stufen 2/3: 5/6 Ziele, 8/7 s. Ziehen Sie bitte eine Nummer.'},
+    {id:'e32Doppelbelichtung',title:'DOPPELBELICHTUNG DER BEUTE',short:'Doppelbelichtung',rarity:'blue',icon:'✥',desc:'Nach einem temporären Power-up speichert die Kamera 8 s lang eine Salve. Deine nächste normale Salve erzeugt zwei verzögerte Lichtbilder am Ziel: je 2,4× passive Angriffskraft gegen bis zu 5 Gegner. Mindestens 12 s Abstand. Stufen 2/3: 3/3 Bilder und kürzerer Abstand. Bitte beim Knabbern lächeln.'},
+    {id:'e32Mieterbeirat',title:'MIETERBEIRAT DER MEUTE',short:'Mieterbeirat',rarity:'purple',icon:'▥',desc:'Sind mindestens 8 Gegner in 185 Reichweite, erscheint 3 s lang eine Hausordnung. Sie fängt höchstens 5 nahe feindliche Geschosse ab und stellt jedem eine einzelne Schadensrechnung über 1,4× passive Angriffskraft zu. Mindestens 16 s Abstand. Ausbau: 6/7 Geschosse und 14/12 s. Beschwerden bitte schriftlich.'},
+    {id:'e32Hintertuer',title:'HINTERTÜR MIT VORDERSEITE',short:'Hintertür',rarity:'purple',icon:'↶',desc:'Eine benutzte Spezialwaffe bereitet 5 s lang deine nächste normale Salve vor. Sie erscheint als Echo hinter einem Gegner und trifft dort bis zu 4 Ziele für je 4,5× passive Angriffskraft. Mindestens 12 s Abstand. Ausbau: 5/6 Ziele, 11/10 s. Zutritt nur durch den Ausgang.'},
+    {id:'e32Zeitpfandhaus',title:'ZEITPFANDHAUS',short:'Zeitpfandhaus',rarity:'orange',icon:'⌛',desc:'Nach 18 echten Kills werden bis zu 8 feindliche Geschosse in 250 Reichweite eingezogen. Jedes wird zu genau einem freundlichen Pfandschein für 3× passive Angriffskraft; ohne Ziel verschwindet es. Mindestens 16 s Abstand. Ausbau: 16/14 Kills, 10/12 Scheine. Rücknahme nur gegen Quittung.'},
+    {id:'e32Singularitaet',title:'KRÜMEL-SINGULARITÄT',short:'Krümel-Singularität',rarity:'orange',icon:'◉',desc:'Eine benutzte Spezialwaffe öffnet beim nächsten Gegner 3 s lang einen Krümelschlund: normale Gegner werden lokal hineingezogen, bis zu 10 Geschosse verschwinden. Danach trifft ein Knall höchstens 8 Gegner für 6× passive Angriffskraft. Bosse werden nicht gezogen. Mindestens 18 s Abstand. Ausbau: größerer Sog und kürzerer Abstand. Auch die Physik ist hungrig.'}
+  ];
+  const skillMap32=Object.fromEntries(SKILLS32.map(c=>[c.id,c]));
+  for(const c of SKILLS32){
+    const entry={icon:c.icon,title:c.title,short:c.short,desc:c.desc,rarity28:c.rarity,maxStacks:3,repeatable:true,legendary:c.rarity==='orange',apply:()=>{}};
+    (entry.legendary?legendarySkillBook:skillBook)[c.id]=entry;
+    stackCaps[c.id]=3;
+    if(c.rarity==='blue')blueRewards.add(c.id);
+    if(c.rarity==='purple')purpleRewards.add(c.id);
+    if(!entry.legendary)for(const pool of upgradePools)if(!pool.includes(c.id))pool.push(c.id);
+  }
+  const skillAvailableBefore32=availableRewards;
+  availableRewards=function(...args){
+    // The old repeatable wrapper reads stackCaps dynamically and assumes every
+    // card lives in skillBook. Legendary cards live in a different book, so
+    // reconstruct all eight here and suppress its partial/duplicate entries.
+    const existing=skillAvailableBefore32(...args).filter(c=>!skillMap32[c.id]);
+    if(!player)return existing;
+    for(const c of SKILLS32)if((player.skills?.[c.id]||0)<3&&(!c.dash||!player.madelpulator))existing.push({...allSkillInfo(c.id),id:c.id});
+    return existing;
+  };
+  const skillGrantBefore32=grantReward;
+  grantReward=function(c){
+    const spec=skillMap32[c?.id];if(!spec)return skillGrantBefore32(c);
+    if(!player||spec.dash&&player.madelpulator)return;
+    const rank=player.skills?.[spec.id]||0;if(rank>=3)return;
+    player.skills[spec.id]=rank+1;
+    normalizeBuild(player);
+    if(rank===0&&typeof discoverBuild28==='function')discoverBuild28(player);
+    updateHud();updateSkills();saveRunNow();
+  };
+  function skillRank32(id,p=player){return Math.min(3,Math.max(0,Number(p?.skills?.[id])||0));}
+  function skillState32(){return player.e32Skills??={timers:{},counts:{},actors:[],fx:[],killMeter:0,powerArmedUntil:0,nextUid:1};}
+  function skillReady32(id,s=skillState32()){return runTime>=(s.timers[id]||0);}
+  let skillProc32=false;
+  function skillHit32(id,target,damageAP,slow=0){
+    if(!target||target.dead||target.spawnGrace>0||mode!=='playing')return false;
+    const before=skillProc32;skillProc32=true;
+    try{return hit24({id},target,{damageAP,slowSec:slow,bossSlowSec:slow?Math.min(.3,slow*.35):0});}
+    finally{skillProc32=before;}
+  }
+  function skillFx32(id,from,to=from,kind='flash',life=.55,radius=42){const s=skillState32();s.fx.push({id,fx:kind,x:to.x,y:to.y,fromX:from.x,fromY:from.y,life,maxLife:life,radius});if(s.fx.length>36)s.fx.splice(0,s.fx.length-36);}
+  function skillArea32(id,point,radius,cap,damageAP,slow=0){const hits=targets24(point,radius,cap);for(const e of hits){skillHit32(id,e,damageAP,slow);if(mode!=='playing')break;}skillFx32(id,point,point,'burst',.48,radius);return hits.length;}
+  const SYNERGIES32=[
+    {id:'e32PfandToast',skills:['e32Pfandpfote','e24ToastKompass'],title:'Toast mit Kaution',desc:'Der Toastbrotkompass hält die Pfandpfoten-Brotmarke 1 s länger am Boden.'},
+    {id:'e32PfandNase',skills:['e32Pfandpfote','e28Nasentasche'],title:'Niesende Bürgschaft',desc:'Die platzende Brotmarke richtet 1× zusätzliche passive Angriffskraft an.'},
+    {id:'e32KeksSchale',skills:['e32KeksSpiegel','shield'],title:'Keks im Schalenrahmen',desc:'Der Spiegel fängt bei jedem erfolgreichen Dash ein zusätzliches Geschoss ab.'},
+    {id:'e32NummerFrost',skills:['e32Wartemarke','frost'],title:'Wartezimmer mit Eisfach',desc:'Jeder Nummern-Treffer bremst normale Gegner 0,3 s länger.'},
+    {id:'e32NummerUntermieter',skills:['e32Wartemarke','e24Untermieter'],title:'Ein Gast steht noch draußen',desc:'Die Wartemarke darf auf einen zusätzlichen, anderen Gegner überspringen.'},
+    {id:'e32BildFieber',skills:['e32Doppelbelichtung','powerFrenzy'],title:'Filmfieber',desc:'Die Kamera nimmt bei jeder Auslösung ein zusätzliches Lichtbild auf.'},
+    {id:'e32BeiratPlatte',skills:['e32Mieterbeirat','e24FortniteFreddy'],title:'Baurecht auf Abruf',desc:'Die Hausordnung kann zwei weitere Geschosse abfangen.'},
+    {id:'e32HinterAmt',skills:['e32Hintertuer','e24AmtlicheKrume'],title:'Amtliche Hintertür',desc:'Das Salven-Echo stellt einem weiteren Gegner eine Rechnung.'},
+    {id:'e32ZeitGlatze',skills:['e32Zeitpfandhaus','e25Rosenbleck'],title:'Glatze mit Pfandsiegel',desc:'Das Zeitpfandhaus wandelt bis zu zwei weitere Geschosse um.'},
+    {id:'e32KrumeKabel',skills:['e32Singularitaet','e28Kabelsalat'],title:'Drei Kabel im Schwarzen Loch',desc:'Der Schlussknall des Krümelschlunds verursacht 0,5× mehr passive Angriffskraft.'},
+    {id:'e32WetterFrost',skills:['wollenkamps','frost'],title:'Frau Wollenkamps sagt Regen',desc:'Beim Schirmschlag erhalten die beiden Nachbarn weitere 0,3 s Bremse.'}
+  ];
+  function hasSynergy32(id,p=player){const s=SYNERGIES32.find(x=>x.id===id);return Boolean(s&&s.skills.every(k=>p?.skills?.[k]));}
+  function skillEvent32(event,context={}){
+    if(!player||mode!=='playing'||hasenbeinMode||skillProc32)return;
+    const s=skillState32(),rank=id=>skillRank32(id),syn=id=>hasSynergy32(id);
+    if(event==='nutPickupCount'&&rank('e32Pfandpfote')){
+      const id='e32Pfandpfote',need=[0,8,6,4][rank(id)];s.counts[id]=Math.min(need,(s.counts[id]||0)+1);
+      if(s.counts[id]>=need&&skillReady32(id,s)){
+        s.counts[id]=0;s.timers[id]=runTime+5;
+        s.actors=s.actors.filter(a=>a.kind!=='bait');
+        s.actors.push({kind:'bait',id,x:player.x,y:player.y,life:3+(syn('e32PfandToast')?1:0),cap:3+rank(id),damage:1.6+rank(id)*.4+(syn('e32PfandNase')?1:0)});
+        skillFx32(id,player,player,'bait',.65,100);
+      }
+    }
+    if(event==='successfulDash'&&rank('e32KeksSpiegel')&&skillReady32('e32KeksSpiegel',s)){
+      const id='e32KeksSpiegel',start=context.origin||player,cap=1+rank(id)+(syn('e32KeksSchale')?1:0),caught=[];
+      enemyBullets=enemyBullets.filter(b=>{if(b.life>0&&caught.length<cap&&dist(b,start)<135&&!worldShotBlocked(start,b,3)){caught.push(b);return false;}return true;});
+      if(caught.length){s.timers[id]=runTime+[0,8,7,6][rank(id)];for(const b of caught){const t=targets24(b,460,1)[0];if(t)skillHit32(id,t,1.1+rank(id)*.4);skillFx32(id,b,t||start,'reflection',.5,24);}tone(930,.09,'triangle',.035,1250);}
+    }
+    if(event==='primaryVolley'){
+      if(rank('e32Wartemarke')){
+        const id='e32Wartemarke';s.counts[id]=Math.min(7,(s.counts[id]||0)+1);
+        if(s.counts[id]>=7&&skillReady32(id,s)){
+          const first=targets24(player,620,1)[0];if(first){s.counts[id]=0;s.timers[id]=runTime+[0,9,8,7][rank(id)];s.actors.push({kind:'ticket',id,x:player.x,y:player.y,at:runTime+.05,left:3+rank(id)+(syn('e32NummerUntermieter')?1:0),seen:[],rank:rank(id)});}
+        }
+      }
+      if(rank('e32Doppelbelichtung')&&s.powerArmedUntil>runTime&&skillReady32('e32Doppelbelichtung',s)){
+        const id='e32Doppelbelichtung',target=targets24(player,620,1)[0];
+        if(target){s.powerArmedUntil=0;s.timers[id]=runTime+[0,12,11,10][rank(id)];const shots=(rank(id)>=2?3:2)+(syn('e32BildFieber')?1:0);
+          for(let i=0;i<shots;i++)s.actors.push({kind:'picture',id,x:target.x,y:target.y,at:runTime+.22+i*.19,damage:1.9+rank(id)*.5,cap:5});
+          skillFx32(id,player,target,'flash',.3,65);
+        }
+      }
+      if(rank('e32Hintertuer')&&(s.armedHinter32||0)>runTime){
+        const id='e32Hintertuer',target=targets24(player,630,1)[0];
+        if(target){s.armedHinter32=0;const dx=target.x-player.x,dy=target.y-player.y,d=Math.hypot(dx,dy)||1;
+          const back={x:target.x+dx/d*82,y:target.y+dy/d*82};if(worldBlocked(back.x,back.y,12))Object.assign(back,{x:target.x,y:target.y});
+          skillArea32(id,target,108,3+rank(id)+(syn('e32HinterAmt')?1:0),3.7+rank(id)*.8);
+          skillFx32(id,back,target,'echo',.58,108);
+        }
+      }
+    }
+    if(event==='successfulSpecial'){
+      if(rank('e32Hintertuer')&&skillReady32('e32Hintertuer',s)){s.armedHinter32=runTime+5;s.timers.e32Hintertuer=runTime+[0,12,11,10][rank('e32Hintertuer')];}
+      if(rank('e32Singularitaet')&&skillReady32('e32Singularitaet',s)&&!s.actors.some(a=>a.kind==='vortex')){
+        const target=targets24(player,640,1)[0];if(target){const id='e32Singularitaet';s.timers[id]=runTime+[0,18,16,14][rank(id)];s.actors.push({kind:'vortex',id,x:target.x,y:target.y,life:3,shotBudget:8+rank(id)*2,rank:rank(id)});skillFx32(id,player,target,'vortex',.7,180);}
+      }
+    }
+    if(event==='anyEnemyKilled'&&rank('e32Zeitpfandhaus')){
+      const id='e32Zeitpfandhaus',need=[0,18,16,14][rank(id)],cap=6+rank(id)*2+(syn('e32ZeitGlatze')?2:0);
+      s.killMeter=Math.min(need,(s.killMeter||0)+1);
+      if(s.killMeter>=need&&skillReady32(id,s)){
+        const collected=[];enemyBullets=enemyBullets.filter(b=>{if(b.life>0&&collected.length<cap&&dist(b,player)<250&&!worldShotBlocked(player,b,3)){collected.push(b);return false;}return true;});
+        if(collected.length){s.killMeter=0;s.timers[id]=runTime+16;for(const b of collected){const t=targets24(b,460,1)[0];if(t)skillHit32(id,t,3);skillFx32(id,b,t||player,'reflection',.56,30);}tone(780,.13,'triangle',.06,1300);}
+      }
+    }
+  }
+  const skillEventBefore32=event24;
+  event24=function(event,context={}){skillEventBefore32(event,context);skillEvent32(event,context);};
+  const skillPowerBefore32=collectPowerup;
+  collectPowerup=function(p){const result=skillPowerBefore32(p);if(player?.skills?.e32Doppelbelichtung&&mode==='playing'&&p?.power)skillState32().powerArmedUntil=Math.max(skillState32().powerArmedUntil||0,runTime+8);return result;};
+  const skillContentBefore32=updateContent;
+  updateContent=function(dt){const before=contentCompanion?.cooldown??0,result=skillContentBefore32(dt);
+    if(mode==='playing'&&hasSynergy32('e32WetterFrost')&&before<=dt+.0001&&contentCompanion?.cooldown>3.6){
+      const target=targets24(player,620,1)[0];if(target)for(const e of targets24(target,95,2,target))e.slow=Math.max(e.slow||0,(isBoss(e)||e.miniBoss)?.35:1.1);
+    }return result;
+  };
+  const skillUpdateBefore32=updateExpansion;
+  updateExpansion=function(dt){
+    skillUpdateBefore32(dt);if(!player||hasenbeinMode||mode!=='playing'||(!player.e32Skills&&!player.skills?.e32Mieterbeirat))return;
+    const s=skillState32(),syn=id=>hasSynergy32(id),active=[];
+    for(const a of s.actors){
+      if(a.kind==='bait'){
+        a.life-=dt;for(const e of targets24(a,205,a.cap).filter(e=>!isBoss(e)&&!e.miniBoss)){
+          const d=dist(e,a);if(d<10)continue;const from={x:e.x,y:e.y},step=Math.min(d,Math.max(24,e.speed||60)*dt*.66);
+          e.x+=(a.x-e.x)/d*step;e.y+=(a.y-e.y)/d*step;resolveWorldMotion(e,from);
+        }
+        if(a.life<=0){skillArea32(a.id,a,110,a.cap,a.damage,.35);continue;}
+      }else if(a.kind==='ticket'){
+        if(runTime>=a.at){let target=targets24(a,210,18).find(e=>!a.seen.includes(e.e32TicketUid));
+          if(!target&&!a.seen.length)target=targets24(player,620,1)[0];
+          if(!target)continue;
+          target.e32TicketUid??=s.nextUid++;a.seen.push(target.e32TicketUid);
+          const from={x:a.x,y:a.y};a.x=target.x;a.y=target.y;a.left--;a.at=runTime+.18;
+          skillHit32(a.id,target,2.1+a.rank*.4,.55+(syn('e32NummerFrost')?.3:0));skillFx32(a.id,from,target,'ticket',.4,24);
+          if(a.left<=0)continue;
+        }
+      }else if(a.kind==='picture'){
+        if(runTime>=a.at){skillArea32(a.id,a,90,a.cap,a.damage);continue;}
+      }else if(a.kind==='ward'){
+        a.life-=dt;let remaining=a.left;
+        enemyBullets=enemyBullets.filter(b=>{
+          if(remaining>0&&b.life>0&&dist(b,a)<146&&!worldShotBlocked(a,b,3)){
+            remaining--;const t=targets24(b,430,1)[0];if(t)skillHit32(a.id,t,1.4);skillFx32(a.id,b,t||a,'reflection',.38,28);return false;
+          }return true;
+        });a.left=remaining;
+        if(a.life<=0||a.left<=0)continue;
+      }else if(a.kind==='vortex'){
+        a.life-=dt;const radius=185+(a.rank-1)*20;
+        for(const e of targets24(a,radius,12)){
+          if(isBoss(e)||e.miniBoss){e.slow=Math.max(e.slow||0,.16);continue;}
+          const d=dist(a,e);if(d<25)continue;const from={x:e.x,y:e.y},step=Math.min(d-25,(74+a.rank*12)*dt);
+          e.x+=(a.x-e.x)/d*step;e.y+=(a.y-e.y)/d*step;resolveWorldMotion(e,from);
+        }
+        let left=a.shotBudget;
+        enemyBullets=enemyBullets.filter(b=>{if(left>0&&b.life>0&&dist(b,a)<radius&&!worldShotBlocked(a,b,3)){left--;return false;}return true;});a.shotBudget=left;
+        if(a.life<=0){skillArea32(a.id,a,150+(a.rank-1)*10,8,6+(syn('e32KrumeKabel')?.5:0));continue;}
+      }
+      active.push(a);
+    }
+    s.actors=active.slice(-22);for(const f of s.fx)f.life-=dt;s.fx=s.fx.filter(f=>f.life>0);
+    if(skillRank32('e32Mieterbeirat')&&skillReady32('e32Mieterbeirat',s)&&!s.actors.some(a=>a.kind==='ward')&&targets24(player,185,9).length>=8){
+      const rank=skillRank32('e32Mieterbeirat');s.timers.e32Mieterbeirat=runTime+[0,16,14,12][rank];
+      s.actors.push({kind:'ward',id:'e32Mieterbeirat',x:player.x,y:player.y,life:3,left:4+rank+(syn('e32BeiratPlatte')?2:0)});
+      skillFx32('e32Mieterbeirat',player,player,'ward',.7,146);
+    }
+  };
+  const skillClearBefore32=clearCombatExtras;
+  clearCombatExtras=function(){skillClearBefore32();if(player?.e32Skills){player.e32Skills.actors=[];player.e32Skills.fx=[];player.e32Skills.armedHinter32=0;player.e32Skills.powerArmedUntil=0;}};
+
+  // The voice lines already complain about drafts and rain. The card had lost
+  // that defining part of her character when the damage description was revised.
+  skillBook.wollenkamps.desc+=' Sie meckert dabei über Zugluft, Nieselregen und dass niemand eine Jacke dabeihat.';
+  const clearer32={
+    e31AugenAusstechen:'Weltkarte und Minimap bleiben für diesen Build verborgen. Dafür sind die nächsten fünf gültigen Shop-Werteupgrades gratis, auch in NG+. Unverbrauchte Freikäufe bleiben gespeichert. Ja, der Quizmaster darf dich weiterhin herumteleportieren.',
+    e28Pullerbrocken:'Jede sechste normale Salve lässt nach 0,24 s beim nächsten Ziel einen Brocken einschlagen: bis zu fünf Gegner im Radius 85 erhalten 4,2× passive Angriffskraft und kleine Gegner werden zurückgeschoben. Höchstens alle 5,5 s. Frag nicht, woher der Brocken kommt.',
+    e28Kabelsalat:'Nach einer tatsächlich benutzten Spezialwaffe treffen bis zu drei verschiedene Gegner in 620 Reichweite je 4,5× passive Angriffskraft und werden kurz gebremst. Ein Boss bekommt nur einen Treffer. Höchstens alle 10 s. Elektriker sind nicht eingeladen.',
+    e24ToastKompass:'Nach einem Kill zieht die Backentasche 3 s lang aus 45 zusätzlicher Entfernung Nüsse und Drops an, höchstens alle 8 s. Kein Extra-Loot: Der Toast zeigt nur die Richtung.',
+    e24Untermieter:'Trifft deine normale Schallfront einen bereits gebremsten Gegner, schallt es im Radius 60 nach: bis zu drei Ziele erhalten 2× passive Angriffskraft. Höchstens alle 3 s. Mietvertrag liegt im Keller.',
+    e24AmtlicheKrume:'Nach einer tatsächlich benutzten Spezialwaffe trifft eine einzelne Krume den nächsten Gegner in 600 Reichweite für 3× passive Spezialkraft. Höchstens alle 8 s. Rechnung kommt per Post.',
+    e25Rosenbleck:'Alle 12 s fängt Rosenblecks Glatze bis zu zwei nahe feindliche Geschosse ab und blendet bis zu drei Gegner für je 1,4× passive Angriffskraft. Mit Schutzschale 1 s schneller. Sonnenbrille empfohlen.'
+  };
+  for(const [id,desc] of Object.entries(clearer32)){const c=allSkillInfo(id)||specialUpgradeBook[id];if(c)c.desc=desc;}
+  for(const id of ['e28Backensauger','e28BackensaugerUp1','e28BackensaugerUp2','e28BackensaugerUp3']){
+    if(skillBook[id]?.desc)skillBook[id].desc=skillBook[id].desc.replace(/maximal 380/g,'maximal 480');
+    if(cardMap28[id]?.description)cardMap28[id].description=cardMap28[id].description.replace(/maximal 380/g,'maximal 480');
+  }
+
+  function revealedSynergies32(known){return SYNERGIES32.filter(s=>s.skills.every(id=>known.has('skill:'+id)));}
+  const skillGalleryBefore32=showGallery28;
+  showGallery28=function(...args){const result=skillGalleryBefore32(...args),known=galleryKnown28(),found=revealedSynergies32(known);if(mode==='gallery28'&&found.length){
+    $('overlayContent')?.insertAdjacentHTML('beforeend',`<section class="build-section e32-synergies" id="gallerySynergies32"><h3>Entdeckte Skill-Kombinationen <span>${found.length}</span></h3><div class="build-card-grid">${found.map(s=>`<article><strong>${escapeHTML(s.title)}</strong><small>${s.skills.map(id=>escapeHTML(allSkillInfo(id)?.short||id)).join(' + ')}</small><p>${escapeHTML(s.desc)}</p></article>`).join('')}</div></section>`);
+  }return result;};
+  const skillDetailsBefore32=buildDetailsMarkup;
+  buildDetailsMarkup=function(p,live){let result=skillDetailsBefore32(p,live);
+    const owned=SYNERGIES32.filter(s=>s.skills.every(id=>p?.skills?.[id]));
+    if(owned.length){result=result.replace('<button data-jump="currentSkills">SKILLS</button>','<button data-jump="currentSkills">SKILLS</button><button data-jump="currentSynergies32">SYNERGIEN</button>');
+      result+=`<section class="build-section e32-synergies" id="currentSynergies32"><h3>Aktive Synergien <span>${owned.length}</span></h3><div class="build-card-grid">${owned.map(s=>`<article><strong>${escapeHTML(s.title)}</strong><small>${s.skills.map(id=>escapeHTML(allSkillInfo(id)?.short||id)).join(' + ')}</small><p>${escapeHTML(s.desc)}</p></article>`).join('')}</div></section>`;
+    }
+    const capped=Object.entries(p?.skills||{}).filter(([id,n])=>Number(allSkillInfo(id)?.maxStacks||1)>1&&Number(n)>=Number(allSkillInfo(id)?.maxStacks||1));
+    const cappedStats=Object.keys(scoreSkillBook).filter(id=>
+      typeof statCap32==='function'&&statCap32(p,id)||typeof shopLevel32==='function'&&shopLevel32(p,id)>=10||
+      typeof statCap32!=='function'&&p===player&&!scorePerkAvailable(id));
+    for(const [id,n]of capped){const info=allSkillInfo(id);if(!info)continue;const shown=escapeHTML(info.title+(n>1?' · '+n+'× gewählt':''));result=result.replace(`<strong>${shown}</strong>`,`<strong>${shown} <em class="e32-cap-badge">MAX STUFE</em></strong>`);}
+    if(cappedStats.length||capped.length)result+=`<section class="build-section e32-caps"><h3>Erreichte Obergrenzen</h3><p>${[...cappedStats.map(id=>escapeHTML(scoreSkillBook[id].title)),...capped.map(([id])=>escapeHTML(allSkillInfo(id).short))].join(' · ')}</p></section>`;
+    return result;
+  };
+
+  // Edition 32: a deliberately small atlas vocabulary and a persistent route target.
+  const mapKinds32=new Set(['building','permanent','cache','quest28']);
+  const mapPoi32=p=>Boolean(p&&mapKinds32.has(p.kind)&&(!p.done||p.kind==='building'||p.kind==='quest28'));
+  const visibleMapPois32=()=>exploration?.pois.filter(mapPoi32)||[];
+  const originalLandmark32=landmarkName27;
+  landmarkName27=function(p){
+    if(p.kind==='permanent')return 'PERMANENTES UPGRADE';
+    if(p.kind==='building'&&!p.visited)return 'GEBÄUDE';
+    return originalLandmark32(p);
+  };
+  function trackedPoi32(){
+    if(!exploration?.trackId32)return null;
+    const p=exploration.pois.find(q=>q.id===exploration.trackId32);
+    if(!mapPoi32(p)){delete exploration.trackId32;return null;}
+    return p;
+  }
+  function setTrackedPoi32(p){
+    if(!exploration||p&&!mapPoi32(p))return false;
+    if(p?.id===exploration.trackId32)delete exploration.trackId32;
+    else if(p)exploration.trackId32=p.id;
+    else delete exploration.trackId32;
+    saveRunNow();return true;
+  }
+  function mapHit32(c,clientX,clientY,mini=false){
+    if(!exploration||!c)return null;
+    const rect=c.getBoundingClientRect();if(!rect.width||!rect.height)return null;
+    const px=(clientX-rect.left)*c.width/rect.width,py=(clientY-rect.top)*c.height/rect.height;
+    const pad=mini?8:30,size=c.width-pad*2,span=mini?Math.min(exploration.width,5200):exploration.width/worldMapZoom;
+    if(px<pad-6||py<pad-6||px>pad+size+6||py>pad+size+6)return null;
+    const center=mini?worldMapPosition():worldMapCenter;
+    const cx=clamp(center.x,span/2,exploration.width-span/2),cy=clamp(center.y,span/2,exploration.height-span/2);
+    const left=cx-span/2,top=cy-span/2,s=size/span;
+    let hit=null,dMin=(mini?12:19)**2;
+    for(const p of visibleMapPois32()){
+      const x=pad+(p.x-left)*s,y=pad+(p.y-top)*s;
+      // The corner map clamps off-screen symbols to the frame. They are not clickable there.
+      if(x<pad||y<pad||x>pad+size||y>pad+size)continue;
+      const d=(px-x)**2+(py-y)**2;if(d<dMin){hit=p;dMin=d;}
+    }
+    return hit;
+  }
+  const rawPaintMap32=paintMap27;
+  paintMap27=function(c,mini=false){
+    if(!exploration)return rawPaintMap32(c,mini);
+    const savedPois=exploration.pois,savedEnemies=enemies;
+    exploration.pois=visibleMapPois32();enemies=[];
+    try{rawPaintMap32(c,mini);}finally{exploration.pois=savedPois;enemies=savedEnemies;}
+    const p=trackedPoi32();if(!p||!c)return;
+    const x=c.getContext('2d'),pad=mini?8:30,size=c.width-pad*2,span=mini?Math.min(exploration.width,5200):exploration.width/worldMapZoom;
+    const center=mini?worldMapPosition():worldMapCenter,cx=clamp(center.x,span/2,exploration.width-span/2),cy=clamp(center.y,span/2,exploration.height-span/2);
+    const px=pad+(p.x-(cx-span/2))*size/span,py=pad+(p.y-(cy-span/2))*size/span;
+    if(px<pad+3||py<pad+3||px>pad+size-3||py>pad+size-3)return;
+    x.save();x.strokeStyle='#f5e5a4';x.lineWidth=mini?2:3;x.strokeRect(Math.round(px)-(mini?11:17)+.5,Math.round(py)-(mini?11:17)+.5,mini?22:34,mini?22:34);x.restore();
+  };
+  const openAtlas32=showWorldMap;
+  showWorldMap=function(...args){
+    const result=openAtlas32(...args);if(mode!=='worldMap'||!exploration)return result;
+    const canvas=$('worldMapCanvas'),nav=$('overlayContent')?.querySelector('.map-destinations27');
+    canvas?.setAttribute('aria-label','Weltkarte. Tippe auf ein Symbol, um das Ziel zu verfolgen. Erneut tippen entfernt die Markierung.');
+    const legend=$('overlayContent')?.querySelector('.map-legend');
+    if(legend)legend.innerHTML='<span class="map-house">GEBÄUDE</span><span class="map-power">PERMANENTES UPGRADE</span><span class="map-cache">NUSSTRUHE</span><span>! QUESTGEBERIN</span><span class="map-player">DU · WEISSER PFEIL</span><span>Fundort antippen: Richtung im Spiel verfolgen · erneutes Tippen: Ziel löschen</span>';
+    if(nav){let n=0;for(const button of nav.querySelectorAll('[data-map-poi]')){
+      const p=exploration.pois.find(q=>q.id===button.dataset.mapPoi);
+      if(!mapPoi32(p)){button.remove();continue;}
+      n++;const number=button.querySelector('b');if(number)number.textContent=String(n);
+      button.setAttribute('aria-pressed',String(p.id===exploration.trackId32));
+      button.addEventListener('click',()=>{setTrackedPoi32(p);for(const b of nav.querySelectorAll('[data-map-poi]'))b.setAttribute('aria-pressed',String(b.dataset.mapPoi===exploration.trackId32));drawWorldMap();});
+    }}
+    const intro=$('overlayContent')?.querySelector(':scope > p');if(intro)intro.textContent='Die Zeit pausiert. Tippe ein Symbol oder einen Fundort an, um ihn zu verfolgen. In der Nahansicht kannst du die Karte verschieben.';
+    if(canvas){let down=null,dragged=false;
+      canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};dragged=false;},{capture:true});
+      canvas.addEventListener('pointermove',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)dragged=true;},{capture:true});
+      canvas.addEventListener('pointerup',e=>{if(!down||dragged)return;const p=mapHit32(canvas,e.clientX,e.clientY);if(p){setTrackedPoi32(p);mapFocus27=p.id;for(const b of nav?.querySelectorAll('[data-map-poi]')||[])b.setAttribute('aria-pressed',String(b.dataset.mapPoi===exploration.trackId32));drawWorldMap();}down=null;},{capture:true});
+      canvas.addEventListener('pointercancel',()=>{down=null;},{capture:true});
+    }
+    drawWorldMap();return result;
+  };
+
+  // Existing goals continue to work for saved games. A new map chooses from seven goals.
+  Object.assign(questSpecs28[0],{goal:112,line:'„Ich muss diese Karte zeichnen. Die Hasen veranstalten daneben eine Hauptversammlung. Kannst du 112 davon anderweitig beschäftigen?“',task:'Besiege 112 Gegner draußen auf dieser Karte.'});
+  Object.assign(questSpecs28[1],{goal:46,line:'„Meine Vorratsdose ist leer. Völlig rätselhaft. Ich saß bloß den ganzen Tag daneben und hab geknabbert.“',task:'Sammle 46 Erdnüsse auf dieser Karte ein.'});
+  Object.assign(questSpecs28[2],{goal:4,line:'„Auf meiner Karte steht viermal: Hier später gucken. Später ist jetzt. Leider habe ich gerade Sitzdienst.“',task:'Besuche nach der Annahme vier unterschiedliche andere Fundorte.'});
+  Object.assign(questSpecs28[3],{goal:4800,line:'„Mein Schrittzähler behauptet, ich sei ein Möbelstück. Lauf für die Vermessung eine ordentliche Runde. Umwege sind ausdrücklich erwünscht.“',task:'Lege nach der Annahme 4.800 Einheiten zu Fuß auf dieser Karte zurück.'});
+  questSpecs28.push(
+    {name:'MUNITIONSAUSSCHUSS',goal:4,line:'„Vier Munitionskisten fehlen in der Inventurliste. Sammle sie ein. Ich zähle mit, versprochen.“',task:'Sammle vier Munitionskisten draußen auf dieser Karte ein.'},
+    {name:'KURZFRISTIGE BÜROKRATIE',goal:5,line:'„Meine Formulare verfallen schneller als die Tinte trocknet. Ich brauche fünf dieser vorübergehenden Kraftpakete als Beleg.“',task:'Sammle fünf temporäre Power-ups draußen auf dieser Karte ein.'},
+    {name:'HAUSBESUCH NACH VORSCHRIFT',goal:3,line:'„Ich muss drei Gebäude prüfen. Reinlaufen kannst du doch viel schneller als ich. Bericht gibt es mündlich.“',task:'Betritt nach der Annahme drei verschiedene Gebäude auf dieser Karte.'}
+  );
+  const generateMap32=createExploration;
+  createExploration=function(...args){
+    const map=generateMap32(...args),q=map?.pois.find(p=>p.kind==='quest28');
+    if(q)q.questType=Math.floor(hashWorld27(map.seed|0,map.biome|0,0x32e74)*questSpecs28.length);
+    return map;
+  };
+  const questEvent32=event24;
+  event24=function(kind,...args){const result=questEvent32(kind,...args),item=args[0],q=mapQuest28();
+    if(kind==='pickup'&&worldOutside()&&['playing','victory'].includes(mode)&&q?.status==='active'){
+      if(q.questType===4&&item?.type==='ammo')q.progress++;
+      if(q.questType===5&&item?.type==='power')q.progress++;
+    }
+    return result;
+  };
+  const enterQuestBuilding32=tickHouse27;
+  tickHouse27=function(dt){const entering=houseEntry27?.id,result=enterQuestBuilding32(dt),p=entering&&exploration?.pois.find(q=>q.id===entering),q=mapQuest28();
+    if(entering&&!houseEntry27&&p?.visited&&exploration?.interior===entering&&q?.status==='active'&&q.questType===6){q.visits??=[];if(!q.visits.includes(p.id)){q.visits.push(p.id);q.progress=q.visits.length;saveRunNow();}}
+    return result;
+  };
+
+  // The prior skin ledger is the notification ledger: it is seeded from old progress
+  // once, persisted in complete saves, and never emits cosmetic notifications in tests.
+  const skinUnlockSource32=unlockedSkins;
+  const specialSkinNoticeKey32='snickers3-skin-super-notice-v1';
+  if(!fullSaveKeys.includes(specialSkinNoticeKey32))fullSaveKeys.push(specialSkinNoticeKey32);
+  const superSkinIds32=new Set(skins.filter(s=>s.id.endsWith('superSaiyajin')).map(s=>s.id));
+  let knownSuperSkins32=new Set();
+  try{const saved=JSON.parse(localStorage.getItem(specialSkinNoticeKey32)||'null');
+    if(Array.isArray(saved?.ids))knownSuperSkins32=new Set(saved.ids.filter(id=>superSkinIds32.has(id)));
+    else{const owned=skinUnlockSource32();knownSuperSkins32=new Set([...owned].filter(id=>superSkinIds32.has(id)));localStorage.setItem(specialSkinNoticeKey32,JSON.stringify({ids:[...knownSuperSkins32]}));}
+  }catch{}
+  let skinNoticeQueue32=[],skinNoticeTimer32=null;
+  function drawNextSkinNotice32(){
+    if(skinNoticeTimer32||!skinNoticeQueue32.length)return;
+    const id=skinNoticeQueue32.shift(),skin=skins.find(s=>s.id===id),host=$('skinUnlockNotice32');
+    if(!host||!skin)return;
+    const hero=skin.characterId||'snickers';
+    const url=window.PixelStudio?.url('hero',hero,id)||'';
+    host.innerHTML=`<img src="${url}" alt="${escapeHTML(skin.name)}"><span><small>NEUER SKIN FREIGESCHALTET</small><strong>${escapeHTML(skin.name)}</strong></span>`;
+    host.classList.remove('hidden');
+    skinNoticeTimer32=setTimeout(()=>{host.classList.add('hidden');skinNoticeTimer32=null;drawNextSkinNotice32();},5600);
+  }
+  function queueSkinNotice32(id){
+    let host=$('skinUnlockNotice32');if(!host){host=document.createElement('div');host.id='skinUnlockNotice32';host.className='skin-unlock-notice32 hidden';host.setAttribute('role','status');host.setAttribute('aria-live','polite');shell.appendChild(host);}
+    if(!skinNoticeQueue32.includes(id))skinNoticeQueue32.push(id);
+    drawNextSkinNotice32();
+  }
+  unlockedSkins=function(...args){const prior=new Set(skinLedger26),result=skinUnlockSource32(...args);
+    if(!playtestAllUnlocked&&!saveTransferBusy&&!(typeof isTestArena28==='function'&&isTestArena28())){
+      for(const id of result)if(id!=='classic'&&validSkinIds26.has(id)&&!prior.has(id)&&skinLedger26.has(id))queueSkinNotice32(id);
+      let specialChanged=false;for(const id of result)if(superSkinIds32.has(id)&&!knownSuperSkins32.has(id)){knownSuperSkins32.add(id);specialChanged=true;queueSkinNotice32(id);}
+      if(specialChanged)try{localStorage.setItem(specialSkinNoticeKey32,JSON.stringify({ids:[...knownSuperSkins32]}));}catch{}
+    }
+    return result;
+  };
+  const skinFinish32=finish;
+  finish=function(...args){const result=skinFinish32(...args);if(['won','lost'].includes(mode))unlockedSkins();return result;};
+  const skinEndless32=recordEndlessBest;
+  recordEndlessBest=function(...args){const result=skinEndless32(...args);if(!playtestAllUnlocked)unlockedSkins();return result;};
+  const skinArchive32=archiveEndlessRun;
+  archiveEndlessRun=function(...args){const result=skinArchive32(...args);if(player?.endlessHallArchived&&!playtestAllUnlocked)unlockedSkins();return result;};
+  const skinDuel32=endHasenbeinDuel;
+  endHasenbeinDuel=function(won,...args){const result=skinDuel32(won,...args);if(won&&!playtestAllUnlocked)unlockedSkins();return result;};
+  const skinAchievement32=unlockAchievement;
+  unlockAchievement=function(id,...args){const owned=achievementUnlocked(id),result=skinAchievement32(id,...args);
+    if(!owned&&achievementUnlocked(id)&&allAchievementsWon()&&!playtestAllUnlocked)unlockedSkins();
+    return result;
+  };
+
+  // A short rules reference that can be opened from menu or pause without content spoilers.
+  helpMarkup=function(){return `<section class="build-section"><h3>Steuerung</h3><div class="help-grid">
+    <div class="help-row"><kbd>WASD</kbd><span>Bewegen<small>Pfeiltasten gehen auch.</small></span></div>
+    <div class="help-row"><kbd>MAUS</kbd><span>Zielen<small>Deine Grundattacke feuert automatisch.</small></span></div>
+    <div class="help-row"><kbd>SPACE</kbd><span>Ausweichen<small>Der Dash schützt dich kurz.</small></span></div>
+    <div class="help-row"><kbd>E</kbd><span>Spezialwaffe<small>Q/R oder Mausrad wechselt die Waffe.</small></span></div>
+    <div class="help-row"><kbd>M</kbd><span>Weltkarte<small>Fundort anklicken: Wegpfeil verfolgen.</small></span></div>
+    <div class="help-row"><kbd>P / ESC</kbd><span>Pause und Build</span></div>
+    <div class="help-row"><kbd>TOUCH</kbd><span>Stick links, Aktionen rechts</span></div>
+    </div></section><section class="build-section"><h3>Im Run</h3><div class="mechanics-grid">
+    <article><b>Wellen</b><p>Überlebe die Welle, wähle eine Karte und sammle einen Build. Nach Bossen kannst du weiterziehen.</p></article>
+    <article><b>Funde</b><p>Nüsse geben Guthaben. Herzen heilen, Munitionskisten laden Waffen auf; Power-ups wirken nur kurz.</p></article>
+    <article><b>Erkundung</b><p>Gebäude, Truhen, dauerhafte Upgrades und Aufträge findest du auf der Karte. Tippe einen Fundort an, um seine Richtung im Spiel zu sehen.</p></article>
+    <article><b>Shop und Fortschritt</b><p>Kaufe dauerhafte Verbesserungen mit deinem Run-Guthaben. Fähigkeiten, Skins und Spielmodi schaltest du durch Spielen frei.</p></article>
+    </div></section>`;};
+
   // PIXELWERK_WORLD_END
   // PIXELWERK_INTEGRATION_BEGIN · installed by tools/build_pixel_edition.py
   function installPixelEdition(){
@@ -9460,6 +10266,327 @@
       natureFrames31.set(id,c);return c;
     }
     art.world=function(id){return String(id).startsWith('nature31-')?natureSprite31(id)||worldPresentation31(id):worldPresentation31(id);};
+
+    // Edition 32: the little world details inherit the authored atlas's material,
+    // shading and pixel density. No broad 2× flat-fill surfaces remain in these
+    // new plants/props; in particular, the garden log is real bark and moss.
+    const natureArt32=art.world,natureIcon32=art.icon,natureCache32=new Map();
+    const NATURE_ART32={
+      fern:['sewer-flora28-1','garden-flora28-0'],
+      bellflowers:['garden-flora28-1','astral-flora28-0'],
+      fallenBranch:['fallen-oak','garden-flora28-0'],
+      sewerReeds:['swamp-detail27-0','sewer-flora28-1'],
+      mould:['sewer-flora28-0','sewer-flora28-1'],
+      rustGrate:['sewer-prop1','sewer-flora28-0'],
+      basil:['kitchen-flora28-2','kitchen-flora28-3'],
+      spilledGrain:['kitchen-detail27-0','kitchen-flora28-0'],
+      pepperMill:['kitchen-detail27-2','kitchen-flora28-0'],
+      dryGrass:['quarry-flora28-0','quarry-flora28-2'],
+      stoneCairn:['quarry-detail27-1','quarry-flora28-0'],
+      mineLantern:['trading-post','quarry-flora28-0'],
+      glassFern:['lab-flora28-1','lab-flora28-0'],
+      cableCoil:['stage-detail27-1','lab-flora28-0'],
+      sampleCrate:['crates','lab-flora28-0'],
+      cattails:['swamp-detail27-0','swamp-flora28-0'],
+      lotus:['swamp-flora28-2','swamp-flora28-1'],
+      hollowLog:['old-stump','swamp-flora28-0'],
+      moonFlower:['astral-flora28-1','astral-flora28-0'],
+      starGrass:['astral-flora28-0','astral-flora28-1'],
+      crystalRing:['astral-prop1','astral-flora28-0'],
+      stageWeeds:['stage-flora28-0','stage-flora28-1'],
+      lostBottle:['lab-prop1','stage-flora28-0'],
+      cableBasket:['stage-prop1','stage-flora28-0']
+    };
+    function cropBounds32(img){
+      const w=img.width,h=img.height,data=img.getContext('2d').getImageData(0,0,w,h).data;
+      let left=w,top=h,right=0,bottom=0;
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(data[(y*w+x)*4+3]>80){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
+      return left>w/2?{x:0,y:0,w,h}:{x:left,y:top,w:right-left+1,h:bottom-top+1};
+    }
+    function cut32(ctx,img,x,y,w,h,sourceBounds){
+      const b=sourceBounds||cropBounds32(img),scale=Math.min(w/b.w,h/b.h);
+      ctx.drawImage(img,b.x,b.y,b.w,b.h,Math.round(x+(w-b.w*scale)/2),Math.round(y+h-b.h*scale),Math.round(b.w*scale),Math.round(b.h*scale));
+    }
+    function nativeWorld32(item){
+      const ids=NATURE_ART32[item];if(!ids)return null;
+      const c=art.surface(256),x=c.getContext('2d');x.imageSmoothingEnabled=false;
+      const base=natureArt32(ids[0]),accent=natureArt32(ids[1]);
+      if(!base)return null;
+      // Details sit on a transparent 256px atlas frame and use the same ground
+      // anchor as the surrounding authored world assets.
+      if(item==='fallenBranch'){
+        cut32(x,base,0,53,256,181);cut32(x,accent,33,180,58,60);cut32(x,accent,191,171,47,54);
+      }else if(item==='rustGrate'){
+        // The iron bars from the authored sewer gate become an inlaid floor
+        // grate. Its low collision footprint matches the flattened art.
+        x.save();x.translate(38,149);x.transform(1,-.13,.25,.43,0,0);
+        x.drawImage(base,52,66,155,146,0,0,168,146);x.restore();
+        cut32(x,accent,26,189,45,47);cut32(x,accent,187,185,40,46);
+      }else if(item==='mineLantern'){
+        // Hanging brass lantern cut out of the trading post. All texture and
+        // glass are original pixels; the small stone/grass grounding is new.
+        const lamp=art.surface(40,69),lc=lamp.getContext('2d');lc.imageSmoothingEnabled=false;
+        lc.drawImage(base,70,70,40,69,0,0,40,69);
+        lc.globalCompositeOperation='destination-in';lc.fillStyle='#fff';
+        lc.beginPath();[[20,12],[23,15],[23,24],[31,28],[35,34],[33,41],[31,43],[28,54],[21,63],[14,55],[11,43],[8,41],[6,34],[10,27],[17,24],[17,16]].forEach(([a,b],i)=>i?lc.lineTo(a,b):lc.moveTo(a,b));lc.closePath();lc.fill();
+        cut32(x,lamp,63,54,125,183,{x:0,y:0,w:40,h:69});
+        cut32(x,accent,43,197,58,39);cut32(x,accent,172,202,43,35);
+      }else if(item==='pepperMill'){
+        // Wood grain of an old kitchen cask forms the grinder body; brass
+        // bands, tapered cap and pepper flecks retain a readable silhouette.
+        const grain=art.surface(100,145),gx=grain.getContext('2d');gx.imageSmoothingEnabled=false;
+        gx.drawImage(base,60,112,144,130,0,0,100,145);
+        gx.globalCompositeOperation='destination-in';gx.fillStyle='#fff';gx.beginPath();
+        [[29,3],[68,3],[84,17],[79,43],[91,57],[86,110],[75,140],[19,140],[9,110],[7,57],[20,43],[15,17]].forEach(([a,b],i)=>i?gx.lineTo(a,b):gx.moveTo(a,b));gx.closePath();gx.fill();
+        x.fillStyle='#251e1a';x.beginPath();
+        [[108,78],[151,78],[169,94],[164,119],[177,135],[171,189],[159,224],[98,224],[88,189],[86,135],[99,119],[94,94]].forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.closePath();x.fill();
+        x.drawImage(grain,80,77,101,145);
+        x.fillStyle='#33261c';x.fillRect(106,67,48,12);x.fillStyle='#967147';x.fillRect(110,69,40,7);x.fillStyle='#e1c389';x.fillRect(115,70,28,2);
+        x.fillStyle='#514435';x.fillRect(124,56,12,11);x.fillStyle='#dbc085';x.fillRect(126,57,8,7);
+        x.fillStyle='#251f1b';x.fillRect(101,213,59,7);x.fillStyle='#aa8754';x.fillRect(105,214,50,2);
+        x.fillStyle='#e5cc9a';for(let i=0;i<26;i++){const q=(i*41)%83,r=(i*29)%20;x.fillRect(170+q,205+r,2+(i%2),1+(i%3===0));}
+      }else if(item==='spilledGrain'){
+        cut32(x,base,19,64,178,162);
+        const grain=['#f8e6b9','#d6b776','#a8894e'];
+        for(let i=0;i<54;i++){const px=126+(i*61)%113,py=175+(i*37)%54;x.fillStyle=grain[i%3];x.fillRect(px,py,2+i%3,1+(i%4===0));}
+      }else if(item==='sampleCrate'){
+        cut32(x,base,10,72,229,162);cut32(x,accent,127,52,75,75);
+      }else if(item==='lostBottle'){
+        // A hand-painted bottle from the item atlas replaces the boxy
+        // placeholder, with stage greenery around the dropped prop.
+        cut32(x,natureIcon32('scoreRush'),64,55,132,174);
+        cut32(x,accent,159,185,60,49);
+      }else if(item==='crystalRing'){
+        cut32(x,base,23,53,215,184);cut32(x,accent,81,182,80,53);
+      }else if(['fern','bellflowers','sewerReeds','mould','basil','dryGrass','glassFern','cattails','lotus','moonFlower','starGrass','stageWeeds'].includes(item)){
+        cut32(x,base,27,42,203,191);
+        cut32(x,accent,item==='starGrass'?30:147,134,item==='starGrass'?88:72,99,96);
+      }else if(item==='hollowLog'){
+        cut32(x,base,17,77,228,159);cut32(x,accent,152,171,68,59);
+      }else{
+        cut32(x,base,26,49,213,184);
+        cut32(x,accent,157,184,65,51);
+      }
+      // Fine contact pixels stop isolated props from floating on the ground.
+      x.fillStyle='#111c1928';x.fillRect(64,232,134,2);
+      c.pixelOrigin={width:256,x:0,y:0};return c;
+    }
+    art.world=function(id){
+      if(!String(id).startsWith('nature31-'))return natureArt32(id);
+      if(natureCache32.has(id))return natureCache32.get(id);
+      const result=nativeWorld32(id.slice(9))||natureArt32(id);natureCache32.set(id,result);return result;
+    };
+    let eyeBargain32;
+    art.icon=function(id){
+      if(id!=='e31AugenAusstechen')return natureIcon32(id);
+      if(eyeBargain32)return eyeBargain32;
+      const c=art.surface(64),x=c.getContext('2d');x.imageSmoothingEnabled=false;
+      // Existing richly painted red eyes and acorns replace Edition31's flat
+      // bars. The diagonal silver cut and five gilded coins spell the bargain.
+      x.drawImage(natureIcon32('overdrive'),0,0,64,64);
+      x.save();x.translate(29,30);x.rotate(-.62);
+      x.fillStyle='#132126';x.fillRect(-27,0,57,6);x.fillStyle='#d5d9bf';x.fillRect(-25,0,48,2);x.fillStyle='#fff4d7';x.fillRect(-20,0,22,1);
+      x.fillStyle='#a67246';x.fillRect(23,-2,7,10);x.fillStyle='#e8c07c';x.fillRect(24,-1,5,2);x.restore();
+      const coin=natureIcon32('jackpot');x.drawImage(coin,5,38,25,25);
+      x.fillStyle='#2f2a24';x.fillRect(41,44,20,17);x.fillStyle='#e9b96b';x.fillRect(42,45,18,15);
+      x.fillStyle='#fff0b9';x.font='bold 13px NuttyPixel, monospace';x.textAlign='center';x.fillText('5',51,57);
+      eyeBargain32=c;return c;
+    };
+
+    // The authored enemy sprites use the usual actor renderer. These marks are
+    // drawn after the actor, so every attack remains legible in a crowded horde.
+    const previousEnemyDraw32=drawRabbit;
+    drawRabbit=function(e){
+      previousEnemyDraw32(e);
+      if(!e||e.dead||!ENEMIES32[e.type]||e.windup<=0||worldOutside()&&!worldVisible(e,180))return;
+      const c=ENEMIES32[e.type],r=e.r+16;
+      ctx.save();ctx.strokeStyle=c.tier===2?'#efd39a':c.tier===1?'#d8ca91':'#b7d5b5';ctx.lineWidth=3;ctx.setLineDash([7,6]);
+      if(c.attack==='mark'||c.attack==='blink')pixelRing(e.targetX32,e.targetY32,c.attack==='mark'?c.radius:38,ctx.strokeStyle,3,.78);
+      if(c.attack==='charge'){
+        const x=e.x+Math.cos(e.aim32)*190,y=e.y+Math.sin(e.aim32)*190;
+        ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(x,y);ctx.stroke();
+      }else if(c.attack!=='mark'&&c.attack!=='blink'){
+        ctx.beginPath();ctx.arc(e.x,e.y,r,e.aim32-.55,e.aim32+.55);ctx.stroke();
+      }
+      ctx.restore();
+    };
+    drawExtraEnemy=drawRabbit;drawContentEnemy=drawRabbit;drawNewBoss=drawRabbit;drawPaftiBoss=drawRabbit;
+    const previousShotDraw32=drawPixelEnemyProjectile;
+    drawPixelEnemyProjectile=function(b){
+      if(!String(b.tag||'').startsWith('burst32:'))return previousShotDraw32(b);
+      const id=b.tag.slice(8),c=ENEMIES32[id];
+      if(!c)return previousShotDraw32(b);
+      const icon=c.biome==='lab'?'electric-burst':c.biome==='quarry'||c.biome==='astral'?'ice-shard':c.biome==='garden'||c.biome==='swamp'?'carrot-dart':c.biome==='kitchen'?'creamPuff':c.biome==='stage'?'horn-wave':'poison-glob';
+      ctx.save();ctx.translate(Math.round(b.x),Math.round(b.y));ctx.rotate(b.a);art.draw(ctx,c.biome==='kitchen'?art.companion('creamPuff',0):art.detail(icon),0,0,22,.5);ctx.restore();return true;
+    };
+
+    // Eight distinct 64 px reward portraits. Keep large silhouettes and small
+    // highlights at the same density as the existing hand-authored skill icons.
+    const iconBefore32=art.icon,iconCache32=new Map();
+    const iconPalettes32={
+      e32Pfandpfote:['#a36a43','#eac774','#fff0b0','#6f8e5e'],
+      e32KeksSpiegel:['#9a6447','#dcad70','#fce4ab','#72c9d2'],
+      e32Wartemarke:['#658296','#c4d9d0','#f8ead0','#e8b77c'],
+      e32Doppelbelichtung:['#5d738f','#b8cad1','#f1e7c2','#93ddc9'],
+      e32Mieterbeirat:['#92634a','#dec191','#f3e2b1','#d78574'],
+      e32Hintertuer:['#68557e','#b89cc4','#e6d1df','#83d3c8'],
+      e32Zeitpfandhaus:['#6c5268','#d1a776','#f7d18b','#c9878f'],
+      e32Singularitaet:['#55456e','#9881bc','#cfb8df','#eec68a']
+    };
+    function skillIcon32(id){
+      if(iconCache32.has(id))return iconCache32.get(id);
+      const p=iconPalettes32[id];if(!p)return null;
+      const c=art.surface(64),g=c.getContext('2d');g.imageSmoothingEnabled=false;
+      const ink='#202634',shadow='#111d2a',box=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(x,y,w,h);};
+      const poly=(points,col)=>{g.fillStyle=col;g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fill();};
+      const line=(ax,ay,bx,by,col,width=2)=>{g.strokeStyle=col;g.lineWidth=width;g.lineCap='square';g.beginPath();g.moveTo(ax+.5,ay+.5);g.lineTo(bx+.5,by+.5);g.stroke();};
+      const sparkle=(x,y,col=p[2])=>{box(x-1,y-5,3,11,col);box(x-5,y-1,11,3,col);box(x-1,y-1,3,3,'#fff6d8');};
+      // Each icon sits in its own recessed enamel tile, with a clear outer edge.
+      poly([[10,4],[53,4],[60,11],[60,52],[53,59],[10,59],[4,52],[4,11]],ink);
+      poly([[11,7],[52,7],[57,12],[57,51],[52,56],[11,56],[7,51],[7,12]],p[0]);
+      poly([[11,9],[51,9],[53,12],[53,19],[11,19]],p[1]);
+      box(10,51,44,3,shadow);box(11,11,4,38,p[2]);
+      if(id==='e32Pfandpfote'){
+        poly([[18,16],[48,16],[48,45],[38,49],[18,45]],ink);
+        poly([[21,19],[45,19],[45,42],[37,46],[21,42]],p[1]);box(23,20,20,4,p[2]);
+        poly([[28,28],[31,24],[37,24],[40,29],[37,34],[31,34]],p[0]);
+        box(31,26,6,5,'#ffeabb');box(25,38,15,2,p[0]);box(27,42,9,2,p[3]);
+        sparkle(47,24,p[3]);box(39,44,4,4,p[3]);
+      }else if(id==='e32KeksSpiegel'){
+        poly([[19,17],[43,15],[52,22],[51,45],[44,50],[18,47],[14,39],[15,22]],ink);
+        poly([[20,20],[43,18],[49,23],[48,44],[42,47],[19,44],[17,38],[18,23]],p[1]);
+        poly([[23,23],[42,21],[46,26],[45,41],[39,44],[22,41],[20,36]],p[3]);
+        poly([[25,24],[32,23],[22,37],[22,40],[27,39],[40,22]],'#d8f0de');
+        for(const [x,y]of [[39,29],[33,39],[27,31],[44,36]])box(x,y,3,3,p[0]);
+        sparkle(48,16,'#fff4bf');
+      }else if(id==='e32Wartemarke'){
+        poly([[16,17],[49,17],[49,27],[46,30],[49,33],[49,47],[16,47],[16,33],[20,30],[16,27]],ink);
+        poly([[19,20],[46,20],[46,26],[42,30],[46,34],[46,44],[19,44],[19,34],[23,30],[19,26]],p[2]);
+        box(24,23,17,3,p[0]);box(24,39,17,2,p[1]);
+        box(27,29,4,7,p[0]);box(33,29,4,7,p[0]);box(39,29,4,7,p[0]);box(31,29,12,2,p[0]);box(37,35,6,2,p[0]);
+        for(const y of [23,29,35,41])box(15,y,2,2,p[3]);
+      }else if(id==='e32Doppelbelichtung'){
+        poly([[15,27],[23,27],[27,21],[42,21],[46,27],[51,27],[51,46],[15,46]],ink);
+        poly([[18,29],[26,29],[30,23],[40,23],[43,29],[48,29],[48,43],[18,43]],p[1]);
+        box(20,32,7,4,p[2]);box(29,31,18,12,p[0]);box(31,33,14,8,p[3]);
+        box(34,34,6,5,'#edf9da');box(38,36,5,5,p[2]);
+        poly([[24,16],[40,13],[45,17],[28,21]],p[2]);poly([[21,19],[38,17],[42,20],[24,24]],p[3]);
+        sparkle(49,16);
+      }else if(id==='e32Mieterbeirat'){
+        box(17,14,31,39,ink);box(20,17,25,32,p[1]);box(23,20,19,26,p[2]);
+        box(26,23,13,2,p[0]);box(26,28,13,2,p[0]);box(26,33,8,2,p[0]);
+        poly([[34,36],[39,33],[44,36],[43,41],[39,44],[35,41]],ink);
+        poly([[36,37],[39,35],[42,37],[41,40],[39,42],[37,40]],p[3]);
+        box(11,25,5,15,p[0]);box(49,25,5,15,p[0]);box(20,46,25,3,shadow);
+      }else if(id==='e32Hintertuer'){
+        poly([[19,15],[44,15],[49,22],[49,47],[19,47]],ink);
+        poly([[23,18],[42,18],[46,23],[46,43],[23,43]],p[1]);
+        poly([[27,22],[39,21],[41,25],[41,40],[27,40]],p[0]);
+        poly([[30,24],[37,23],[37,38],[30,38]],p[3]);
+        box(38,31,3,3,p[2]);
+        line(16,37,21,31,p[2],3);poly([[13,37],[20,39],[15,43]],p[2]);
+        line(47,31,53,23,p[2],2);sparkle(53,21,p[3]);
+      }else if(id==='e32Zeitpfandhaus'){
+        box(19,14,30,5,ink);box(19,45,30,5,ink);box(22,16,24,3,p[2]);box(22,46,24,2,p[2]);
+        poly([[23,19],[45,19],[42,25],[37,29],[37,32],[43,38],[45,45],[23,45],[25,39],[32,32],[32,29],[26,25]],ink);
+        poly([[26,21],[42,21],[40,25],[35,30],[35,33],[41,39],[42,43],[26,43],[28,39],[34,33],[34,30],[29,25]],p[2]);
+        poly([[28,22],[40,22],[38,26],[34,29],[30,26]],p[0]);
+        poly([[28,41],[34,34],[40,41]],p[3]);box(33,30,3,4,p[0]);
+        box(17,18,3,29,p[1]);box(47,18,3,29,p[1]);sparkle(49,12);
+      }else if(id==='e32Singularitaet'){
+        for(const [r,col]of [[19,p[2]],[16,p[0]],[12,p[1]],[8,'#28233c']]){
+          g.strokeStyle=col;g.lineWidth=4;g.beginPath();g.arc(33,32,r,Math.PI*.1,Math.PI*1.85);g.stroke();
+        }
+        box(31,29,6,6,'#1a1727');box(33,31,2,2,'#fbdda8');
+        for(const [x,y]of [[17,21],[47,43],[46,18],[21,46]]){box(x,y,4,3,p[3]);box(x+1,y,2,1,'#fff5c9');}
+        line(17,37,24,34,p[2],2);line(43,26,50,23,p[2],2);
+      }
+      box(10,10,43,2,'#fff4c255');box(11,53,43,2,'#251f2d66');
+      // Quantize on a common 2 px grid. This strips vector edge antialiasing
+      // instead of introducing the blurry half-pixels seen in some old props.
+      const small=art.surface(32),sx=small.getContext('2d');sx.imageSmoothingEnabled=false;sx.drawImage(c,0,0,32,32);
+      const crisp=art.surface(64),cx=crisp.getContext('2d');cx.imageSmoothingEnabled=false;cx.drawImage(small,0,0,64,64);
+      iconCache32.set(id,crisp);return crisp;
+    }
+    art.icon=function(id){return skillIcon32(id)||iconBefore32(id);};
+    const drawSkillsBefore32=drawExpansion;
+    drawExpansion=function(...args){const result=drawSkillsBefore32(...args),s=player?.e32Skills;
+      if(!s||hasenbeinMode)return result;
+      for(const a of s.actors||[]){if(!worldVisible(a,230))continue;
+        const x=Math.round(a.x),y=Math.round(a.y),phase=runTime*5;
+        ctx.save();ctx.imageSmoothingEnabled=false;
+        if(a.kind==='bait'){
+          ctx.globalAlpha=.55;ctx.fillStyle='#14252e';ctx.fillRect(x-25,y+8,50,7);ctx.globalAlpha=1;
+          art.draw(ctx,art.icon(a.id),x,y-6,38,.76);
+          ctx.strokeStyle='#eac774';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,79+Math.sin(phase)*3,.16,Math.PI*1.74);ctx.stroke();
+        }else if(a.kind==='ticket'){
+          art.draw(ctx,art.icon(a.id),x,y-35,30,.8);
+          ctx.fillStyle='#f6e4bb';ctx.fillRect(x-2,y-17,4,7);
+        }else if(a.kind==='ward'){
+          ctx.globalAlpha=.22;ctx.fillStyle='#cbb487';ctx.beginPath();ctx.ellipse(x,y,139,97,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.88;
+          ctx.strokeStyle='#e5cb91';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y,139,97,0,0,Math.PI*2);ctx.stroke();
+          art.draw(ctx,art.icon(a.id),x,y-19,44,.8);
+        }else if(a.kind==='vortex'){
+          for(let ring=0;ring<3;ring++){
+            ctx.strokeStyle=['#c8a6d3','#9871b4','#e1bc88'][ring];ctx.lineWidth=ring===0?5:3;
+            ctx.beginPath();ctx.ellipse(x,y,51+ring*27,28+ring*17,0,phase*.25+ring,phase*.25+ring+Math.PI*1.55);ctx.stroke();
+          }
+          art.draw(ctx,art.icon(a.id),x,y-25,44,.8);
+        }else if(a.kind==='picture'){
+          const t=Math.max(0,1-(a.at-runTime)/.5);ctx.globalAlpha=.15+t*.3;
+          ctx.fillStyle='#e8f3dc';ctx.fillRect(x-45,y-38,90,67);
+          ctx.fillStyle='#7ad5bd';ctx.fillRect(x-37,y-31,74,2);ctx.fillRect(x-37,y+22,74,2);
+        }
+        ctx.restore();
+      }
+      for(const f of s.fx||[]){if(!worldVisible(f,f.radius+90))continue;const x=Math.round(f.x),y=Math.round(f.y),fromX=Math.round(f.fromX),fromY=Math.round(f.fromY),t=1-f.life/f.maxLife;
+        ctx.save();ctx.globalAlpha=Math.min(1,f.life*5);
+        if(['reflection','ticket','echo'].includes(f.fx)){
+          const px=Math.round(fromX+(x-fromX)*Math.min(1,t*2)),py=Math.round(fromY+(y-fromY)*Math.min(1,t*2)-Math.sin(t*Math.PI)*16);
+          ctx.strokeStyle=f.fx==='ticket'?'#f8e4b4':'#91dcd1';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(fromX,fromY);ctx.lineTo(px,py);ctx.stroke();
+          art.draw(ctx,art.icon(f.id),px,py,20,.8);
+        }else{
+          ctx.strokeStyle=f.fx==='vortex'?'#d8b9e6':f.fx==='ward'?'#f5ddab':'#c6e1c8';ctx.lineWidth=3;
+          ctx.beginPath();ctx.ellipse(x,y,Math.max(10,f.radius*(.3+t*.55)),Math.max(7,f.radius*(.18+t*.37)),0,0,Math.PI*2);ctx.stroke();
+          if(f.fx==='flash')art.draw(ctx,art.icon(f.id),x,y-28,40,.8);
+        }
+        ctx.restore();
+      }
+      return result;
+    };
+
+    // Corner map selects an icon directly; the frame still opens the full atlas.
+    const cornerMap32=$('miniMap27');
+    if(cornerMap32){cornerMap32.setAttribute('aria-label','Minikarte: Fundort antippen oder Weltkarte öffnen');
+      const caption=cornerMap32.querySelector('.mini-map-caption27');if(caption)caption.textContent='ZIEL WÄHLEN · KARTE M';
+      cornerMap32.onclick=e=>{const c=cornerMap32.querySelector('canvas'),p=mapHit32(c,e.clientX,e.clientY,true);if(p){setTrackedPoi32(p);paintMap27(c,true);}else showWorldMap();};
+    }
+    const guide32=document.createElement('div');guide32.id='poiGuide32';guide32.className='poi-guide32 hidden';guide32.setAttribute('role','status');guide32.setAttribute('aria-live','off');
+    guide32.innerHTML='<span class="poi-guide-arrow32" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12 4 4l3 8-3 8z"/></svg></span><span class="poi-guide-label32"></span>';shell.appendChild(guide32);
+    const renderRoute32=render;
+    render=function(dt){renderRoute32(dt);
+      if(mapBlind31())cornerMap32?.classList.add('hidden');
+      const p=mode==='playing'&&worldOutside()&&!mapBlind31()&&!(typeof isTestArena28==='function'&&isTestArena28())?trackedPoi32():null;
+      guide32.classList.toggle('hidden',!p);if(!p)return;
+      const dx=p.x-player.x,dy=p.y-player.y,d=Math.hypot(dx,dy);
+      guide32.classList.toggle('boss32',Boolean(boss&&!boss.dead));
+      guide32.querySelector('.poi-guide-arrow32').style.transform=`rotate(${Math.atan2(dy,dx)}rad)`;
+      const text=`${landmarkName27(p)} · ${Math.max(0,Math.round(d/100))} SCHRITTE`;
+      const label=guide32.querySelector('.poi-guide-label32');if(label.textContent!==text)label.textContent=text;
+    };
+
+    // Restore the subtitle displaced when the raster title replaces the HTML h1.
+    const title32=document.querySelector('.start-content h1.bread-logo');
+    if(title32&&!document.querySelector('.menu-subtitle32')){
+      const subtitle32=document.createElement('p');
+      subtitle32.className='menu-subtitle32';
+      subtitle32.textContent='ATTACK FROM HASENBEIN';
+      title32.insertAdjacentElement('afterend',subtitle32);
+    }
+    const chapter32=document.querySelector('.start-content .chapter');
+    if(chapter32)chapter32.textContent='STAMBOULI EDITION';
+    const menuVersion32=document.querySelector('.menu-version-tag');
+    if(menuVersion32)menuVersion32.textContent='STAMBOULI EDITION';
 
     // Fixed source grid makes pixel density independent of HiDPI display resolution.
     makeGround();
