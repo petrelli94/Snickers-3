@@ -10,12 +10,12 @@
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   // Combat waves end on the timer; each fifth campaign combat is followed by a separate boss wave.
   // Knollenbrot-Balance: kurze Einstiegswellen, danach kontrolliert längere Belastungsphasen.
-  const waveLengths = Array(15).fill(120);
+  const waveLengths = Array(15).fill(105);
   const campaignProgress25 = (w=wave) => endlessMode?w:Math.min(8,Math.floor(w/5)*3+(w%5)/2);
   const rewardWave25 = () => endlessMode?wave:Math.round(campaignProgress25());
   const displayWave25 = (w=wave,bossState=campaignBossContext25()) => endlessMode||hasenbeinMode?w+1:w+1+Math.floor(w/5)+(bossState?1:0);
-  const endlessWaveLength = () => 90;
-  const currentWaveLength = () => endlessMode ? endlessWaveLength(wave) : (waveLengths[wave]||120);
+  const endlessWaveLength = () => 105;
+  const currentWaveLength = () => endlessMode ? endlessWaveLength(wave) : (waveLengths[wave]||105);
   // Difficulty curves deliberately scale different axes at different speeds. Stacking the same exponential on HP,
   // density, speed, actions and incoming damage made old late-game waves jump from easy to unfair.
   const endlessHpScale = w => 1 + .045*Math.max(0,w) + .00030*Math.max(0,w-40)**2;
@@ -100,7 +100,7 @@
     ember: {name:'Glutgarten', note:'Kupfer & Asche', bg:'#21150f', panel:'#38271d', line:'#69503b', dim:'#c5ad98', rgb:'33 21 15', ground:['#59432e','#443528','#2f2922'], plant:['#392d24','#504033','#735540'], shade:'#21160f'}
   };
   const accents = {lime:{name:'Limette',hex:'#c7f36b',rgb:'199 243 107'}, cyan:{name:'Eisblau',hex:'#7ee5f5',rgb:'126 229 245'}, violet:{name:'Flieder',hex:'#d1afff',rgb:'209 175 255'}, amber:{name:'Gold',hex:'#ffd17a',rgb:'255 209 122'}, pink:{name:'Pink',hex:'#ffa9ca',rgb:'255 169 202'}};
-  let settings = {theme:'forest',accent:'amber',volume:70,musicMute:false,sfxMute:false}, settingsReturn = 'menu', generalDefeated = false, cyberDefeated = false, lastDefeatedBoss = '';
+  let settings = {theme:'forest',accent:'amber',volume:70,musicVolume:100,sfxVolume:100,musicMute:false,sfxMute:false}, settingsReturn = 'menu', generalDefeated = false, cyberDefeated = false, lastDefeatedBoss = '';
   let gamePlusLevel=0, newGamePlus=false, newGamePlus2=false, ngPlusUnlocked=false, ngPlusBuild=null, ngPlus2Unlocked=false, ngPlus2Build=null, ngPlusEverUnlocked=false, ngPlus2EverUnlocked=false, hallOfFame=[], endlessHallOfFame=[];
   // Run before any persisted progress is loaded. Pure storage migration, no game-state dependency.
   function retireTestlabStorage30(storage=localStorage){
@@ -166,7 +166,7 @@
     hallOfFame=hallOfFame.filter(r=>r&&!r.playtest&&typeof r==='object'&&(!Number.isInteger(r.gamePlusLevel)||[0,1,2].includes(r.gamePlusLevel)));
   }catch{}
   try{const records=JSON.parse(localStorage.getItem('snickers3-endless-hall-v1')||'[]');if(Array.isArray(records))endlessHallOfFame=records.filter(r=>r&&!r.playtest&&r.endlessMode===true&&r.build&&typeof r.build==='object'&&Number.isFinite(r.endlessWave));}catch{}
-  try { const saved=JSON.parse(localStorage.getItem('snickers3-settings-v4')||localStorage.getItem('snickers3-settings-v3')||localStorage.getItem('snickers3-settings-v2')||'{}'); if(themes[saved.theme])settings.theme=saved.theme;if(accents[saved.accent])settings.accent=saved.accent;if(Number.isFinite(saved.volume))settings.volume=clamp(saved.volume,0,100);settings.musicMute=Boolean(saved.musicMute);settings.sfxMute=Boolean(saved.sfxMute); } catch {}
+  try { const saved=JSON.parse(localStorage.getItem('snickers3-settings-v4')||localStorage.getItem('snickers3-settings-v3')||localStorage.getItem('snickers3-settings-v2')||'{}'); if(themes[saved.theme])settings.theme=saved.theme;if(accents[saved.accent])settings.accent=saved.accent;if(Number.isFinite(saved.volume))settings.volume=clamp(saved.volume,0,100);for(const key of ['musicVolume','sfxVolume'])if(Number.isFinite(saved[key]))settings[key]=clamp(saved[key],0,100);settings.musicMute=Boolean(saved.musicMute);settings.sfxMute=Boolean(saved.sfxMute); } catch {}
   const accent = () => accents[settings.accent].hex;
   const isBoss = e => e?.type === 'boss';
   let inputMode=matchMedia('(pointer: coarse)').matches?'touch':'mouse', victoryTime=0, victoryAfter=null;
@@ -272,7 +272,7 @@
       const t = audioContext.currentTime, osc = audioContext.createOscillator(), gain = audioContext.createGain();
       osc.type = type; osc.frequency.setValueAtTime(freq, t);
       if (endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(endFreq, 20), t + duration);
-      gain.gain.setValueAtTime(volume*settings.volume/100, t); gain.gain.exponentialRampToValueAtTime(.0001, t + duration);
+      gain.gain.setValueAtTime(volume*settings.volume/100*(musicTone?settings.musicVolume:settings.sfxVolume)/100, t); gain.gain.exponentialRampToValueAtTime(.0001, t + duration);
       osc.connect(gain); gain.connect(audioContext.destination); osc.start(t); osc.stop(t + duration);
     } catch {}
   }
@@ -321,7 +321,7 @@
   }
   function showAchievements(){
     if(mode!=='menu')return;mode='achievements';
-    const rows=achievements.map(a=>{const hidden=a.secret&&!achievementUnlocked(a.id)&&(a.hasenbein?!ngPlus2EverUnlocked&&!hallOfFame.some(r=>hallDifficulty(r)==='normal'&&hallTier(r)===2):a.impossibleEndless?!impossibleProgress.clear:a.impossible?!hardProgress.endless:a.hard?!hardUnlocked():a.ngplus2?!ngPlus2EverUnlocked:a.endless?!hallOfFame.length:!ngPlusEverUnlocked);if(hidden){const reveal=a.hasenbein?'Wird mit der Freischaltung von Normal NG+2 enthüllt.':a.impossibleEndless?'Wird nach Impossible NG+2 enthüllt.':a.impossible?'Wird nach Hard NG+2 enthüllt.':a.hard?'Wird nach dem normalen NG+2-Abschluss enthüllt.':a.endless?'Wird mit dem ersten Hall-of-Fame-Eintrag enthüllt.':a.ngplus2?'Wird mit New Game+2 enthüllt.':'Wird mit New Game+ enthüllt.';return `<div class="achievement-row secret-achievement"><span class="achievement-badge">?</span><div><strong>???</strong><small>GEHEIM · ${reveal}</small><div class="achievement-track"><i style="width:0%"></i></div></div><b>—</b></div>`;}const value=Math.min(a.goal,achievementValue(a.id)),done=achievementUnlocked(a.id),pct=value/a.goal*100;return `<div class="achievement-row ${done?'done':''}${a.ngplus?' ngplus-achievement':''}"><span class="achievement-badge">${done?'★':'○'}</span><div><strong>${a.title}</strong><small>${a.desc}</small><div class="achievement-track"><i style="width:${pct}%"></i></div></div><b>${value}/${a.goal}</b></div>`;}).join('');
+    const rows=[...achievements].sort((a,b)=>Number(achievementUnlocked(b.id))-Number(achievementUnlocked(a.id))).map(a=>{const hidden=a.secret&&!achievementUnlocked(a.id)&&(a.hasenbein?!ngPlus2EverUnlocked&&!hallOfFame.some(r=>hallDifficulty(r)==='normal'&&hallTier(r)===2):a.impossibleEndless?!impossibleProgress.clear:a.impossible?!hardProgress.endless:a.hard?!hardUnlocked():a.ngplus2?!ngPlus2EverUnlocked:a.endless?!hallOfFame.length:!ngPlusEverUnlocked);if(hidden){const reveal=a.hasenbein?'Wird mit der Freischaltung von Normal NG+2 enthüllt.':a.impossibleEndless?'Wird nach Impossible NG+2 enthüllt.':a.impossible?'Wird nach Hard NG+2 enthüllt.':a.hard?'Wird nach dem normalen NG+2-Abschluss enthüllt.':a.endless?'Wird mit dem ersten Hall-of-Fame-Eintrag enthüllt.':a.ngplus2?'Wird mit New Game+2 enthüllt.':'Wird mit New Game+ enthüllt.';return `<div class="achievement-row secret-achievement"><span class="achievement-badge">?</span><div><strong>???</strong><small>GEHEIM · ${reveal}</small><div class="achievement-track"><i style="width:0%"></i></div></div><b>—</b></div>`;}const value=Math.min(a.goal,achievementValue(a.id)),done=achievementUnlocked(a.id),pct=value/a.goal*100;return `<div class="achievement-row ${done?'done':''}${a.ngplus?' ngplus-achievement':''}"><span class="achievement-badge">${done?'★':'○'}</span><div><strong>${a.title}</strong>${done?'<span class="achievement-earned34">✓ FREIGESCHALTET</span>':''}<small>${a.desc}</small><div class="achievement-track"><i style="width:${pct}%"></i></div></div><b>${value}/${a.goal}</b></div>`;}).join('');
     showOverlay(`<span class="eyebrow">DEINE NUSS-CHRONIK</span><h2 id="overlayTitle">ACHIEVEMENTS</h2><p>${achievements.filter(a=>achievementUnlocked(a.id)).length} von ${achievements.length} freigeschaltet.</p><div class="achievement-list">${rows}</div><button class="primary-button" id="achievementClose">ZURÜCK <span>↗</span></button>`);$('achievementClose').onclick=()=>{mode='menu';hideOverlay();$('startButton').focus();};
   }
   function announce(kicker, title) {
@@ -347,10 +347,11 @@
     if(!['menu','playing','paused','settings'].includes(mode))return;
     if(mode!=='settings')settingsReturn=mode;
     mode='settings';resetInput();$('announcement').classList.add('hidden');
-    showOverlay(`<span class="eyebrow">DEIN HAMSTER. DEINE FARBEN.</span><h2 id="overlayTitle">EINSTELLUNGEN</h2><div class="settings-section"><h3>Farbwelt</h3><div class="theme-options">${Object.entries(themes).map(([id,t])=>`<button class="theme-option" id="theme-${id}" aria-pressed="${settings.theme===id}"><span class="theme-preview" style="background:linear-gradient(130deg,${t.ground[0]},${t.bg})"></span><strong>${t.name}</strong><small>${t.note}</small><span class="choice-check" aria-hidden="true">✓</span></button>`).join('')}</div></div><div class="settings-section"><h3>UI-Farbe</h3><div class="accent-options">${Object.entries(accents).map(([id,a])=>`<button id="accent-${id}" class="accent-option" aria-pressed="${settings.accent===id}"><span style="background:${a.hex}"></span>${a.name}<i class="choice-check" aria-hidden="true">✓</i></button>`).join('')}</div></div><div class="settings-section audio-section"><h3>Audio</h3><label for="masterVolume">GESAMTLAUTSTÄRKE <output id="volumeValue">${settings.volume} %</output></label><input id="masterVolume" type="range" min="0" max="100" step="1" value="${settings.volume}"><div class="mute-options"><label><input id="musicMute" type="checkbox" ${settings.musicMute?'checked':''}> Musik stumm</label><label><input id="sfxMute" type="checkbox" ${settings.sfxMute?'checked':''}> Soundeffekte und Sprache stumm</label></div></div><div class="settings-section rebirth-section"><h3>Hamsterneugeburt</h3><p>Setze ausgewählte lokale Fortschrittsdaten zurück.</p><button class="secondary-button rebirth-open" id="rebirthOpen">🐹 HAMSTERNEUGEBURT</button></div><p class="settings-note">Farbwelt und UI-Farbe werden auf diesem Gerät gespeichert. Das laufende Spiel pausiert hier.</p><button class="primary-button" id="settingsClose">FERTIG <span>↗</span></button>`);
+    showOverlay(`<span class="eyebrow">DEIN HAMSTER. DEINE FARBEN.</span><h2 id="overlayTitle">EINSTELLUNGEN</h2><div class="settings-section"><h3>Farbwelt</h3><div class="theme-options">${Object.entries(themes).map(([id,t])=>`<button class="theme-option" id="theme-${id}" aria-pressed="${settings.theme===id}"><span class="theme-preview" style="background:linear-gradient(130deg,${t.ground[0]},${t.bg})"></span><strong>${t.name}</strong><small>${t.note}</small><span class="choice-check" aria-hidden="true">✓</span></button>`).join('')}</div></div><div class="settings-section"><h3>UI-Farbe</h3><div class="accent-options">${Object.entries(accents).map(([id,a])=>`<button id="accent-${id}" class="accent-option" aria-pressed="${settings.accent===id}"><span style="background:${a.hex}"></span>${a.name}<i class="choice-check" aria-hidden="true">✓</i></button>`).join('')}</div></div><div class="settings-section audio-section"><h3>Audio</h3><label for="masterVolume">GESAMTLAUTSTÄRKE <output id="volumeValue">${settings.volume} %</output></label><input id="masterVolume" type="range" min="0" max="100" step="1" value="${settings.volume}">${[['musicVolume','MUSIK'],['sfxVolume','SOUNDEFFEKTE & SPRACHE']].map(([id,label])=>`<label for="${id}">${label}<output id="${id}Value">${settings[id]} %</output></label><input id="${id}" type="range" min="0" max="100" step="1" value="${settings[id]}">`).join('')}<div class="mute-options"><label><input id="musicMute" type="checkbox" ${settings.musicMute?'checked':''}> Musik stumm</label><label><input id="sfxMute" type="checkbox" ${settings.sfxMute?'checked':''}> Soundeffekte und Sprache stumm</label></div></div><div class="settings-section rebirth-section"><h3>Hamsterneugeburt</h3><p>Setze ausgewählte lokale Fortschrittsdaten zurück.</p><button class="secondary-button rebirth-open" id="rebirthOpen">🐹 HAMSTERNEUGEBURT</button></div><p class="settings-note">Farbwelt und UI-Farbe werden auf diesem Gerät gespeichert. Das laufende Spiel pausiert hier.</p><button class="primary-button" id="settingsClose">FERTIG <span>↗</span></button>`);
     for(const id of Object.keys(themes))$(`theme-${id}`).onclick=()=>{settings.theme=id;applySettings();for(const k of Object.keys(themes))$(`theme-${k}`).setAttribute('aria-pressed',String(k===id));};
     for(const id of Object.keys(accents))$(`accent-${id}`).onclick=()=>{settings.accent=id;applySettings();for(const k of Object.keys(accents))$(`accent-${k}`).setAttribute('aria-pressed',String(k===id));};
     const saveAudio=()=>{try{localStorage.setItem('snickers3-settings-v4',JSON.stringify(settings));}catch{}};
+    for(const id of ['musicVolume','sfxVolume'])$(id).oninput=()=>{settings[id]=clamp(Number($(id).value),0,100);$(id+'Value').textContent=settings[id]+' %';if(id==='sfxVolume'&&!settings[id])stopBossSpeech();saveAudio();};
     $('masterVolume').oninput=()=>{settings.volume=Number($('masterVolume').value);$('volumeValue').textContent=settings.volume+' %';if(!settings.volume)stopBossSpeech();saveAudio();};
     $('musicMute').onchange=()=>{settings.musicMute=$('musicMute').checked;saveAudio();};
     $('sfxMute').onchange=()=>{settings.sfxMute=$('sfxMute').checked;if(settings.sfxMute)stopBossSpeech();saveAudio();};
@@ -955,7 +956,7 @@
     scavenger:{icon:'✧',title:'PLÜNDERFELL',short:'Länger sammeln',desc:'Sammelradius und Lebensdauer von Drops steigen.',apply:p=>{p.magnet+=70;p.pickupLifeBonus=(p.pickupLifeBonus||0)+6;}},
     specialCore:{icon:'◆',title:'SPEZIAL-KERN',short:'Spezialschaden',desc:'Spezialwaffen verursachen 35 % mehr Schaden.',apply:p=>p.specialDamage=(p.specialDamage||1)*1.35},
     ammoHunter:{icon:'⊕',title:'MUNITIONS-SPÜRNASEN',short:'Ammo-Jäger',desc:'Seltene Spezialmunition fällt 45 % häufiger.',apply:p=>p.ammoDropLuck=(p.ammoDropLuck||1)*1.45},
-    ironFur:{icon:'▰',title:'EISENFELL',short:'Eisenfell',desc:'18 % Chance, einen eingehenden Treffer komplett abzufangen.',apply:p=>p.damageGuard=Math.min(.45,(p.damageGuard||0)+.18)},
+    ironFur:{icon:'▰',title:'EISENFELL',short:'Eisenfell',desc:'18 % Chance, einen eingehenden Treffer komplett abzufangen.',apply:p=>p.damageGuard=Math.min(STAT_CAPS32.damageGuard,(p.damageGuard||0)+.18)},
     hotPaws:{icon:'↯',title:'HEISSE PFOTEN',short:'Tempo+',desc:'12 % schneller laufen und Dash lädt 10 % schneller.',apply:p=>{p.speed*=1.12;p.dashCooldown*=.9;}},
     ammoScrounger:{icon:'✚',title:'DOPPELTE TASCHE',short:'Doppel-Munition',desc:'Munitionskisten füllen jede Waffe statt 50 % nun um 60 % auf.',apply:p=>p.ammoRefillBonus=Math.min(.35,(p.ammoRefillBonus||0)+.1)},
     hunter:{icon:'⌖',title:'GROSSWILDJÄGER',short:'Bossjäger',desc:'20 % mehr Schaden gegen Bosse und Minibosse.',apply:p=>p.bossDamage=(p.bossDamage||1)*1.2},
@@ -966,8 +967,8 @@
     nutDrill:{icon:'↠',title:'NUSSBOHRER',short:'Nussbohrer',desc:'Massive Bohrnuss mit enormem Linienschaden und extremem Durchschlag.',weapon:'nutDrill',apply:p=>{if(!p.weapons.includes('nutDrill'))p.weapons.push('nutDrill');p.weaponUses.nutDrill=(p.weaponUses.nutDrill||0)+2;}}
   };
   const legendarySkillBook={
-    crownNut:{icon:'♛',title:'KRONENNUSS',short:'Kronennuss',desc:'+30 % normaler Schaden, +1 Durchschlag und +10 % Krit-Chance.',legendary:true,apply:p=>{p.damage*=1.30;p.pierce+=1;p.crit=Math.min(.65,(p.crit||0)+.1);}},
-    ghostFur:{icon:'✧',title:'GEISTERFELL',short:'Geisterfell',desc:'18 % mehr Tempo, 25 % schnellerer Dash und +12 % Blockchance.',legendary:true,apply:p=>{p.speed*=1.18;p.dashCooldown*=.75;p.damageGuard=Math.min(.5,(p.damageGuard||0)+.12);}},
+    crownNut:{icon:'♛',title:'KRONENNUSS',short:'Kronennuss',desc:'+30 % normaler Schaden, +1 Durchschlag und +10 % Krit-Chance.',legendary:true,apply:p=>{p.damage*=1.30;p.pierce+=1;p.crit=Math.min(STAT_CAPS32.crit,(p.crit||0)+.1);}},
+    ghostFur:{icon:'✧',title:'GEISTERFELL',short:'Geisterfell',desc:'18 % mehr Tempo, 25 % schnellerer Dash und +12 % Blockchance.',legendary:true,apply:p=>{p.speed*=1.18;p.dashCooldown*=.75;p.damageGuard=Math.min(STAT_CAPS32.damageGuard,(p.damageGuard||0)+.12);}},
     arsenalRelic:{icon:'◆',title:'ARSENAL-RELIKT',short:'Arsenal-Relikt',desc:'+35 % Spezialschaden, +1 maximale Ladung je Waffe und Munitionskisten füllen 65 % statt 50 %.',legendary:true,apply:p=>{p.specialDamage=(p.specialDamage||1)*1.35;p.ammoBonus=(p.ammoBonus||0)+1;p.ammoRefillBonus=Math.min(.35,(p.ammoRefillBonus||0)+.15);}}
   };
   const ngPlusSkillBook={
@@ -980,7 +981,7 @@
     hyperFur:{icon:'⚡',title:'HYPERFELL',short:'Hyperfell',desc:'NG+: +20 % Bewegungstempo und 20 % kürzerer Dash-Cooldown.',ngplus:true,apply:p=>{p.speed*=1.2;p.dashCooldown*=.8;}},
     turretVolley:{icon:'♜',title:'WACHEN-SCHWARM',short:'Wachen-Schwarm',desc:'NG+: Der Knabber-Turm feuert eine Doppelsalve und deutlich schneller.',ngplus:true,apply:p=>{p.nutSentry=true;p.turretVolley=true;}},
     powerFrenzy:{icon:'✦',title:'POWER-FIEBER',short:'Power-Fieber',desc:'NG+: Power-ups fallen 60 % häufiger und halten 30 % länger.',ngplus:true,apply:p=>{p.powerLuck=(p.powerLuck||1)*1.6;p.powerDuration=Math.max(p.powerDuration||1,1.3);p.powerFrenzy=true;}},
-    executioner:{icon:'⌖',title:'ENDGEGNER-SCHRECK',short:'Boss-Schreck',desc:'NG+: +40 % Schaden gegen Bosse und Minibosse sowie +10 % Krit-Chance.',ngplus:true,apply:p=>{p.bossDamage=(p.bossDamage||1)*1.4;p.crit=Math.min(.75,(p.crit||0)+.1);p.executioner=true;}},
+    executioner:{icon:'⌖',title:'ENDGEGNER-SCHRECK',short:'Boss-Schreck',desc:'NG+: +40 % Schaden gegen Bosse und Minibosse sowie +10 % Krit-Chance.',ngplus:true,apply:p=>{p.bossDamage=(p.bossDamage||1)*1.4;p.crit=Math.min(STAT_CAPS32.crit,(p.crit||0)+.1);p.executioner=true;}},
     dashNova:{icon:'✺',title:'DASH-KOMET',short:'Dash-Komet',desc:'NG+: Jeder Dash schleudert automatisch zwölf starke Nüsse radial heraus.',ngplus:true,apply:p=>{p.dashNova=true;p.dashCooldown*=.9;}},
     ammoAlchemy:{icon:'⊕',title:'MUNITIONS-ALCHEMIE',short:'Ammo-Alchemie',desc:'NG+: +2 maximale Ladungen für alle Spezialwaffen, +15 % Spezialschaden und Munitionskisten füllen deutlich stärker.',ngplus:true,apply:p=>{p.ammoAlchemy=true;p.ammoBonus=(p.ammoBonus||0)+2;p.specialDamage=(p.specialDamage||1)*1.15;p.ammoRefillBonus=Math.min(.45,(p.ammoRefillBonus||0)+.2);}},
     deathBurst:{icon:'✸',title:'TODESSPLITTER',short:'Todessplitter',desc:'NG+: Jeder fünfte Kill löst automatisch eine schädliche Nuss-Explosion am besiegten Gegner aus.',ngplus:true,apply:p=>{p.deathBurst=true;p.deathBurstKills=0;}}
@@ -1012,7 +1013,7 @@
     boomerangMaster:{icon:'↩',title:'ARSENAL-MEISTER',short:'Arsenal-Meister',desc:'Alle Spezialwaffen bekommen +2 maximale Ladungen und verursachen 20 % mehr Schaden. Keine automatische Auffüllung.',apply:p=>{p.ammoBonus=(p.ammoBonus||0)+2;p.specialDamage=(p.specialDamage||1)*1.2;}},
     ammoForge:{icon:'⊕',title:'FERKEL-MUNITIONSWERK',short:'Ammo-Werk',desc:'Munitionsdrops fallen 85 % häufiger und Kisten füllen jede Waffe zusätzlich 20 % stärker auf.',apply:p=>{p.ammoDropLuck=(p.ammoDropLuck||1)*1.85;p.ammoRefillBonus=Math.min(.35,(p.ammoRefillBonus||0)+.2);}},
     savageCore:{icon:'◆',title:'WILDER KERN',short:'Wilder Kern',desc:'+32 % normaler Schaden und +30 % Spezialwaffen-Schaden.',apply:p=>{p.damage*=1.32;p.specialDamage=(p.specialDamage||1)*1.30;}},
-    graniteFur:{icon:'▣',title:'GRANITFELL',short:'Granitfell',desc:'+4 permanente Herzen, volle Heilung und zusätzliche 15 % Blockchance.',apply:p=>{p.maxHp+=4;p.hp=p.maxHp;p.damageGuard=Math.min(.5,(p.damageGuard||0)+.15);}}
+    graniteFur:{icon:'▣',title:'GRANITFELL',short:'Granitfell',desc:'+4 permanente Herzen, volle Heilung und zusätzliche 15 % Blockchance.',apply:p=>{p.maxHp+=4;p.hp=p.maxHp;p.damageGuard=Math.min(STAT_CAPS32.damageGuard,(p.damageGuard||0)+.15);}}
   };
   const specialUpgradePools=[['goldenNut','chronoFur','nutstorm','ammoForge'],['bossBane','shellArmor','powerCondenser','savageCore'],['boomerangMaster','goldenNut','nutstorm','graniteFur','ammoForge','savageCore']];
   function availableRewards(includeSpecial=false){
@@ -1058,7 +1059,7 @@
     fireRate:{icon:'ϟ',title:'SCHUSSGESCHWINDIGKEIT',desc:'+10 % dauerhafte Feuerrate.',apply:p=>p.fireRate/=1.10},
     dash:{icon:'↯',title:'DASH COOLDOWN',desc:'10 % kürzerer Dash-Cooldown.',apply:p=>p.dashCooldown*=.90},
     powerLuck:{icon:'✦',title:'POWER-UP-DROPCHANCE',desc:'+10 % dauerhafte Power-up-Dropchance.',apply:p=>p.powerLuck*=1.10},
-    dodge:{icon:'◈',title:'DODGE-CHANCE',desc:'+2 % Chance, einen gegnerischen Treffer komplett auszuweichen. Jede weitere Stufe gibt erneut +2 %.',apply:p=>p.dodgeChance=Math.min(.40,(p.dodgeChance||0)+.02)}
+    dodge:{icon:'◈',title:'DODGE-CHANCE',desc:'+2 % Chance, einen gegnerischen Treffer komplett auszuweichen. Jede weitere Stufe gibt erneut +2 %.',apply:p=>p.dodgeChance=Math.min(STAT_CAPS32.dodgeChance,(p.dodgeChance||0)+.02)}
   };
   function queueScoreSkillMilestones(){
     if(!player)return;
@@ -1667,9 +1668,10 @@
     }
     thrownWeapons=thrownWeapons.filter(t=>t.life>0&&(!t.returning||dist(t,player)>25));
     for(const p of pickups){
-      p.life-=dt;p.phase+=dt*3;const d=dist(player,p),magnetRadius=Math.min(480,player.magnet+(runTime<(player.e24?.magnetUntil||0)?45:0))*(player.powerups.magnet>0?2.2:1);
-      if((d<magnetRadius||p.permanentHeart)&&d>1){p.x+=(player.x-p.x)/d*310*dt;p.y+=(player.y-p.y)/d*310*dt;}
-      if(d<25){if(p.mapMiniLoot33){collectMapMiniLoot33(p);continue;}p.life=0;event24(p.type==='heart'?'heartPickup':p.type==='nut'?'nutPickupCount':'pickup',p);if(p.permanentHeart){collectPermanentHeart(p);}else if(p.type==='heart'){player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-35,'+1 ♥',accent());tone(700,.13,'sine',.055,1050);}else if(p.type==='power'){collectPowerup(p);}else if(p.type==='ammo'){grantSpecialAmmo();}else{score+=Math.round((player.powerups.jackpot>0?16:4)*(player.powerups.scoreRush>0?2:1)*runScoreMultiplier());setAchievementProgress('score_hog',score);tone(1000,.045,'sine',.022,1400);}}
+      p.life-=dt;p.phase+=dt*3;const d=dist(player,p),magnetRadius=Math.min(STAT_CAPS32.magnet,player.magnet+(runTime<(player.e24?.magnetUntil||0)?45:0))*(player.powerups.magnet>0?2.2:1);
+      if(d<magnetRadius||p.permanentHeart)p.attracted34=true;
+      if(p.attracted34&&d>1){const step=Math.min(d,Math.max(1100,effectiveSpeed(player)*2.6,d*4.5)*dt);p.x+=(player.x-p.x)/d*step;p.y+=(player.y-p.y)/d*step;}
+      if(dist(player,p)<25){if(p.mapMiniLoot33){collectMapMiniLoot33(p);continue;}p.life=0;event24(p.type==='heart'?'heartPickup':p.type==='nut'?'nutPickupCount':'pickup',p);if(p.permanentHeart){collectPermanentHeart(p);}else if(p.type==='heart'){player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-35,'+1 ♥',accent());tone(700,.13,'sine',.055,1050);}else if(p.type==='power'){collectPowerup(p);}else if(p.type==='ammo'){grantSpecialAmmo();}else{score+=Math.round((player.powerups.jackpot>0?16:4)*(player.powerups.scoreRush>0?2:1)*runScoreMultiplier());setAchievementProgress('score_hog',score);tone(1000,.045,'sine',.022,1400);}}
     }
     pickups=pickups.filter(p=>p.life>0);enemies=enemies.filter(e=>!e.dead);
     if(!boss&&!worldRoomActive()&&waveSpawningComplete())beginVictory(upgradeScreen);
@@ -1781,9 +1783,9 @@
     for(const id of p.weapons)p.weaponUses[id]=clamp(Number(p.weaponUses[id])||0,0,weaponBook[id].max+p.ammoBonus+(starterWeaponIds.has(id)?p.bombBonus:0));
   }
   const adrenalineActive=p=>p.adrenaline&&p.hp/p.maxHp<.4;
-  const effectiveInterval=p=>Math.max(.065,p.fireRate*(p.powerups?.berserk>0?.70:1)*(p.powerups?.overclock>0?.72:1)*(p.powerups?.overdrive>0?.62:1)/(adrenalineActive(p)?1.22:1)/(p.nightTime>0?1.15:1));
-  const effectiveSpeed=p=>Math.min(runTime<(p.e24?.speedUntil||0)?420:550,p.speed*(runTime<(p.e24?.speedUntil||0)?1.1:1)*(p.powerups?.haste>0?1.34:1)*(adrenalineActive(p)?1.1:1));
-  const effectiveDash=p=>Math.max(.85,p.dashCooldown);
+  const effectiveInterval=p=>Math.max(.025,p.fireRate*(p.powerups?.berserk>0?.70:1)*(p.powerups?.overclock>0?.72:1)*(p.powerups?.overdrive>0?.62:1)/(adrenalineActive(p)?1.22:1)/(p.nightTime>0?1.15:1));
+  const effectiveSpeed=p=>Math.min(980,p.speed*(runTime<(p.e24?.speedUntil||0)?1.1:1)*(p.powerups?.haste>0?1.34:1)*(adrenalineActive(p)?1.1:1));
+  const effectiveDash=p=>Math.max(BALANCE.minDash,p.dashCooldown);
   function nearestTarget(from=player,range=900){let best=null,near=range;for(const e of [...enemies,...(boss?[boss]:[]),...(paftiBoss?[paftiBoss]:[])]){if(e.dead)continue;const d=dist(from,e);if(d<near&&!worldShotBlocked(from,e,4)){best=e;near=d;}}return best;}
 
   function combatTargets(){return [...enemies.filter(e=>!e.dead),...(boss&&!boss.dead?[boss]:[]),...(paftiBoss&&!paftiBoss.dead?[paftiBoss]:[])];}
@@ -1938,8 +1940,7 @@
     const old=new Set(activeRewardChoices.map(c=>c.id)),pool=availableRewards().filter(c=>!old.has(c.id));
     if(!pool.length){toast('Du besitzt fast alles; es gibt keine anderen Angebote mehr.');return;}
     if(player.waveShuffle>0)player.waveShuffle--;else if(player.runShuffle>0)player.runShuffle--;else player.shuffleBonusBank--;
-    const preferred=rewardChoices().filter(c=>!old.has(c.id)),next=[...preferred];
-    for(const c of shuffled(pool))if(next.length<3&&!next.some(v=>v.id===c.id))next.push(c);
+    const next=weightedRewards34(pool,3);
     // If fewer than three alternatives exist, preserve a previous card to keep every slot useful.
     for(const c of activeRewardChoices)if(next.length<3&&!next.some(v=>v.id===c.id))next.push(c);
     activeRewardChoices=next.slice(0,3);player.shuffleCount++;setAchievementProgress('shuffle_master',player.shuffleCount);renderWaveReward();tone(530,.2,'triangle',.06,940);
@@ -3075,7 +3076,7 @@
       // Keep audio randomness separate from game RNG / loot.
       for(let i=0;i<length;i++)data[i]=(Math.sin(i*77.37)+Math.sin(i*31.13))*.5*(1-i/length);
       const source=audioContext.createBufferSource(),filter=audioContext.createBiquadFilter(),gain=audioContext.createGain();
-      source.buffer=buffer;filter.type='highpass';filter.frequency.value=1800;gain.gain.value=.045*settings.volume/100;
+      source.buffer=buffer;filter.type='highpass';filter.frequency.value=1800;gain.gain.value=.045*settings.volume/100*settings.sfxVolume/100;
       source.connect(filter);filter.connect(gain);gain.connect(audioContext.destination);source.start();source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect();};
     }catch{}
   }
@@ -3210,14 +3211,14 @@
   upgradePools[1].push('pigCheekBomber','hamsterTwister');upgradePools[3].push('hamsterVape','pigCheekBomber');upgradePools[5].push('hamsterTwister','hamsterVape');upgradePools[7].push('pigCheekBomber','hamsterVape');
   Object.assign(ngPlusSkillBook,{
     ngAcornBarrage:passive('EICHELSALVE DER NACHT','⋰','NG+: Alle 7 Sekunden fliegen vier gezielte Eicheln zum nächsten Gegner in 620 Reichweite: je 2,5 × √Nussschaden.','ngAcornBarrage',{ngplus:true}),
-    ngBattleApron:passive('KAMPFSCHÜRZE','▤','NG+: +1 permanentes Herz, volle Heilung und 7 Prozentpunkte Blockchance (höchstens 45 % insgesamt).','ngBattleApron',{ngplus:true,apply:p=>{p.ngBattleApron=true;p.maxHp++;p.hp=p.maxHp;p.damageGuard=Math.min(.45,p.damageGuard+.07);}}),
+    ngBattleApron:passive('KAMPFSCHÜRZE','▤','NG+: +1 permanentes Herz, volle Heilung und 7 Prozentpunkte Blockchance (höchstens 45 % insgesamt).','ngBattleApron',{ngplus:true,apply:p=>{p.ngBattleApron=true;p.maxHp++;p.hp=p.maxHp;p.damageGuard=Math.min(STAT_CAPS32.damageGuard,p.damageGuard+.07);}}),
     ngHareLaces:passive('HASENSCHNÜRSENKEL','↗','NG+: 10 % mehr Lauftempo und 10 % kürzerer Dash-Cooldown.','ngHareLaces',{ngplus:true,apply:p=>{p.ngHareLaces=true;p.speed*=1.10;p.dashCooldown*=.9;}}),
     ngPouchRunner:passive('BEUTELBOTEN','⊕','NG+: +1 maximale Ladung je Spezialwaffe, +20 % Munitions-Dropchance und +30 Sammelradius. Keine direkte Nachladung.','ngPouchRunner',{ngplus:true,apply:p=>{p.ngPouchRunner=true;p.ammoBonus++;p.ammoDropLuck*=1.2;p.magnet+=30;}}),
     ngDashCinders:passive('DASH-FUNKEN','✴','NG+: Ein Dash legt höchstens alle 5 Sekunden einen kurzen Funkenstoß im Radius 125: 5 × √Nussschaden.','ngDashCinders',{ngplus:true})
   });
   Object.assign(ngPlus2SkillBook,{
     ng2Graviton:passive('GRAVITONEN-NUSS','◎','NG+2: Alle 9 Sekunden zieht ein Impuls normale Gegner in Reichweite 175 kurz zusammen und trifft sie für 6 × √Spezialschaden. Bosse erleiden Schaden ohne Sog.','ng2Graviton',{ngplus2:true}),
-    ng2VictoryTeeth:passive('SIEGERZÄHNE','⌖','NG+2: +13 % Schaden gegen Bosse und +7 Prozentpunkte Krit-Chance.','ng2VictoryTeeth',{ngplus2:true,apply:p=>{p.ng2VictoryTeeth=true;p.bossDamage=(p.bossDamage||1)*1.13;p.crit=Math.min(.65,p.crit+.07);}}),
+    ng2VictoryTeeth:passive('SIEGERZÄHNE','⌖','NG+2: +13 % Schaden gegen Bosse und +7 Prozentpunkte Krit-Chance.','ng2VictoryTeeth',{ngplus2:true,apply:p=>{p.ng2VictoryTeeth=true;p.bossDamage=(p.bossDamage||1)*1.13;p.crit=Math.min(STAT_CAPS32.crit,p.crit+.07);}}),
     ng2TimeCrust:passive('ZEITKRUSTE','◌','NG+2: Alle 12 Sekunden räumt ein Puls bis zu fünf nahe gegnerische Geschosse ab und trifft Gegner im Radius 155 für 4 × √Nussschaden.','ng2TimeCrust',{ngplus2:true}),
     ng2LastSnack:passive('LETZTER SNACK','♥','NG+2: Unter 50 % Leben heilt Snickers höchstens alle 24 Sekunden 1 Herz. Kein Effekt bei vollem Leben.','ng2LastSnack',{ngplus2:true}),
     ng2Crossfire:passive('KREUZFEUER-KASTEN','✳','NG+2: Alle 5 Sekunden fliegen zwei durchschlagende Nüsse zum nächsten Gegner: je 3 × √Nussschaden.','ng2Crossfire',{ngplus2:true})
@@ -3233,10 +3234,10 @@
   Object.assign(specialUpgradeBook,{
     echoPelts:{title:'ECHO-FELL',short:'Echo-Fell',icon:'♧',desc:'Boss-Up: +13 % Nussschaden und +12 % Spezialschaden.',apply:p=>{p.damage*=1.13;p.specialDamage*=1.12;}},
     warDrums:{title:'FERKEL-KRIEGSTROMMEL',short:'Kriegstrommel',icon:'♫',desc:'Boss-Up: 11 % höhere Feuerrate und +12 % Schaden gegen Bosse.',apply:p=>{p.fireRate/=1.11;p.bossDamage=(p.bossDamage||1)*1.12;}},
-    stonePlating:{title:'STEINPLATTEN-PANZER',short:'Steinplatten',icon:'▣',desc:'Boss-Up: +2 Herzen, volle Heilung und +8 Prozentpunkte Blockchance (höchstens 45 %).',apply:p=>{p.maxHp+=2;p.hp=p.maxHp;p.damageGuard=Math.min(.45,p.damageGuard+.08);}},
+    stonePlating:{title:'STEINPLATTEN-PANZER',short:'Steinplatten',icon:'▣',desc:'Boss-Up: +2 Herzen, volle Heilung und +8 Prozentpunkte Blockchance (höchstens 45 %).',apply:p=>{p.maxHp+=2;p.hp=p.maxHp;p.damageGuard=Math.min(STAT_CAPS32.damageGuard,p.damageGuard+.08);}},
     bottomlessSatchel:{title:'NACHLADER-RUCKSACK',short:'Nachlader',icon:'⊕',desc:'Boss-Up: +1 maximale Ladung je Spezialwaffe und +25 % Munitions-Dropchance. Keine direkte Nachladung.',apply:p=>{p.ammoBonus++;p.ammoDropLuck*=1.25;}},
     liquidCourage:{title:'SCHWEINEMUT',short:'Schweinemut',icon:'↗',desc:'Boss-Up: 13 % schneller laufen und +12 % Spezialschaden.',apply:p=>{p.speed*=1.13;p.specialDamage*=1.12;}},
-    tidalNut:{title:'DOPPELKERNNUSS',short:'Doppelkern',icon:'✹',desc:'Boss-Up: +1 Durchschlag und +8 Prozentpunkte Krit-Chance.',apply:p=>{p.pierce++;p.crit=Math.min(.65,p.crit+.08);}}
+    tidalNut:{title:'DOPPELKERNNUSS',short:'Doppelkern',icon:'✹',desc:'Boss-Up: +1 Durchschlag und +8 Prozentpunkte Krit-Chance.',apply:p=>{p.pierce++;p.crit=Math.min(STAT_CAPS32.crit,p.crit+.08);}}
   });
   specialUpgradePools[0].push('stonePlating','echoPelts','bottomlessSatchel');specialUpgradePools[1].push('warDrums','liquidCourage','tidalNut');specialUpgradePools[2].push('warDrums','tidalNut','stonePlating','echoPelts','bottomlessSatchel','liquidCourage');
   ngPlusCarryKeys.push('pigCheekBomber','hamsterTwister','hamsterVape','ngAcornBarrage','ngBattleApron','ngHareLaces','ngPouchRunner','ngDashCinders','ng2Graviton','ng2VictoryTeeth','ng2TimeCrust','ng2LastSnack','ng2Crossfire');
@@ -3509,7 +3510,7 @@
     for(const key of ngPlusCarryKeys){const v=raw[key];if(typeof v==='boolean')clean[key]=v;else if(typeof v==='number'&&Number.isFinite(v)&&Math.abs(v)<=10000)clean[key]=v;else if(key==='candyBuffs'&&Array.isArray(v))clean[key]=v.filter(id=>Object.hasOwn(candyBook,id)).slice(0,3);}
     for(const [id,level] of Object.entries(raw.skills||{}))if(allSkillInfo(id)&&!allSkillInfo(id).weapon&&Number.isInteger(level)&&level>0)clean.skills[id]=Math.min(level,stackCaps[id]||1);
     for(const [id,level] of Object.entries(raw.specials||{}))if(Object.hasOwn(specialUpgradeBook,id)&&Number(level)>0)clean.specials[id]=1;
-    if(Array.isArray(raw.weapons))clean.weapons=[...new Set(['nutBomb',...raw.weapons.filter(id=>typeof id==='string'&&Object.hasOwn(weaponBook,id))])].slice(0,40);
+    if(Array.isArray(raw.weapons))clean.weapons=[...new Set(['nutBomb',...raw.weapons.filter(id=>typeof id==='string'&&Object.hasOwn(weaponBook,id))])].slice(0,Object.keys(weaponBook).length);
     for(const id of Object.keys(scoreSkillBook)){const n=raw.scorePerks?.[id];if(Number.isInteger(n)&&n>=0)clean.scorePerks[id]=Math.min(n,30);}
     clean.characterId=typeof raw.characterId==='string'&&Object.hasOwn(characterRoster,raw.characterId)?raw.characterId:'snickers';
     clean.hardMode=Boolean(raw.hardMode);clean.impossibleMode=Boolean(raw.impossibleMode);
@@ -3693,7 +3694,7 @@
         const voices=synth?.getVoices()||[],german=voices.filter(v=>/^de(?:-|_)/i.test(v.lang)||v.lang==='de');
         const voice=german.find(v=>v.localService)||german[0];
         if(synth&&Utterance&&voice){
-          const speech=new Utterance(d.quote);speech.lang='de-DE';speech.voice=voice;speech.rate=1.12;speech.pitch=1.3;speech.volume=settings.volume/100;
+          const speech=new Utterance(d.quote);speech.lang='de-DE';speech.voice=voice;speech.rate=1.12;speech.pitch=1.3;speech.volume=settings.volume/100*settings.sfxVolume/100;
           bossSpeech=speech;
           speech.onend=()=>{if(bossSpeech!==speech)return;bossSpeech=null;if(mode==='victory'&&player.bossDance===d)victoryTime=Math.min(victoryTime,1.4);};
           speech.onerror=()=>{if(bossSpeech===speech)bossSpeech=null;};
@@ -4537,7 +4538,7 @@
   Object.assign(skillBook,{
     sniffAttack:{icon:'⌁',title:'SCHNÜFFELANFALL',short:'Schnüffelanfall',desc:'Eine Spürnase findet alle 5 s den nächsten Gegner. Er nimmt 6 s lang 14 % mehr Schaden (Bosse 8 %). Zusätzlich +12 % Laufgeschwindigkeit.',apply:p=>{p.sniffAttack=true;p.speed*=1.12;}},
     unknofMachine:{icon:'⚙',title:'ENTKNOFIMASCHINE',short:'Entknofimaschine',desc:'Verdichtet Spezialgeschosse: +28 % Spezialschaden und +30 % Chance auf Munitionskisten. Die Kisten bleiben bei 50 % Auffüllung.',apply:p=>{p.unknofMachine=true;p.specialDamage*=1.28;p.ammoDropLuck*=1.30;}},
-    meatUnbopper:{icon:'▣',title:'FORMFLEISCHENTBOPPLER',short:'Formfleischentboppler',desc:'+2 permanente Herzen, volle Heilung und +8 % Blockchance. Alle 14 s entfernt die Maschine bis zu vier Geschosse nahe bei dir.',apply:p=>{p.meatUnbopper=true;p.maxHp+=2;p.hp=p.maxHp;p.damageGuard=Math.min(.45,(p.damageGuard||0)+.08);}},
+    meatUnbopper:{icon:'▣',title:'FORMFLEISCHENTBOPPLER',short:'Formfleischentboppler',desc:'+2 permanente Herzen, volle Heilung und +8 % Blockchance. Alle 14 s entfernt die Maschine bis zu vier Geschosse nahe bei dir.',apply:p=>{p.meatUnbopper=true;p.maxHp+=2;p.hp=p.maxHp;p.damageGuard=Math.min(STAT_CAPS32.damageGuard,(p.damageGuard||0)+.08);}},
     rabbitCommand:{icon:'✦',title:'HASENVERNICHTUNGSKOMMANDO',short:'Hasenkommando',desc:'+24 % Schaden gegen Hasen (auch Hasen-Bosse). Alle 6 s schießen drei Kommandosplitter mit je 1,35 × √Angriffsschaden auf nahe Feinde.',apply:p=>{p.rabbitCommand=true;p.rabbitDamage=(p.rabbitDamage||1)*1.24;}},
     eiterWesen:{icon:'◉',title:'DAS EITERNDE WESEN DER 3. DIMENSION',short:'Eiterwesen',desc:'Ein Wesen folgt dir. Alle 2,4 s trifft es ein Ziel in 540 Reichweite für 3,2 × √Angriffsschaden; auch Bosse, ohne zusätzlichen Flächenschaden.',apply:p=>{p.eiterWesen=true;p.eiterCd=.6;}},
     eiterUp1:{icon:'ϟ',title:'DIMENSIONALE HAST',short:'Eiter: Tempo',requires:'eiterWesen',desc:'Verbessert DAS EITERNDE WESEN DER 3. DIMENSION: greift 20 % schneller an (2,0 s statt 2,4 s).',apply:p=>p.eiterUp1=true},
@@ -5073,7 +5074,7 @@
   const stanislavPafti=triggerPaftiIntervention;
   triggerPaftiIntervention=function(restoring=false){stanislavPafti(restoring);const id=player?.characterId;if(mode!=='paftiCutscene'||!heroStory[id])return;
     const callback=$('paftiContinue').onclick;
-    showOverlay(characterScene(id,'pafti','paftiContinue','KARNIL ERNEUT STELLEN').replace('<p>','<div class="pafti-scene" aria-label="Pafti mit SNES-Controller-Kopf"><div class="pafti-controller"><i></i><b>✚</b><em>● ●</em></div><div class="pafti-body">♟</div></div><p>'));
+    showOverlay(characterScene(id,'pafti','paftiContinue','KARNIL ERNEUT STELLEN'));
     $('paftiContinue').onclick=callback;
   };
   const stanislavBossQuote=bossQuoteMarkup;
@@ -5101,7 +5102,7 @@
     ngTravelerCache:{icon:'▣',title:'REISEVORRAT DER FÜNF WELTEN',short:'Reisevorrat',ngplus:true,desc:'NG+: +1 maximale Ladung für alle Spezialwaffen, +12 % Spezialschaden und +12 % Munitions-Dropchance. Die jeweilige Startwaffe zählt mit.',apply:p=>{p.ngTravelerCache=true;p.ammoBonus++;p.specialDamage*=1.12;p.ammoDropLuck*=1.12;}}
   });
   Object.assign(ngPlus2SkillBook,{
-    ng2IronEncore:{icon:'◈',title:'EISERNE ZUGABE',short:'Eiserne Zugabe',ngplus2:true,desc:'NG+2: +1 maximales Herz, volle Heilung und +6 % Blockchance. Höchstens alle 11 s werden zwei feindliche Geschosse im Umkreis 110 abgefangen.',apply:p=>{p.ng2IronEncore=true;p.maxHp++;p.hp=p.maxHp;p.damageGuard=Math.min(.45,(p.damageGuard||0)+.06);}},
+    ng2IronEncore:{icon:'◈',title:'EISERNE ZUGABE',short:'Eiserne Zugabe',ngplus2:true,desc:'NG+2: +1 maximales Herz, volle Heilung und +6 % Blockchance. Höchstens alle 11 s werden zwei feindliche Geschosse im Umkreis 110 abgefangen.',apply:p=>{p.ng2IronEncore=true;p.maxHp++;p.hp=p.maxHp;p.damageGuard=Math.min(STAT_CAPS32.damageGuard,(p.damageGuard||0)+.06);}},
     ng2BattleRhythm:{icon:'♫',title:'UNBEUGSAMER TAKT',short:'Unbeugsamer Takt',ngplus2:true,desc:'NG+2: +9 % Feuerrate und +12 % Schaden an Bossen und Minibossen. Wirkt mit jeder der fünf Figuren.',apply:p=>{p.ng2BattleRhythm=true;p.fireRate/=1.09;p.bossDamage=(p.bossDamage||1)*1.12;}}
   });
   ngPlusCarryKeys.push('brunoOperation','ngGardenEcho','ngTravelerCache','ng2IronEncore','ng2BattleRhythm');
@@ -5743,8 +5744,10 @@
     }else{
       if(!p.piles)p.piles=shuffled(['empty','upgrade','magpie']);
       const message=p.result||'Drei Haufen, eine Wahl. Einer enthält ein dauerhaftes Upgrade, einer nur Schalen. Im dritten wartet eine Elster auf einen deiner unverstärkten Basis-Skills.';
-      showOverlay(worldRoomMarkup(p,p.outcome==='guardian'?'HIER IST WIEDER RUHE.':'DAS RASCHELT VERDÄCHTIG.',p.outcome==='guardian'?'Der Hausherr ist besiegt. Sein Türschild hängt schief. Sonst alles bestens.':message)+(!p.done?`<div class="nut-pile-options">${[0,1,2].map(i=>`<button class="secondary-button" id="worldPile${i}"><img src="${worldIcon('nut-pile')}" alt="Nusshaufen ${i+1}"><strong>HAUFEN ${i+1}</strong><small>DIESEN DURCHWÜHLEN</small></button>`).join('')}</div>`:`<p class="world-result">${p.resultKind?`<img src="${worldIcon(p.resultKind==='magpie'?'magpie':p.resultKind==='upgrade'?'perma-stat':'nut-pile')}" alt="">`:''}${escapeHTML(p.result||(p.outcome==='guardian'?'Miniboss besiegt · Herz und Punkte erhalten.':'Hier ist nichts mehr zu holen.'))}</p>`)+`<button class="primary-button" id="worldLeave">GEBÄUDE VERLASSEN</button>`);
-      for(let i=0;i<3;i++)bindWorldButton('worldPile'+i,()=>chooseWorldPile(p,i));
+      showOverlay(worldRoomMarkup(p,p.outcome==='guardian'?'HIER IST WIEDER RUHE.':'DAS RASCHELT VERDÄCHTIG.',p.outcome==='guardian'?'Der Hausherr ist besiegt. Sein Türschild hängt schief. Sonst alles bestens.':message)+(!p.done?`<div class="nut-pile-options">${[0,1,2].map(i=>`<button class="secondary-button" id="worldPile${i}"><img src="${worldIcon('nut-pile')}" alt="Nusshaufen ${i+1}"><strong>KISTE ${i+1}</strong><small>DIESE ÖFFNEN</small></button>`).join('')}</div>`:`<p class="world-result">${p.resultKind?`<img src="${worldIcon(p.resultKind==='magpie'?'magpie':p.resultKind==='upgrade'?'perma-stat':'nut-pile')}" alt="">`:''}${escapeHTML(p.result||(p.outcome==='guardian'?'Miniboss besiegt · Herz und Punkte erhalten.':'Hier ist nichts mehr zu holen.'))}</p>`)+`<button class="primary-button" id="worldLeave">GEBÄUDE VERLASSEN</button>`);
+      for(let i=0;i<3;i++){bindWorldButton('worldPile'+i,()=>chooseWorldPile(p,i));bindWorldButton('chestHit34-'+i,()=>chooseWorldPile(p,i));}
+      const scene=$('houseScene27');if(scene&&!p.done){scene.style.cursor='pointer';scene.onclick=e=>{const box=scene.getBoundingClientRect(),x=(e.clientX-box.left)*960/box.width,y=(e.clientY-box.top)*640/box.height;const index=Math.round((x-310)/165);if(index>=0&&index<3&&Math.abs(x-(310+index*165))<=70&&y>=165&&y<=305)chooseWorldPile(p,index);};}
+
     }
     bindWorldButton('worldLeave',worldCloseInterior);
   }
@@ -5753,7 +5756,7 @@
   function buyWorldOffer(p,index){if(mode!=='worldShop'||exploration?.interior!==p.id)return;prepareStatShop(p);const o=p.offers?.[index];if(!o||o.bought||!o.stat||wallet()<o.price)return;const c=o.stat?scoreSkillBook[o.stat]:resolveReward(o.ref);if(!c||(o.stat?!scorePerkAvailable(o.stat):!availableRewards(false).some(a=>a.id===c.id)))return;
     o.bought=true;worldSpent+=o.price;if(o.stat){c.apply(player);player.scorePerks[o.stat]=(player.scorePerks[o.stat]||0)+1;normalizeBuild(player);}else grantReward(c);updateHud();updateSkills();saveRunNow();renderWorldInterior();tone(660,.16,'triangle',.06,950);
   }
-  function chooseWorldPile(p,index){if(mode!=='worldNuts'||p.done||exploration?.interior!==p.id)return;p.done=true;const outcome=p.piles[index];p.resultKind=outcome;
+  function chooseWorldPile(p,index){if(mode!=='worldNuts'||p.done||exploration?.interior!==p.id||!Number.isInteger(index)||index<0||index>2)return;if(!Array.isArray(p.piles)||p.piles.length!==3)p.piles=shuffled(['empty','upgrade','magpie']);p.done=true;p.selectedPile34=index;const outcome=p.piles[index];p.resultKind=outcome;
     if(outcome==='upgrade')p.result='Volltreffer: '+permanentReward(0)+'. Bleibt für diesen Run – auch nach der nächsten Welle.';
     else if(outcome==='magpie'){const ids=knollCandidates().filter(id=>{const c=allSkillInfo(id);return !c?.requires&&!c?.legendary&&!c?.ngplus&&!c?.ngplus2&&!c?.endless;});const id=shuffled(ids)[0];if(id){delete player.skills[id];player[knollStealable[id]]=false;p.result='Eine Elster schießt heraus und klaut '+allSkillInfo(id).title+'. „Meins!“, krächzt sie. Schlechte Verhandlungsbasis.';}else p.result='Eine Elster mustert deinen Build. Kein unverstärkter Basis-Skill zum Klauen. Sie nimmt beleidigt eine leere Schale mit.';}
     else p.result='Nur leere Nussschalen. Jemand war schneller – und hat nicht mal aufgeräumt.';
@@ -5795,7 +5798,7 @@
   }
   function showWorldMap(){
     if(!exploration||hasenbeinMode||!['playing','paused','worldMap'].includes(mode))return;if(mode==='worldMap')return closeWorldMap();worldMapReturn=mode;mode='worldMap';resetInput();worldMapZoom=1;worldMapCenter={...worldMapPosition()};
-    showOverlay(`<span class="eyebrow">${escapeHTML(getStageName(exploration.biome))} · WELTKARTE</span><h2 id="overlayTitle">NOCH JEDE MENGE GARTEN.</h2><p>${endlessMode?'90 Sekunden je Welle · neue Karte nach je 15 Wellen.':'2 Minuten je Kampfwelle · Erkundung bleibt innerhalb des Akts erhalten.'} Die Zeit pausiert.</p><div class="world-map-tools"><button class="secondary-button" id="worldMapFull">GANZE KARTE</button><button class="secondary-button" id="worldMapNear">MEINE UMGEBUNG · 4×</button></div><canvas id="worldMapCanvas" width="700" height="700" aria-label="Weltkarte: Gebäude gelb, dauerhafte Power-ups lila, Minibosse rot, eigene Position weiß. Vergrößerte Karte mit Maus oder Finger verschieben."></canvas><div class="map-legend"><span class="map-house">■ Gebäude</span><span class="map-power">◆ Dauerhafte Power-ups</span><span class="map-boss">✕ Minibosse</span><span class="map-player">● Du</span><span>Grau: erledigt · helle Felder: erkundet</span><span>Vergrößerte Karte mit Maus oder Finger verschieben</span></div><button class="primary-button" id="worldMapClose">KARTE SCHLIESSEN · M</button>`);
+    showOverlay(`<span class="eyebrow">${escapeHTML(getStageName(exploration.biome))} · WELTKARTE</span><h2 id="overlayTitle">NOCH JEDE MENGE GARTEN.</h2><p>${endlessMode?'1:45 Minuten je Welle · neue Karte nach je 15 Wellen.':'1:45 Minuten je Kampfwelle · Erkundung bleibt innerhalb des Akts erhalten.'} Die Zeit pausiert.</p><div class="world-map-tools"><button class="secondary-button" id="worldMapFull">GANZE KARTE</button><button class="secondary-button" id="worldMapNear">MEINE UMGEBUNG · 4×</button></div><canvas id="worldMapCanvas" width="700" height="700" aria-label="Weltkarte: Gebäude gelb, dauerhafte Power-ups lila, Minibosse rot, eigene Position weiß. Vergrößerte Karte mit Maus oder Finger verschieben."></canvas><div class="map-legend"><span class="map-house">■ Gebäude</span><span class="map-power">◆ Dauerhafte Power-ups</span><span class="map-boss">✕ Minibosse</span><span class="map-player">● Du</span><span>Grau: erledigt · helle Felder: erkundet</span><span>Vergrößerte Karte mit Maus oder Finger verschieben</span></div><button class="primary-button" id="worldMapClose">KARTE SCHLIESSEN · M</button>`);
     bindWorldButton('worldMapFull',()=>{worldMapZoom=1;drawWorldMap();});bindWorldButton('worldMapNear',()=>{worldMapZoom=4;worldMapCenter={...worldMapPosition()};drawWorldMap();});
     const c=$('worldMapCanvas');let drag=null;c.onpointerdown=e=>{if(worldMapZoom===1)return;e.preventDefault();drag={id:e.pointerId,x:e.clientX,y:e.clientY,cx:worldMapCenter.x,cy:worldMapCenter.y};c.setPointerCapture(e.pointerId);};c.onpointermove=e=>{if(!drag||drag.id!==e.pointerId)return;const scale=exploration.width/worldMapZoom/(c.getBoundingClientRect().width*640/700);worldMapCenter.x=drag.cx-(e.clientX-drag.x)*scale;worldMapCenter.y=drag.cy-(e.clientY-drag.y)*scale;drawWorldMap();};c.onpointerup=c.onpointercancel=e=>{drag=null;if(c.hasPointerCapture(e.pointerId))c.releasePointerCapture(e.pointerId);};
     bindWorldButton('worldMapClose',closeWorldMap);drawWorldMap();
@@ -6693,7 +6696,7 @@
   worldCloseInterior=function(){houseEntry27=null;return closeHouse27();};
   worldRoomMarkup=function(p,title,body){
     const hero=characterRoster[player.characterId||'snickers'].name,shop=p.outcome==='shop',visited=p.offers?.some(o=>o.bought),heroLine=visited?'„Gibt’s Treuepunkte?“':'„Was kostet hier ein bisschen mehr Durchschlagskraft?“',reply=visited?'„Die hattest du. Hast du gerade ausgegeben.“':'„Weniger als ein neuer Gartenzaun. Bei deinem Fahrstil lohnt sich das.“';
-    return `<span class="eyebrow">${escapeHTML(worldBuildingNames[p.style])} · ZEIT PAUSIERT</span><h2 id="overlayTitle">${shop?'WALBURGA WECHSELGELDS LADEN':title}</h2><div class="house-scene27"><canvas id="houseScene27" width="960" height="640" aria-label="${escapeHTML(hero)} im ${shop?'Laden bei Walburga Wechselgeld':'Innenraum'}"></canvas><span class="house-pause27">WELLENZEIT PAUSIERT</span></div><div class="house-dialog27" aria-live="polite">${shop?`<p><b>${escapeHTML(hero)}</b> ${heroLine}</p><p><b>WALBURGA</b> ${reply}</p>`:`<p>${body}</p>`}</div>`;
+    return `<span class="eyebrow">${escapeHTML(worldBuildingNames[p.style])} · ZEIT PAUSIERT</span><h2 id="overlayTitle">${shop?'WALBURGA WECHSELGELDS LADEN':title}</h2><div class="house-scene27"><canvas id="houseScene27" width="960" height="640" aria-label="${escapeHTML(hero)} im ${shop?'Laden bei Walburga Wechselgeld':'Innenraum'}"></canvas>${!shop&&!p.done?`<div class="chest-hits34">${[0,1,2].map(i=>`<button id="chestHit34-${i}" style="left:${(310+i*165-64)/9.6}%" aria-label="Kiste ${i+1} öffnen"><span>${i+1}</span></button>`).join('')}</div>`:''}<span class="house-pause27">WELLENZEIT PAUSIERT</span></div><div class="house-dialog27" aria-live="polite">${shop?`<p><b>${escapeHTML(hero)}</b> ${heroLine}</p><p><b>WALBURGA</b> ${reply}</p>`:`<p>${body}</p>`}</div>`;
   };
 
   // One map projection for the atlas and the corner navigator; roads match collision-free ground.
@@ -7157,7 +7160,7 @@
     if(!player?.notices28?.length||!['playing','paused','worldShop','worldNuts','upgrade','bossUpgrade','worldReward28'].includes(mode))return;
     if(mode!=='worldReward28'&&!player.noticeReturn28)player.noticeReturn28=mode;
     mode='worldReward28';resetInput();const n=player.notices28[0];
-    showOverlay(`<span class="eyebrow">${escapeHTML(n.kind)} · ZEIT PAUSIERT</span><h2 id="overlayTitle">DAS BLEIBT BEI DIR.</h2><article class="discovery-card28 rarity-${n.rarity}"><img src="${worldArt?.url('icon',n.icon)||''}" alt=""><div><strong>${escapeHTML(n.title)}</strong><p>${escapeHTML(n.desc)}</p></div></article><button class="primary-button" id="discoveryContinue28">${player.notices28.length>1?'NÄCHSTEN FUND ANSEHEN':'WEITER GEHT’S'} ↗</button>`);
+    showOverlay(`<span class="eyebrow">${escapeHTML(n.kind)} · ZEIT PAUSIERT</span><h2 id="overlayTitle">${n.questComplete34?'QUEST ABGESCHLOSSEN!':'DAS BLEIBT BEI DIR.'}</h2>${n.questComplete34?`<div class="quest-dialog28 quest-success34"><img src="${worldArt?.url('quest28',0)||''}" alt="Gundula Gartenfunk"><div><strong>GUNDULA GRATULIERT!</strong><p>„Geschafft! Herzlichen Glückwunsch und vielen Dank für deine Hilfe. Ohne dich säße ich hier noch bis zum nächsten Nusswinter. Das hast du dir verdient!“</p><small>${escapeHTML(n.questName34||'')}</small></div></div>`:''}<article class="discovery-card28 rarity-${n.rarity}"><img src="${worldArt?.url('icon',n.icon)||''}" alt=""><div><strong>${escapeHTML(n.title)}</strong><p>${escapeHTML(n.desc)}</p></div></article><button class="primary-button" id="discoveryContinue28">${player.notices28.length>1?'NÄCHSTEN FUND ANSEHEN':'WEITER GEHT’S'} ↗</button>`);
     bindWorldButton('discoveryContinue28',closeDiscovery28);saveRunNow();
   }
   function closeDiscovery28(){
@@ -8574,13 +8577,22 @@
   function openQueen31(p){if(!p||p.done||p.status==='fighting'||!worldOutside()||!['playing','queenDialog31'].includes(mode))return;exploration.queenDialog31=p.id;mode='queenDialog31';resetInput();player.moving=false;saveRunNow();renderQueen31(p);}
   function renderQueen31(p){
     const resolved=p.status==='blessed';mode='queenDialog31';
+    if(p.status==='judged'){
+      const innie=p.verdict==='innie';
+      showOverlay(`<span class="eyebrow">DIE KÖNIGIN HAT ENTSCHIEDEN · ZEIT PAUSIERT</span><h2 id="overlayTitle">${innie?'DU BIST EIN INNIE!':'DU BIST EIN OUTIE!'}</h2><div class="queen-verdict34"><p>${innie?'„Ha! Nach innen. Genau wie mein Vertrauen in diese Welt. Du gehörst zu uns, kleiner Nussvernichter!“':'„Nach außen?! Unter MEINER Krone? Ich dulde vieles. Aber keine vorstehenden Tatsachen!“'}</p><p>${innie?'„Ich schenke dir meinen roten Blick. Dreißig Sekunden lang darfst du so wütend gucken wie ich beim Steuerbescheid. Geh und mach mich stolz!“':'„Du wolltest eine Audienz? Du bekommst eine. Mit beiden königlichen Händen! Bereite dich vor, Outie!“'}</p><strong>${innie?'Gleich: 30 Sekunden Roter Blick.':'Gleich: Minibosskampf gegen die Königin.'}</strong></div><button class="primary-button" id="queenVerdictContinue34">${innie?'DANKE, EURE INNIGKEIT!':'DANN KOMM DOCH!'}</button>`);
+      bindWorldButton('queenVerdictContinue34',()=>finishQueenVerdict34(p));return;
+    }
     showOverlay(`<span class="eyebrow">DIE KÖNIGIN DER INNIES · ZEIT PAUSIERT</span><h2 id="overlayTitle">${resolved?'EINE VON UNS.':'INNIE ODER OUTIE?'}</h2><canvas id="queenPortrait31" width="256" height="256" style="width:180px;height:180px;image-rendering:pixelated" aria-label="Gekrönte Gestalt ohne Augen, mit senkrechtem Schlitz im Gesicht"></canvas><p><b>„Ich bin die Königin der Innies!“</b></p><p>${resolved?'Die Königin erkennt dich als Innie an. Du erhältst 30 Sekunden ROTER BLICK. Die Zeit beginnt erst beim Weitergehen.':'Die augenlose Königin legt den Kopf schief. „Ich werde prüfen, ob du zu uns gehörst.“ Innie: 30 Sekunden Roter Blick. Outie: ein Minibosskampf um ein paar zusätzliche Nüsse. Beide Ergebnisse sind gleich wahrscheinlich.'}</p>${resolved?'<button class="primary-button" id="queenLeave31">MIT ROTEM BLICK WEITER</button>':'<button class="primary-button" id="queenCheck31">PRÜFUNG ZULASSEN</button><button class="secondary-button" id="queenLeave31">SPÄTER WIEDERKOMMEN</button>'}`);
     const c=$('queenPortrait31'),art=window.PixelStudio;if(c&&art){const x=c.getContext('2d');x.imageSmoothingEnabled=false;art.draw(x,art.enemy('queenInnies31',0,'idle'),128,230,230,.8);}bindWorldButton('queenCheck31',()=>resolveQueen31(p));bindWorldButton('queenLeave31',closeQueen31);
   }
   function closeQueen31(){if(mode!=='queenDialog31'||!exploration)return;const p=queenPoi31();exploration.queenDialog31=null;mode='playing';hideOverlay();resetInput();if(p&&!p.done){const a=Math.atan2(player.y-p.y,player.x-p.x);Object.assign(player,freeWorldPoint(p.x+Math.cos(a)*170,p.y+Math.sin(a)*170,player.r));p.reopenAfter31=runTime+2;}player.invuln=Math.max(player.invuln||0,1.3);lastFrame=performance.now();saveRunNow();}
   function resolveQueen31(p){
     if(mode!=='queenDialog31'||exploration?.queenDialog31!==p?.id||p.status!=='waiting')return false;
-    if(p.verdict==='innie'){p.status='blessed';p.done=true;const state=encounterRunState31();if(state)state.queenDone=true;player.powerups.overdrive=Math.max(player.powerups.overdrive||0,30);updatePowerHud();saveRunNow();victoryFanfare();renderQueen31(p);}
+    p.status='judged';saveRunNow();renderQueen31(p);return true;
+  }
+  function finishQueenVerdict34(p){
+    if(mode!=='queenDialog31'||exploration?.queenDialog31!==p?.id||p.status!=='judged')return false;
+    if(p.verdict==='innie'){p.status='blessed';p.done=true;const state=encounterRunState31();if(state)state.queenDone=true;player.powerups.overdrive=Math.max(player.powerups.overdrive||0,30);updatePowerHud();saveRunNow();victoryFanfare();closeQueen31();}
     else{p.status='fighting';p.active=false;exploration.queenDialog31=null;mode='playing';hideOverlay();resetInput();if(typeof spawnInnieQueen31==='function')spawnInnieQueen31(p);player.invuln=Math.max(player.invuln||0,1.5);saveRunNow();announce('OUTIE!', 'Die Königin verlangt eine Audienz mit Gewalt.');}return true;
   }
   function onInnieQueenDefeated31(p,e){
@@ -8609,7 +8621,7 @@
   const resumableEncounters31=resumableMode;
   resumableMode=function(){if(['worldQuiz31','quizTeleport31','queenDialog31'].includes(mode))return 'playing';return resumableEncounters31();};
   const resumeEncounters31=resumeSavedRun;
-  resumeSavedRun=function(...args){const r=resumeEncounters31(...args);if(player&&exploration&&mode!=='menu'){ensureEncounters31();const queen=queenPoi31();if(exploration.queenDialog31&&queen&&['waiting','blessed'].includes(queen.status)){mode='queenDialog31';renderQueen31(queen);}saveRunNow();}return r;};
+  resumeSavedRun=function(...args){const r=resumeEncounters31(...args);if(player&&exploration&&mode!=='menu'){ensureEncounters31();const queen=queenPoi31();if(exploration.queenDialog31&&queen&&['waiting','judged','blessed'].includes(queen.status)){mode='queenDialog31';renderQueen31(queen);}saveRunNow();}return r;};
   document.addEventListener('keydown',e=>{if(e.code!=='Escape'||!['worldQuiz31','quizTeleport31','queenDialog31'].includes(mode))return;e.preventDefault();e.stopImmediatePropagation();if(mode==='queenDialog31')closeQueen31();else if(mode==='quizTeleport31'){const p=exploration.pois.find(p=>p.id===exploration.interior);if(p)renderQuiz31(p);}else worldCloseInterior();},true);
   const helpEncounters31=helpMarkup;
   helpMarkup=function(){return helpEncounters31().replaceAll('65 % Shop, 20 % Nusshaufen, 15 % Minibossraum','55 % Shop, 20 % Nusshaufen, 15 % Minibossraum, 10 % Quizmaster').replaceAll('zu 65 % einen Shop, zu 20 % drei Nusshaufen und zu 15 % einen Miniboss','zu 55 % einen Shop, zu 20 % drei Nusshaufen, zu 15 % einen Miniboss und zu 10 % einen Quizmaster')+`<section class="build-section"><h3>Quizmaster und Königin</h3><p>Der erste Laden bleibt garantiert. Weitere Gebäude würfeln mit 55 % Shop, 20 % Nusshaufen, 15 % Miniboss und 10 % Quizmaster. Ein Quiz hat vier Antworten und einen Versuch. Richtig gelöst: ein frei gewählter, sicherer Teleport auf derselben Karte. Die 50 Fragen beruhen auf echten Hamsterfakten; Quellen stehen in docs/hamster-quiz31-sources.json.</p><p>Auf einer der ersten drei Karten wartet einmal pro Run die Königin der Innies, auf der Karte als Krone markiert. Ihre Prüfung hat je 50 % Chance: Innie erhält 30 Sekunden Roter Blick; Outie kämpft gegen die Königin um 25 % mehr Nüsse als bei einem normalen wandernden Miniboss. Das Ergebnis bleibt beim Fortsetzen bestehen.</p></section>`;};
@@ -8762,14 +8774,14 @@
   };
 
   // Stambouli Edition: more room to grow, with predictable ten-stage shop paths.
-  Object.assign(BALANCE,{maxDamage:21,maxSpeed:465,minInterval:.105,minDash:.88,
-    maxHearts:35,maxAmmoBonus:10,maxPowerLuck:3.6});
-  const STAT_CAPS32={dodgeChance:.34,damageGuard:.39,crit:.54,specialDamage:7,
-    bossDamage:2.8,rabbitDamage:1.95,ammoDropLuck:3.5,powerDuration:1.9,
-    pierce:9,magnet:480};
+  Object.assign(BALANCE,{maxDamage:65,maxSpeed:760,minInterval:.035,minDash:.32,
+    maxHearts:35,maxAmmoBonus:24,maxPowerLuck:6});
+  const STAT_CAPS32={dodgeChance:.5,damageGuard:.55,crit:.8,specialDamage:14,
+    bossDamage:5,rabbitDamage:3.5,ammoDropLuck:6,powerDuration:3,
+    pierce:16,magnet:1000};
   // The companion/synergy formula had its own sixfold special-damage clamp.
   // Extend the effective formula with the new sevenfold build ceiling.
-  abilitySpecial=function(p=player){return Math.sqrt(Math.max(.2,Math.min(7,p.specialDamage||1)))*
+  abilitySpecial=function(p=player){return Math.sqrt(Math.max(.2,Math.min(STAT_CAPS32.specialDamage,p.specialDamage||1)))*
     abilityPower(p)/Math.sqrt(1.4);};
   const normalizeBefore32=normalizeBuild;
   normalizeBuild=function(p){
@@ -8781,7 +8793,7 @@
     return p;
   };
   const capValue32=(p,id)=>id==='pickupRange'?p?.magnet:id==='heart'?p?.maxHp:id==='ammo'?p?.ammoBonus:
-    id==='dodge'?p?.dodgeChance:p?.[id];
+    id==='dodge'?p?.dodgeChance:id==='dash'?p?.dashCooldown:p?.[id];
   function statCap32(p,id){
     if(!p)return false;
     const n=Number(capValue32(p,id));if(!Number.isFinite(n))return false;
@@ -8892,8 +8904,8 @@
       const level=shopLevel32(player,offer.stat),kind=button.querySelector('.upgrade-kind'),value=button.querySelector('em');
       const description=button.querySelector('strong + span');
       if(kind)kind.textContent='DAUERHAFTER WERT · STUFE '+Math.min(10,level+1)+' / 10';
-      if(description&&offer.stat==='speed')description.textContent='+4,8 % Lauftempo je Ladenstufe (bis 465). Das Punkteschild rennt nicht weg.';
-      if(description&&offer.stat==='dash')description.textContent='8,8 % kürzerer Dash-Cooldown je Ladenstufe (mindestens 0,88 s).';
+      if(description&&offer.stat==='speed')description.textContent='+4,8 % Lauftempo.';
+      if(description&&offer.stat==='dash')description.textContent='8,8 % kürzere Wartezeit zwischen Ausweichsprüngen.';
       if(level>=10){button.disabled=true;if(value)value.textContent='MAXIMAL · STUFE 10 / 10';}
       else if(!shopAvailable32(offer.stat)){button.disabled=true;if(value)value.textContent='WERT AUSGEREIZT';}
       else if(value)value.textContent=(offer.price===0?'0 PUNKTE · GRATIS-UPGRADE':offer.price.toLocaleString('de-DE')+' PUNKTE');
@@ -8913,11 +8925,11 @@
     const card=scoreSkillBook[id],original=card.apply,originalDesc=card.desc;
     if(id==='speed'){
       card.apply=p=>{p.speed*=1.048;};
-      card.desc='+4,8 % Lauftempo je Ladenstufe (bis 465). Das Punkteschild rennt nicht weg.';
+      card.desc='+4,8 % Lauftempo.';
     }
     if(id==='dash'){
       card.apply=p=>{p.dashCooldown*=.912;};
-      card.desc='8,8 % kürzerer Dash-Cooldown je Ladenstufe (mindestens 0,88 s).';
+      card.desc='8,8 % kürzere Wartezeit zwischen Ausweichsprüngen.';
     }
     shopPurchaseInFlight32=true;
     try{shopBuyBefore32(site,index);}finally{
@@ -8953,7 +8965,7 @@
     const budget=endlessMode?7:9;
     if((player.ammoDropsThisWave||0)>=budget||runTime-(player.lastAmmoDrop??-99)<difficulty23().ammoGap)return false;
     player.ammoDryKills=(player.ammoDryKills||0)+1;
-    const chance=Math.min(.312,.117*(player.ammoDropLuck||1)*
+    const chance=Math.min(.70,.117*(player.ammoDropLuck||1)*
       (player.skills?.corffelsBag&&(player.skills?.scavenger||player.beagle)?1.15:1));
     if(player.ammoDryKills<18&&Math.random()>=chance)return false;
     pickups.push({x,y,type:'ammo',life,phase:rnd(0,TAU)});
@@ -8966,7 +8978,7 @@
     if(tryDropSpecialAmmo(e.x,e.y,life))return;
     if(runTime-(player.lastPowerDrop??-99)>=6){
       player.powerDryKills=(player.powerDryKills||0)+1;
-      if(player.powerDryKills>=24||Math.random()<Math.min(.231,.07425*(player.powerLuck||1))){
+      if(player.powerDryKills>=24||Math.random()<Math.min(.45,.07425*(player.powerLuck||1))){
         pickups.push({x:e.x,y:e.y,type:'power',power:rollPowerupId(),life,phase:0});
         player.powerDryKills=0;player.lastPowerDrop=runTime;return;
       }
@@ -9586,6 +9598,590 @@
     return{pose:e.hit>0?'hurt':moving.speed>3?'walk':'idle',frame:moving.speed>3?Math.floor(moving.phase*1.65)%4:0};
   }
 
+  // Plain-language copy shared by all reward surfaces.
+  const TEXTS34={
+  "rabbitCleft": "30 % mehr Schaden gegen Hasen, inklusive Hasen-Bosse.",
+  "corffelsBag": "+65 Sammelradius, Funde bleiben 5 Sekunden länger liegen und 20 % mehr Chance auf Munition.",
+  "brothBox": "+1 permanentes Herz. Nach jeweils 50 besiegten Gegnern gibt es ein Herz Heilung, höchstens alle 12 Sekunden.",
+  "hunnaExpert": "Jede zehnte normale Salve verursacht dreifachen Schaden und durchschlägt 2 zusätzliche Gegner.",
+  "crumbCompass": "8 % mehr Lauftempo und 20 % mehr Chance auf Power-ups. Für Hamster mit Orientierungssinn.",
+  "pretzelSling": "Feuert drei breite Brezeln, die Gegner durchschlagen.",
+  "sausageMortar": "Drei schwere Weißwürste schlagen rund um dein Ziel ein.",
+  "spread": "Drei Nüsse pro Schuss, jede mit 52 % Schaden. Breit gestreut, gut getroffen.",
+  "nutFan": "Zwei zusätzliche Nüsse fliegen schräg nach außen, jede mit 26 % Schaden.",
+  "rearNut": "Bei jedem Schuss fliegt eine zusätzliche Nuss nach hinten. Sie verursacht 65 % Schaden.",
+  "hotChamber": "45 % schneller schießen, dafür 14 % weniger Schaden pro Nuss.",
+  "rapid": "25 % höheres Schusstempo.",
+  "health": "2 zusätzliche Herzen und volle Heilung.",
+  "pierce": "Schüsse durchdringen 2 weitere Gegner.",
+  "power": "35 % mehr Nussschaden.",
+  "bombs": "Deine persönliche Startwaffe erhält dauerhaft +2 maximale Ladungen und wird sofort gefüllt.",
+  "frost": "Treffer bremsen Gegner 1,5 s lang um 28 %. Bosse: 12 %.",
+  "chain": "Jede 4. Salve lässt Blitze auf einen nahen Gegner überspringen.",
+  "orbit": "Zwei Nüsse kreisen um dich und verletzen Gegner, die ihnen zu nahe kommen.",
+  "nutSentry": "Ein kleiner Turm begleitet dich und schießt automatisch auf nahe Gegner.",
+  "carrotDrone": "Deine Drohne bombardiert alle 2,8 Sekunden eine Gegnergruppe.",
+  "eggBooger": "Der Eierpopel springt etwa jede Sekunde auf einen Gegner. Klebrig und nachtragend.",
+  "merzEggs": "Alle 5 Sekunden landen zwei Eier bei den Gegnern und explodieren kurz darauf.",
+  "sniebelPlate": "Angriffe von hinten prallen mit 50 % Chance an deiner Rückenplatte ab.",
+  "lominarWorm": "Lominar huscht vor dir herum, beißt nahe Gegner und bremst alles, was er berührt.",
+  "reflex": "Wartezeit zwischen Ausweichsprüngen um 29 % kürzer und 8 % schneller laufen.",
+  "vampire": "Alle 40 besiegten Gegner heilen ein Herz, höchstens einmal in 10 Sekunden.",
+  "shield": "Fängt einen Treffer ab. Lädt nach 15 Sekunden wieder auf.",
+  "waveRenew": "Nach jeder Kampfwelle heilst du die Hälfte deiner maximalen Herzen, mindestens 3.",
+  "carrotMine": "Legt eine große Möhrenmine am Ziel. Sie explodiert nach kurzer Verzögerung.",
+  "peanutBoomerang": "Ein Bumerang durchschlägt Gegner und kann sie auf dem Rückweg erneut treffen.",
+  "acornNova": "Feuert zwanzig Eicheln in alle Richtungen. Sie durchschlagen Gegner.",
+  "pigPopper": "Ein großer Schockstoß trifft alles um dich. Besonders stark gegen Schweine und Bosse.",
+  "ossiWall": "Errichtet eine Mauer gegen Gegner und Geschosse. In Bosskämpfen wird sie dreimal so groß.",
+  "ammo": "+1 maximale Ladung je Spezialwaffe und sofort +1 Ladung für jede freigeschaltete Waffe.",
+  "powerLuck": "Gegner lassen häufiger temporäre Power-ups fallen.",
+  "homing": "Schüsse korrigieren leicht in Richtung naher Gegner.",
+  "crit": "20 % Chance pro Projektil auf doppelten Schaden.",
+  "turbo": "18 % höheres Schusstempo und +8 % Waffenschaden.",
+  "fortified": "+2 Herzen, volle Heilung und +5 % Chance, Treffer abzufangen.",
+  "shockDash": "Dein Ausweichsprung trifft nahe Gegner mit einer Schockwelle. Gegen Bosse besonders stark.",
+  "scavenger": "Du sammelst Funde aus größerer Entfernung. Sie bleiben außerdem länger liegen.",
+  "specialCore": "Spezialwaffen verursachen 35 % mehr Schaden.",
+  "ammoHunter": "Seltene Spezialmunition fällt 45 % häufiger.",
+  "ironFur": "18 % Chance, einen eingehenden Treffer komplett abzufangen.",
+  "hotPaws": "12 % schneller laufen und Ausweichsprung lädt 10 % schneller.",
+  "ammoScrounger": "Munitionskisten füllen jede Waffe statt 50 % nun um 60 % auf.",
+  "hunter": "20 % mehr Schaden gegen Bosse und Minibosse.",
+  "walnutCannon": "Feuert eine schwere Walnuss mit hohem Schaden durch eine ganze Gegnerlinie.",
+  "hazelnutShotgun": "Elf Haselnussgeschosse auf einmal. Am stärksten aus kurzer Entfernung.",
+  "carrotLaser": "Ein breiter Laser trifft sofort alle Gegner in deiner Schusslinie.",
+  "acornRocket": "Eine Rakete explodiert am Ziel. Sehr stark gegen Gruppen und Bosse.",
+  "nutDrill": "Eine schwere Bohrnuss durchschlägt eine lange Gegnerreihe.",
+  "nutDropping": "Alle 5,5 Sekunden fällt ein giftiger Nussköttel zu Boden. Berührte Gegner vergiften sich und stecken andere an.",
+  "snickersBar": "Gibt dir drei zufällige Verbesserungen für Schaden, Tempo, Waffen oder Leben. Dein Build zeigt das Ergebnis.",
+  "beagle": "Nach jeder Welle einmal kostenlos neu mischen. Diese Gratis-Neuwahl gilt nur für die aktuelle Auswahl.",
+  "narrath": "Dr. Narrath begleitet dich und beschießt nahe Gegner mit seinem schnellen Laserblaster.",
+  "ratTerror": "Feuert neun Ratten. Sie suchen sich Gegner und treffen jeweils einmal.",
+  "creamPuff": "Alle 5 Sekunden erscheint ein Windbeutel. Bei Berührung platzt er und bremst Gegner. Ohne Treffer verschießt er Sahne.",
+  "bruno": "Bruno bleibt im Sessel und wirft ständig Pingpongbälle auf deine Gegner. Sport muss reichen.",
+  "pigHose": "Alle 2,4 Sekunden bespritzt der Schweineschlauch die nächste Gegnerlinie und bremst sie.",
+  "fartBottle": "Dein Ausweichsprung hinterlässt eine Giftwolke, die Gegner verletzt und bremst. Frühestens alle 4,5 Sekunden.",
+  "wollenkamps": "Frau Wollenkamps haut mit ihrem Schirm auf Gegner und hält sie kurz auf. Dabei meckert sie übers Wetter.",
+  "incubator": "Stellt einen Brutkasten am Ziel auf. Daraus schlüpfen acht Küken, die Gegner suchen.",
+  "madelpulator": "78 % mehr Schaden bei allen Angriffen. Dafür verlierst du dauerhaft deinen Ausweichsprung – auch im übernommenen Build.",
+  "knisterKnight": "Der Knisterritter fliegt alle 2,8 Sekunden durch das Bild und schneidet durch Gegner.",
+  "sausageBlinker": "Eine Wurst explodiert dreimal entlang deiner Zielrichtung. Du bleibst stehen.",
+  "duden": "Triff mit normalen Schüssen die markierte Schwachstelle: 78 % Chance auf doppelten Schaden, bei Bossen 68 %.",
+  "krokette": "Eine heiße Krokette treibt Snickers an: +12 % Tempo und +12 % Schusstempo.",
+  "olangolil": "Olangolil spielt Bingo. Ein Gewinn macht ihn 5 Sekunden lang zum Schnellangreifer. Spätestens jeder dritte Zug gewinnt.",
+  "potencyMinister": "Der Minister stempelt Gegner und hält sie kurz auf. Markierte Ziele nehmen 14 % mehr Schaden, Bosse 8 %.",
+  "steelMuzzle": "+1 Herz und 7 % Chance, Treffer abzufangen. Eine robuste Absicherung für lange Runs.",
+  "starIndex": "+10 % Waffenschaden und +10 % Reichweite beim Einsammeln von Funden.",
+  "eichelkopf": "Alle 4,5 Sekunden schlägt der Eichelkopf bei einer Gegnergruppe ein.",
+  "pigPatrol": "Zwei Schweine begleiten dich und feuern abwechselnd auf nahe Gegner.",
+  "troutDormian": "Die Forelle greift etwa alle 3 Sekunden an und bremst ihr Ziel.",
+  "pockenstrombose": "Jeder siebte Nusstreffer schickt Blitze auf zwei Gegner und bremst sie. Frühestens alle 2,4 Sekunden; gegen einzelne Bosse schwächer.",
+  "pigCheekBomber": "Alle 6 Sekunden wirfst du automatisch eine Bombe auf die nächste Gegnergruppe.",
+  "hamsterTwister": "Alle 3,6 Sekunden trifft ein Nusswirbel Gegner um dich herum und bremst sie.",
+  "hamsterVape": "Alle 8 Sekunden entsteht beim Gegner eine Dampfwolke. Sie schadet und bremst 3 Sekunden lang.",
+  "diarrheaSling": "Drei Schlammpfützen verletzen und bremsen Gegner am Ziel für 3,4 Sekunden.",
+  "erweinLewy": "Erwein begleitet dich und feuert alle 2,8 Sekunden einen Lichtstrahl auf Gegner.",
+  "soapedRat": "Eine eingeseifte Ratte begleitet dich. Ihre Seifenlachen verletzen und bremsen Gegner. Rutschgefahr mit Absicht.",
+  "daimDuo": "Daimdappler und Dappendaimler begleiten dich und feuern abwechselnd auf Gegner. Ein Paar, zwei Probleme.",
+  "brunoUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "brunoUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "brunoUp3": "Jeder Angriff löst am Ziel einen zusätzlichen Treffer gegen die ganze Gruppe aus.",
+  "brunoUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "brunoUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "narrathUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "narrathUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "narrathUp3": "Jeder Angriff trifft einen zweiten Gegner. Ist keiner da, bekommt das Hauptziel einen schwächeren Zusatztreffer.",
+  "narrathUp4": "Treffer halten normale Gegner kurz an. Bosse werden stattdessen gebremst.",
+  "narrathUp5": "Ein Angriff heilt dir ein fehlendes Herz. Frühestens alle 28 Sekunden.",
+  "knisterKnightUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "knisterKnightUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "knisterKnightUp3": "Jeder Angriff löst am Ziel einen zusätzlichen Treffer gegen die ganze Gruppe aus.",
+  "knisterKnightUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "knisterKnightUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "wollenkampsUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "wollenkampsUp2": "Frau Wollenkamps: Ihr eigener Angriff trifft das Hauptziel zusätzlich für 1,1× passive Angriffskraft.",
+  "wollenkampsUp3": "Jeder Angriff trifft einen zweiten Gegner. Ist keiner da, bekommt das Hauptziel einen schwächeren Zusatztreffer.",
+  "wollenkampsUp4": "Treffer halten normale Gegner kurz an. Bosse werden stattdessen gebremst.",
+  "wollenkampsUp5": "Ein Angriff heilt dir ein fehlendes Herz. Frühestens alle 28 Sekunden.",
+  "potencyMinisterUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "potencyMinisterUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "potencyMinisterUp3": "Der Stempel markiert einen zweiten Gegner: 14 % mehr Schaden, bei Bossen 8 %, für 2,5 Sekunden.",
+  "potencyMinisterUp4": "Treffer halten normale Gegner kurz an. Bosse werden stattdessen gebremst.",
+  "potencyMinisterUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "olangolilUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "olangolilUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "olangolilUp3": "Jeder Angriff trifft einen zweiten Gegner. Ist keiner da, bekommt das Hauptziel einen schwächeren Zusatztreffer.",
+  "olangolilUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "olangolilUp5": "Ein Angriff löst alle 16 Sekunden eine zusätzliche Schadenswelle am Ziel aus.",
+  "pigPatrolUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "pigPatrolUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "pigPatrolUp3": "Jeder Angriff trifft einen zweiten Gegner. Ist keiner da, bekommt das Hauptziel einen schwächeren Zusatztreffer.",
+  "pigPatrolUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "pigPatrolUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "troutDormianUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "troutDormianUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "troutDormianUp3": "Jeder Angriff löst am Ziel einen zusätzlichen Treffer gegen die ganze Gruppe aus.",
+  "troutDormianUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "troutDormianUp5": "Ein Angriff heilt dir ein fehlendes Herz. Frühestens alle 28 Sekunden.",
+  "lominarWormUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "lominarWormUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "lominarWormUp3": "Jeder Angriff löst am Ziel einen zusätzlichen Treffer gegen die ganze Gruppe aus.",
+  "lominarWormUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "lominarWormUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "nutSentryUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "nutSentryUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "nutSentryUp3": "Jeder Angriff trifft einen zweiten Gegner. Ist keiner da, bekommt das Hauptziel einen schwächeren Zusatztreffer.",
+  "nutSentryUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "nutSentryUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "carrotDroneUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "carrotDroneUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "carrotDroneUp3": "Jeder Angriff löst am Ziel einen zusätzlichen Treffer gegen die ganze Gruppe aus.",
+  "carrotDroneUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "carrotDroneUp5": "Ein Angriff heilt dir ein fehlendes Herz. Frühestens alle 28 Sekunden.",
+  "eggBoogerUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "eggBoogerUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "eggBoogerUp3": "Jeder Angriff trifft einen zweiten Gegner. Ist keiner da, bekommt das Hauptziel einen schwächeren Zusatztreffer.",
+  "eggBoogerUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "eggBoogerUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "erweinLewyUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "erweinLewyUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "erweinLewyUp3": "Jeder Angriff trifft einen zweiten Gegner. Ist keiner da, bekommt das Hauptziel einen schwächeren Zusatztreffer.",
+  "erweinLewyUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "erweinLewyUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "soapedRatUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "soapedRatUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "soapedRatUp3": "Jeder Angriff löst am Ziel einen zusätzlichen Treffer gegen die ganze Gruppe aus.",
+  "soapedRatUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "soapedRatUp5": "Ein Angriff heilt dir ein fehlendes Herz. Frühestens alle 28 Sekunden.",
+  "daimDuoUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "daimDuoUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "daimDuoUp3": "Bei jedem Angriff feuert auch der zweite Helfer eine zusätzliche Nuss.",
+  "daimDuoUp4": "Treffer halten normale Gegner kurz an. Bosse werden stattdessen gebremst.",
+  "daimDuoUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "orbitUp1": "Die Nüsse umkreisen dich 17 % schneller.",
+  "orbitUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "orbitUp3": "Eine dritte Nuss umkreist dich und trifft Gegner.",
+  "orbitUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "orbitUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "creamPuffUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "creamPuffUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "creamPuffUp3": "Ein zweiter Windbeutel erscheint. Er verursacht halben Schaden.",
+  "creamPuffUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "creamPuffUp5": "Ein Angriff heilt dir ein fehlendes Herz. Frühestens alle 28 Sekunden.",
+  "eichelkopfUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "eichelkopfUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "eichelkopfUp3": "Jeder Angriff löst am Ziel einen zusätzlichen Treffer gegen die ganze Gruppe aus.",
+  "eichelkopfUp4": "Treffer bremsen Gegner kurz. Bei Bossen hält die Bremse kürzer.",
+  "eichelkopfUp5": "Ein Angriff entfernt zwei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "ronnySquirrel": "Ronny begleitet dich und verschießt zehn wechselnde Nusssorten mit unterschiedlichen Treffern und Effekten.",
+  "ronnyUp1": "Ronny schießt alle 1,18 statt 1,35 Sekunden.",
+  "ronnyUp2": "Ronnys Geschosse verursachen 18 % mehr Schaden.",
+  "ronnyUp3": "Jeder dritte Angriff schickt eine zweite Nuss mit halbem Schaden hinterher.",
+  "ronnyUp4": "Ronnys Pistazien und Pekannüsse bremsen länger: 2,1 Sekunden, bei Bossen 1,7 Sekunden.",
+  "ronnyUp5": "Ronnys Walnüsse und Macadamianüsse treffen zusätzlich einen Nachbarn des Ziels.",
+  "ronnyUp6": "Ronnys Geschosse verursachen 15 % mehr Schaden gegen Bosse und Minibosse.",
+  "ronnyUp7": "Unter 35 % Leben fängt Ronny zwei nahe Geschosse ab. Frühestens alle 22 Sekunden.",
+  "wollenkampsUp6": "Der Schirm trifft bis zu drei weitere Gegner neben dem Hauptziel.",
+  "wollenkampsUp7": "Die Wetterdiskussion bremst auch Gegner neben dem Ziel: 0,85 Sekunden, Bosse 0,35 Sekunden.",
+  "wollenkampsUp8": "Bei einer Diskussion verschwinden bis zu zwei Geschosse neben dir. Frühestens alle 16 Sekunden.",
+  "potatoSalvo": "Zwei schwere Kartoffeln schlagen nacheinander am Ziel ein.",
+  "sniffAttack": "12 % schneller laufen. Deine Spürnase markiert alle 5 Sekunden einen Gegner: Er nimmt 14 % mehr Schaden, Bosse 8 %.",
+  "unknofMachine": "28 % mehr Waffenschaden und 30 % höhere Chance auf Munitionskisten.",
+  "meatUnbopper": "2 zusätzliche Herzen, volle Heilung und 8 % Chance, Treffer abzufangen. Alle 14 Sekunden verschwinden vier nahe Geschosse.",
+  "rabbitCommand": "24 % mehr Schaden gegen Hasen. Alle 6 Sekunden fliegen drei zusätzliche Geschosse auf nahe Gegner.",
+  "eiterWesen": "Das Eiterwesen begleitet dich und beschießt etwa alle 2 Sekunden einen Gegner.",
+  "eiterUp1": "Das Eiterwesen greift alle 1,5 statt 1,8 Sekunden an.",
+  "eiterUp2": "Das Eiterwesen verursacht 25 % mehr Schaden am Hauptziel.",
+  "eiterUp3": "Jeder Schuss trifft einen zweiten nahen Gegner mit 35 % des Hauptschadens.",
+  "eiterUp4": "Treffer bremsen Gegner 1,4 Sekunden, Bosse 0,6 Sekunden.",
+  "eiterUp5": "Entfernt bis zu drei Geschosse neben dir. Frühestens alle 18 Sekunden.",
+  "brunoOperation": "Bruno steht auf und folgt dir. Er schießt alle 0,68 statt 0,85 Sekunden und trifft 25 % stärker.",
+  "e24Bilbo": "Bilbo begleitet dich und trifft alle 2,7 Sekunden bis zu drei Gegner mit seinem Nudelholz.",
+  "e24BilboUp1": "Bilbo schlägt alle 2,3 statt 2,7 Sekunden zu.",
+  "e24BilboUp2": "Bilbo trifft etwa 20 % stärker und erreicht einen vierten Gegner.",
+  "e24BilboUp3": "Unter halbem Leben heilt Bilbos nächster Treffer ein Herz. Frühestens alle 32 Sekunden.",
+  "e24Mullewapp": "Nach 8 eingesammelten Nüssen fängt eine Schale beim nächsten Treffer 0,5 Schaden ab. Hält 8 Sekunden; frühestens alle 12 Sekunden.",
+  "e24Brownie": "Jeder sechste Schuss wirft einen Brownie in die Gegnergruppe. Er trifft bis zu vier Gegner und bremst sie kurz.",
+  "e24Knallfrosch": "Nach einer Spezialwaffe explodiert dein nächster normaler Schuss am Ziel. Frühestens alle 8 Sekunden.",
+  "e24Gegenwind": "Dein Ausweichsprung wirft drei Nüsse nach hinten. Frühestens alle 4 Sekunden.",
+  "e24Backentaschenbrief": "Jeder achte Schuss verschickt einen harten Brief, der drei Gegner durchschlägt. Frühestens alle 5 Sekunden.",
+  "e24Jule": "Jule wirft Schulbeutel auf Gegner. Alle 22 Sekunden fährt Mama sie kurz abholen – mitten durch die Gegner.",
+  "e24JuleUp1": "Jule wirft alle 1,35 statt 1,6 Sekunden.",
+  "e24JuleUp2": "Mamas Fahrspur wird 40 % breiter. Treffer bremsen Gegner 1,2 Sekunden, Bosse 0,4 Sekunden.",
+  "e24JuleUp3": "Mama kommt alle 18 statt 22 Sekunden und räumt bis zu sechs Geschosse weg.",
+  "e24Mafia": "Bisse gegen vergiftete Gegner verursachen zusätzlichen Schaden. Frühestens alle 2,5 Sekunden. Schutzgeld wird abgebissen.",
+  "e24Kastrierung": "Jeder sechste Biss trifft einen nahen Gegner zusätzlich. Frühestens alle 5 Sekunden. Familienplanung abgeschlossen.",
+  "e24Pockenstopper": "Wenn du verletzt wirst, vergiftet eine Wolke bis zu vier Gegner um dich. Frühestens alle 12 Sekunden.",
+  "e24Kanaladel": "Nach dem Ausweichsprung nimmt der nächste Treffer bis zu 0,75 Schaden weniger weg. Hält 2 Sekunden; frühestens alle 8 Sekunden.",
+  "e24Enterbte": "Tötest du einen vergifteten Gegner mit einem Biss, trifft eine Explosion bis zu fünf Nachbarn. Frühestens alle 4 Sekunden.",
+  "e24Edda": "Edda begleitet dich und wirft alle 2 Sekunden ihren Quirl in eine Gegnergruppe. Trifft bis zu drei Gegner.",
+  "e24EddaUp1": "Edda wirft alle 1,7 statt 2 Sekunden.",
+  "e24EddaUp2": "Eddas Treffer hinterlassen 1,5 Sekunden klebriges Eiweiß. Es bremst bis zu vier Gegner; Bosse kürzer.",
+  "e24EddaUp3": "Eddas Treffer löst alle 12 Sekunden eine zusätzliche Explosion gegen bis zu sechs Gegner aus.",
+  "e24KrustenRand": "Jeder fünfte Schmalzeinschlag trifft das erste Ziel zusätzlich. Frühestens alle 3 Sekunden.",
+  "e24Fruchtfleischfrage": "Nach einer Spezialwaffe trifft dein nächster Schmalzeinschlag die ganze Gruppe und bremst sie. Frühestens alle 7 Sekunden.",
+  "e24Bodenversicherung": "Dein Ausweichsprung hinterlässt zwei Krümel, die kurz danach explodieren. Frühestens alle 5 Sekunden.",
+  "e24ResteFrieden": "Wenn du verletzt wirst, trifft eine Schockwelle vier nahe Gegner und entfernt drei Geschosse. Frühestens alle 14 Sekunden.",
+  "e24PanierteGeduld": "Stehe 0,7 Sekunden still: Der nächste Schmalzeinschlag trifft eine Gegnergruppe extra stark. Frühestens alle 6 Sekunden.",
+  "e24Florian": "Florian begleitet dich und spuckt alle 2,7 Sekunden Schleim auf einen Gegner. Treffer bremsen.",
+  "e24FlorianUp1": "Florian spuckt alle 2,25 statt 2,7 Sekunden.",
+  "e24FlorianUp2": "Florians Schleim trifft zusätzlich einen zweiten Gegner und bremst ihn 1 Sekunde.",
+  "e24FlorianUp3": "Bist du verletzt, entfernt Florians nächster Treffer bis zu vier Geschosse neben dir. Frühestens alle 16 Sekunden.",
+  "e24Wallby": "Dein Ausweichsprung wirft eine Möhrenklinge nach hinten. Sie durchschlägt zwei Gegner; frühestens alle 4 Sekunden.",
+  "e24RadieschenRebellion": "Jeder achte Schuss verschickt eine Radieschenkugel, die ihr Ziel verletzt und kurz bremst.",
+  "e24Rueckschein": "Dein Bumerang verursacht beim Rückflug zusätzlichen Schaden. Einmal pro Bumerang, frühestens alle 2,5 Sekunden.",
+  "e24Wurzelamt": "Deine Wurzelfalle trifft kurz danach bis zu fünf Gegner ein zweites Mal. Frühestens alle 9 Sekunden.",
+  "e24Fluchtprotokoll": "Dein Ausweichsprung hinterlässt 1,6 Sekunden eine Blätterwand. Sie fängt fünf Geschosse ab; frühestens alle 12 Sekunden.",
+  "e24Bongo": "Bongo begleitet dich und trommelt alle 3 Sekunden bis zu fünf Gegnern die Ohren voll.",
+  "e24BongoUp1": "Bongo trommelt alle 2,55 statt 3 Sekunden.",
+  "e24BongoUp2": "Bongos Trommelwirbel trifft etwa 26 % weiter und schubst normale Gegner zurück.",
+  "e24BongoUp3": "Alle 12 Sekunden trifft Bongos Wirbel zusätzlich stärker und entfernt drei Geschosse am Ziel.",
+  "e24Ruhestoerung": "Jede sechste Schallfront trifft die Gruppe am Ziel mit einem zusätzlichen Knall.",
+  "e24Laermsteuer": "Dein Ausweichsprung verletzt Gegner am Startpunkt mit einem Knall. Frühestens alle 4 Sekunden.",
+  "e24Untermieter": "Trifft deine Schallfront einen gebremsten Gegner, erwischt ein Nachhall bis zu drei nahe Ziele. Frühestens alle 3 Sekunden.",
+  "e24Haushaltsaufloesung": "Nach deiner Resonanzwand trifft die nächste Schallfront ihr Ziel zusätzlich. Frühestens alle 8 Sekunden.",
+  "e24Zugabe": "Wenn du verletzt wirst, trifft ein lauter Knall bis zu sechs Gegner um dich. Frühestens alle 14 Sekunden.",
+  "e24Warze": "Jeder zwölfte Schuss feuert eine zusätzliche Warze ab. Sie wollte sowieso mal raus.",
+  "e24Impfzettel": "Ein eingesammeltes Herz entfernt zwei nahe Geschosse. Frühestens alle 8 Sekunden.",
+  "e24SockenMixer": "Nach dem Ausweichsprung läufst du 1,5 Sekunden lang 10 % schneller. Frühestens alle 6 Sekunden.",
+  "e24KaffeePfand": "Nach einer Spezialwaffe bremst ein Kaffeespritzer die drei nächsten Gegner für 1 Sekunde.",
+  "e24ToastKompass": "Nach einem besiegten Gegner steigt dein Sammelradius für 3 Sekunden um 45. Frühestens alle 8 Sekunden.",
+  "e24Libbe": "Dein Ausweichsprung hinterlässt 2 Sekunden eine Pfütze, die fünf Gegner bremsen kann.",
+  "e24AmtlicheKrume": "Nach einer Spezialwaffe trifft eine extra Krume den nächsten Gegner. Frühestens alle 8 Sekunden.",
+  "e24RuecklaeuferSosse": "Jeder zehnte Schuss lässt zwei Soßenspritzer in der Gegnergruppe platzen. Frühestens alle 5 Sekunden.",
+  "e24KruemelKripo": "Ein direkt besiegter Gegner schickt einen Schadenskrümel zum nächsten Gegner. Frühestens alle 5 Sekunden.",
+  "e24FortniteFreddy": "Jeder dritte Ausweichsprung hinterlässt 2 Sekunden eine Holzplatte. Sie blockt sechs Geschosse. Architektur ist Ansichtssache.",
+  "e24Notfallwindel": "Fällst du unter halbes Leben, fängt die Windel beim nächsten Treffer 1 Schaden ab. Hält 6 Sekunden; frühestens alle 25 Sekunden.",
+  "e24KassenbonLoch": "Nach einer Spezialwaffe nimmt ein markierter Gegner 3 Sekunden lang 12 % mehr Schaden durch normale Angriffe, Bosse 6 %.",
+  "e24Schalenalarm": "Wenn du verletzt wirst, fliegen drei Schalen nach außen und drei nahe Geschosse verschwinden. Frühestens alle 15 Sekunden.",
+  "e24EckigeKugel": "Eine schwere Kugel springt durch vier Gegner. Einen Boss trifft sie höchstens zweimal, beim zweiten Mal schwächer.",
+  "e25Rosenbleck": "Alle 12 Sekunden fängt Rosenblecks Glatze zwei Geschosse ab und trifft bis zu drei Gegner. Sonnenbrille empfohlen.",
+  "e25Nameless": "Alle 8 Sekunden verletzt und bremst die Kreatur einen Gegner. Normale Treffer auf ihn werden kurz 12 % stärker, bei Bossen 6 %.",
+  "e28Pullerbrocken": "Jeder sechste Schuss lässt einen Brocken in eine Gegnergruppe krachen und schubst kleine Gegner weg. Frühestens alle 5,5 Sekunden.",
+  "e28Nasentasche": "Nach zwölf eingesammelten Nüssen verletzt und bremst ein Niesen bis zu vier nahe Gegner. Taschentücher kosten extra.",
+  "e28Filzpropeller": "Alle 4,2 Sekunden mäht ein Rotor durch vier nahe Gegner und bremst sie. Endlich Filz, der etwas leistet.",
+  "e28Alkoholverbot": "Nach einer Spezialwaffe verschwinden sechs nahe Geschosse, fünf Gegner werden getroffen und du blockst einmal 0,5 Schaden. Frühestens alle 14 Sekunden.",
+  "e28Backensauger": "55 mehr Sammelradius. Der Staubsauger macht Überstunden.",
+  "e28BackensaugerUp1": "45 zusätzlicher Sammelradius. Endlich kommst du hinter den Hasen.",
+  "e28BackensaugerUp2": "55 zusätzlicher Sammelradius. Der Beutel wurde wegoptimiert.",
+  "e28BackensaugerUp3": "65 zusätzlicher Sammelradius. Jetzt saugt sogar der Nachbargarten.",
+  "e31AugenAusstechen": "Karte und Minimap verschwinden dauerhaft für diesen Build. Dafür sind die nächsten fünf Shop-Upgrades gratis.",
+  "e32Pfandpfote": "Nach 8 eingesammelten Nüssen erscheint ein Köder. Er lockt vier Gegner an und explodiert nach 3 Sekunden.",
+  "e32KeksSpiegel": "Dein Ausweichsprung wandelt zwei nahe Geschosse in Gegenangriffe um. Frühestens alle 8 Sekunden.",
+  "e32Wartemarke": "Jeder siebte Schuss schickt eine Marke durch vier Gegner. Sie verletzt und bremst kurz. Frühestens alle 9 Sekunden.",
+  "e32Doppelbelichtung": "Nach einem Power-up lässt dein nächster Schuss zwei Lichtbilder am Ziel explodieren. Frühestens alle 12 Sekunden.",
+  "e32Mieterbeirat": "Umringen dich acht Gegner, fängt ein Schild 3 Sekunden lang fünf Geschosse ab und schickt Schaden zurück. Frühestens alle 16 Sekunden.",
+  "e32Hintertuer": "Nach einer Spezialwaffe trifft dein nächster normaler Schuss bis zu vier Gegner zusätzlich von hinten. Frühestens alle 12 Sekunden.",
+  "crownNut": "+30 % Schaden deiner normalen Angriffe, deine Schüsse durchdringen einen Gegner mehr und +10 % Chance auf doppelte Treffer.",
+  "ghostFur": "18 % mehr Tempo, 25 % kürzere Wartezeit beim Ausweichen und +12 % Chance, Treffer abzufangen.",
+  "arsenalRelic": "+35 % Waffenschaden, +1 maximale Ladung pro Waffe und Munitionskisten füllen 65 % statt 50 %.",
+  "crunchChronicle": "10 % mehr Nussschaden und ein Herz. Alle 12 Sekunden bremst eine Zeitblase nahe Gegner und entfernt acht Geschosse.",
+  "sunBrood": "Ein goldenes Ei explodiert am Ziel. Danach jagen sechs Küken die Überlebenden.",
+  "bingoCrown": "+15 % Nussschaden und +12 % Schusstempo.",
+  "bunkerCheeks": "+3 Herzen, volle Heilung und +11 % Chance, Treffer abzufangen.",
+  "scarletCompass": "+22 % Waffenschaden, +15 % Boss-Schaden und +25 Sammelradius.",
+  "royalSpark": "+12 % Chance auf doppelte Treffer, deine Schüsse durchdringen einen Gegner mehr und +10 % Nussschaden.",
+  "moonMill": "Drei Kreissägenwellen treffen alle Gegner rund um dein Ziel.",
+  "slimePaws": "28 % mehr Nussschaden. Treffer bremsen; jeder sechste Treffer spritzt Schleim auf einen zweiten Gegner.",
+  "seasonRabies": "20 % schneller schießen. Alle 8 Sekunden wechselt die Jahreszeit: Heilung, Feuer, Fernangriff oder Frost.",
+  "e24Steppke": "Nach einer Spezialwaffe explodiert es dreimal beim Ziel. Frühestens alle 14 Sekunden. Erbstreit erledigt.",
+  "e24KaeseEndstation": "Nach Raffzahns Tunnelnetz treffen drei Käsezeiger unterschiedliche Gegner. Frühestens alle 10 Sekunden.",
+  "e24Rohmaterial": "Nach zwölf direkt besiegten Gegnern fällt eine glühende Pfanne in eine Gegnergruppe. Frühestens alle 12 Sekunden.",
+  "e24Maehdrescher": "Ein Bumerangtreffer auf dem Rückweg löst einen Blätterring gegen acht Gegner um dich aus. Frühestens alle 14 Sekunden.",
+  "e24PausenbrotTon": "Nach einer Spezialwaffe trifft ein Knall nahe Gegner. Begleiter und automatische Angriffe werden 3 Sekunden lang 12 % stärker.",
+  "e24Woelminator": "Ein direkter Treffer auf einen gebremsten Gegner löst eine starke Explosion aus. Frühestens alle 12 Sekunden.",
+  "e24Brotversicherung": "Nach einer Spezialwaffe trifft eine Krustenwelle nahe Gegner und entfernt acht Geschosse. Frühestens alle 20 Sekunden.",
+  "e24BrotTacker": "Ein starker Brotschuss trifft sechs Gegner in einer Linie und schickt einen schwächeren Treffer hinterher. Entfernt vier Geschosse.",
+  "e32Zeitpfandhaus": "Nach 18 besiegten Gegnern werden acht nahe Geschosse zu Gegenangriffen. Frühestens alle 16 Sekunden. Rücknahme gegen Quittung.",
+  "e32Singularitaet": "Eine Spezialwaffe öffnet einen Sog, der Gegner und Geschosse einsaugt und nach 3 Sekunden explodiert. Bosse bleiben stehen.",
+  "breadHalo": "Alle 4 Sekunden trifft eine Krustenwelle die Gegner um dich herum.",
+  "creamHeart": "+2 Herzen und volle Heilung. Im Kampf alle 18 Sekunden +1 Herz.",
+  "thunderCrumbs": "Jeder sechste Schuss feuert zwei zusätzliche Blitznüsse mit je 180 % Schaden ab. Sie durchschlagen Gegner.",
+  "pocketDimension": "+1 maximale Ladung je Spezialwaffe und +35 Sammelradius. Munition wird regulär nachgeladen.",
+  "afterHours": "12 % höheres Schusstempo und 8 % kürzere Wartezeit zwischen Ausweichsprüngen. Noch eine Runde geht immer.",
+  "annihilator": "+35 % Schaden deiner normalen Angriffe und +20 % Waffenschaden.",
+  "hyperFur": "+20 % Bewegungstempo und 20 % kürzere Wartezeit zwischen Ausweichsprüngen.",
+  "turretVolley": "Dein Knabber-Turm feuert alle 0,6 Sekunden zwei Nüsse, die je zwei Gegner durchschlagen. Schaltet den Turm bei Bedarf frei.",
+  "powerFrenzy": "Power-ups fallen 60 % häufiger und halten 30 % länger.",
+  "executioner": "+40 % Schaden gegen Bosse und Minibosse sowie +10 % Chance auf doppelte Treffer.",
+  "dashNova": "Dein Ausweichsprung feuert zwölf Nüsse in alle Richtungen und lädt 10 % schneller nach.",
+  "ammoAlchemy": "+2 maximale Ladungen für alle Spezialwaffen, +15 % Waffenschaden und Munitionskisten füllen deutlich stärker.",
+  "deathBurst": "Nach acht besiegten Gegnern trifft eine Explosion die Umgebung. Frühestens alle 1,8 Sekunden.",
+  "ricochet": "Normale Geschosse treffen zusätzlich einen zweiten nahen Gegner mit 44 % ihres Schadens.",
+  "emergencyReserve": "Ein tödlicher Treffer pro Welle lässt dir ein Herz und 2 Sekunden Schutz. Für Bosskämpfe wird der Schutz erneuert.",
+  "cheeseInsurance": "Wenn du verletzt wirst, verschwinden drei nahe Geschosse. Frühestens alle 8 Sekunden.",
+  "recallService": "Jede dritte Spezialwaffen-Nutzung füllt eine Ladung einer anderen Waffe auf. Frühestens alle 10 Sekunden.",
+  "ngFlicker": "+12 % Chance auf doppelte Treffer und +8 % Tempo.",
+  "ngLedger": "+16 % Waffenschaden und +1 maximale Ladung pro Waffe.",
+  "ngAcornBarrage": "Alle 7 Sekunden fliegen vier zusätzliche Eicheln auf den nächsten Gegner.",
+  "ngBattleApron": "+1 permanentes Herz, volle Heilung und 7 Prozentpunkte Chance, Treffer abzufangen.",
+  "ngHareLaces": "10 % mehr Lauftempo und 10 % kürzere Wartezeit zwischen Ausweichsprüngen.",
+  "ngPouchRunner": "+1 maximale Ladung je Spezialwaffe, +20 % Chance auf Munition und +30 Sammelradius. Munition wird nicht aufgefüllt.",
+  "ngDashCinders": "Dein Ausweichsprung trifft nahe Gegner mit Funken. Frühestens alle 5 Sekunden.",
+  "ngGardenEcho": "Jeder siebte Schuss schickt zwei Zusatzschüsse mit je 32 % Schaden hinterher.",
+  "ngTravelerCache": "+1 maximale Ladung für alle Spezialwaffen, +12 % Waffenschaden und +12 % Chance auf Munition. Die jeweilige Startwaffe zählt mit.",
+  "royalReactor": "+45 % Schaden deiner normalen Angriffe und +30 % Waffenschaden.",
+  "timeEater": "+18 % Bewegungstempo, 25 % kürzere Wartezeit beim Ausweichen und Gegner in deiner Nähe bewegen sich zusätzlich langsamer.",
+  "nuclearSentry": "Der automatische Knabber-Turm feuert alle 0,55 Sekunden drei Nüsse. Jede durchschlägt drei Gegner.",
+  "phaseCapacitor": "Dein Ausweichsprung lädt 12 % schneller und entfernt zehn nahe Geschosse. Außerdem 15 % mehr Waffenschaden.",
+  "lastBite": "25 % zusätzlicher Schaden an Gegnern unter 30 % Leben. Wirkt auch auf Bossphasen, Gift und Begleiter.",
+  "professorCouncil": "Begleiter und automatische Angriffe verursachen 18 % mehr Schaden.",
+  "defianceReactor": "+1 permanentes Herz. Unter 50 % Leben verursachen alle Angriffe 20 % mehr Schaden.",
+  "ng2Pulse": "+18 % Schaden gegen Bosse und +10 % Nussschaden.",
+  "ng2Shell": "+2 Herzen, volle Heilung und +8 % Chance, Treffer abzufangen.",
+  "ng2Graviton": "Alle 9 Sekunden zieht ein Impuls nahe Gegner zusammen und verletzt sie. Bosse nehmen Schaden, bleiben aber stehen.",
+  "ng2VictoryTeeth": "+13 % Schaden gegen Bosse und +7 Prozentpunkte Chance auf doppelte Treffer.",
+  "ng2TimeCrust": "Alle 12 Sekunden trifft eine Schockwelle nahe Gegner und entfernt fünf Geschosse.",
+  "ng2LastSnack": "Unter halbem Leben heilst du ein Herz. Frühestens alle 24 Sekunden.",
+  "ng2Crossfire": "Alle 5 Sekunden fliegen zwei zusätzliche, durchschlagende Nüsse auf den nächsten Gegner.",
+  "ng2IronEncore": "Ein zusätzliches Herz, volle Heilung und 6 % Chance, Treffer abzufangen. Alle 11 Sekunden verschwinden zwei nahe Geschosse.",
+  "ng2BattleRhythm": "+9 % Schusstempo und +12 % Schaden an Bossen und Minibossen.",
+  "scavengerPulse": "Alle 18 Sekunden kommen alle Funde zu dir. Ein Power-up füllt eine verbrauchte Waffenladung auf; frühestens alle 8 Sekunden.",
+  "adrenaline": "Unter 40 % Leben +22 % Schusstempo und +10 % Tempo. Kein dauerhafter Wertverlust beim Heilen.",
+  "ratKing": "Alle 7,5 Sekunden startet dein Rattenkönig fünf Ratten, die sich selbst Gegner suchen.",
+  "stormOrbit": "Alle 6 Sekunden trifft ein Sturm nahe Gegner und entfernt sechs Geschosse.",
+  "survivalInstinct": "Ein zusätzliches Herz. Wenn du verletzt wirst, ist dein Ausweichsprung sofort bereit. Frühestens alle 8 Sekunden.",
+  "supplyPlan": "Jede dritte gewonnene Welle gibt eine zusätzliche Neuwahl. Du kannst sie für später behalten.",
+  "nightShift": "Nach 25 besiegten Gegnern schießt du 8 Sekunden lang 15 % schneller.",
+  "endlessHarvest": "Nach 30 besiegten Gegnern heilt Snickers ein Herz. ",
+  "endlessShield": "+1 Herz und 8 % Chance, Treffer abzufangen, auch gegen späte Wellen.",
+  "endlessMeteor": "Alle 8 Sekunden schlagen drei Meteoriten bei Gegnergruppen ein.",
+  "endlessWaveguard": "Alle 9 Sekunden trifft eine Schockwelle nahe Gegner und entfernt vier Geschosse.",
+  "endlessCourier": "Nach 30 besiegten Gegnern erhält eine benutzte Spezialwaffe eine Ladung zurück.",
+  "endlessDoctor": "Nach 45 besiegten Gegnern heilt Snickers ein Herz. Funktioniert auch in langen Bosswellen.",
+  "endlessBloodMoon": "+15 % Schaden gegen Bosse und Minibosse; +5 % Chance auf doppelte Treffer.",
+  "endlessSwarm": "Alle 9 Sekunden starten vier Hummeln, die sich selbst Gegner suchen.",
+  "endlessFrost": "Alle 10 s werden Gegner in 180 Reichweite 1,5 s verlangsamt; Bosse nur kurz.",
+  "endlessShell": "+2 Herzen, volle Heilung und 7 % Chance, Treffer abzufangen.",
+  "endlessSpark": "Alle 7 Sekunden treffen Blitze bis zu drei verschiedene Gegner.",
+  "endlessCompass": "+10 % Tempo und +10 % Waffenschaden.",
+  "endlessPicket": "Alle 7 Sekunden trifft und bremst die Streife drei Gegner.",
+  "endlessPostbox": "Alle 15 Sekunden entfernt ein Impuls drei nahe Geschosse und trifft einen Gegner.",
+  "endlessSurge": "+11 % Schusstempo und +7 Prozentpunkte Chance auf doppelte Treffer.",
+  "endlessLarder": "+1 maximales Herz, sofort +1 Heilung und +1 maximale Ladung pro Spezialwaffe.",
+  "endlessRadar": "+9 % Tempo und +12 % Chance auf Power-ups. Mehr Fundstücke, weniger freie Hände.",
+  "ratKingUp1": "Dieser Begleiter greift rund 15 % schneller wieder an.",
+  "ratKingUp2": "Jeder eigene Treffer verursacht zusätzlichen Schaden.",
+  "ratKingUp3": "Jedes Rudel bekommt zwei zusätzliche Ratten mit je 55 % des normalen Rattenschadens.",
+  "ratKingUp4": "Treffer halten normale Gegner kurz an. Bosse werden stattdessen gebremst.",
+  "ratKingUp5": "Ein Angriff heilt dir ein fehlendes Herz. Frühestens alle 28 Sekunden.",
+  "mustardBazookaUnlock": "Eine riesige Senfexplosion verteilt zusätzliche Splitter.",
+  "nutTeslaUnlock": "Ein Kettenblitz springt durch bis zu acht Gegner.",
+  "pickleMortarUnlock": "Eine große Explosion verletzt und bremst Gegner am Ziel.",
+  "corkscrew": "Drei schwere Spiralnüsse durchschlagen jeweils drei Gegner.",
+  "goulashStorm": "Drei Gulascheinschläge treffen nacheinander rund um dein Ziel.",
+  "ngCheeseGatling": "Sechs schnelle Käsegeschosse durchschlagen jeweils zwei Gegner.",
+  "creamRailgunUnlock": "Ein gewaltiger Sahnestrahl trifft eine ganze Gegnerlinie. Besonders stark gegen Bosse.",
+  "gnomeArtilleryUnlock": "Sechs schwere Einschläge treffen Gegner rund um dein Ziel.",
+  "creamCompressor": "Fünf kurze Sahnestrahlen schubsen Gegner zurück und räumen bis zu zwölf Geschosse weg.",
+  "starStomper": "Nach kurzer Warnung kracht ein Stern am Ziel ein. Der große Einschlag verletzt und bremst Gegner.",
+  "ng2StarRoaster": "Vier schwere Einschläge treffen nacheinander dein Zielgebiet.",
+  "singularity": "Ein Sog hält normale Gegner 2,8 Sekunden zusammen und explodiert dann. Bosse bleiben stehen.",
+  "thunderRail": "Drei parallele Blitzstrahlen durchschlagen das ganze Bild.",
+  "hiveLauncher": "Zwölf Hummeln suchen sich selbst ihre Ziele.",
+  "iceComet": "Ein großer Komet explodiert am Ziel und bremst Überlebende 3 Sekunden, Bosse halb so lang.",
+  "orbitSaw": "Vier Sägen umkreisen dich 3 Sekunden lang und verletzen nahe Gegner mehrfach.",
+  "scrapSpinner": "Zwei Schrottscheiben fliegen zurück zu dir. Sie treffen auf Hin- und Rückweg.",
+  "stormJar": "Ein Glas am Ziel verschießt innerhalb von 3,5 Sekunden drei starke Blitze.",
+  "goldenNut": "+45 % Schaden deiner normalen Angriffe und 50 % mehr Punkte.",
+  "chronoFur": "Ausweichsprung lädt 30 % schneller und Snickers läuft 12 % schneller.",
+  "nutstorm": "Schießt fünf schwächere Nüsse auf einmal. Sie durchdringen zwei Gegner mehr.",
+  "bossBane": "Bosse und Minibosse erleiden 40 % mehr Schaden.",
+  "shellArmor": "+3 Herzen, volle Heilung und eine wiederaufladbare Schutzschale.",
+  "powerCondenser": "Power-ups halten 65 % länger und fallen 55 % häufiger.",
+  "boomerangMaster": "Alle Spezialwaffen bekommen +2 maximale Ladungen und verursachen 20 % mehr Schaden. Munition wird nicht aufgefüllt.",
+  "ammoForge": "Munitionsdrops fallen 85 % häufiger und Kisten füllen jede Waffe zusätzlich 20 % stärker auf.",
+  "savageCore": "+32 % Schaden deiner normalen Angriffe und +30 % Waffenschaden.",
+  "graniteFur": "+3 Herzen, volle Heilung und +12 % Chance, Treffer abzufangen.",
+  "amberShield": "+2 Herzen, volle Heilung und +7 % Chance, Treffer abzufangen.",
+  "recoilEngine": "+22 % Waffenschaden und +1 maximale Waffenladung.",
+  "sharpDentist": "+24 % Boss-Schaden und +5 % Chance auf doppelte Treffer.",
+  "fleaHop": "+15 % Tempo und +10 % Schusstempo.",
+  "echoPelts": "+13 % Nussschaden und +12 % Waffenschaden.",
+  "warDrums": "11 % höheres Schusstempo und +12 % Schaden gegen Bosse.",
+  "stonePlating": "+2 Herzen, volle Heilung und +8 Prozentpunkte Chance, Treffer abzufangen.",
+  "bottomlessSatchel": "+1 maximale Ladung je Spezialwaffe und +25 % Chance auf Munition. Munition wird nicht aufgefüllt.",
+  "liquidCourage": "13 % schneller laufen und +12 % Waffenschaden.",
+  "tidalNut": "Deine Schüsse durchdringen einen Gegner mehr und +8 Prozentpunkte Chance auf doppelte Treffer.",
+  "pearlReserve": "+2 Herzen, volle Heilung und +10 % Schaden gegen Bosse.",
+  "saffronArsenal": "+22 % Waffenschaden, +1 maximale Ladung je Spezialwaffe und 15 % mehr Chance auf Munition.",
+  "e28Dienstaufsicht": "Begleiterangriffe treffen bis zu drei weitere Gegner und bremsen sie. Gemeinsam frühestens alle 8 Sekunden.",
+  "e28Rettungsbrot": "Wenn du verletzt wirst, explodiert eine Brotkruste, entfernt fünf Geschosse und blockt einmal 0,75 Folgeschaden. Frühestens alle 18 Sekunden.",
+  "e28Kabelsalat": "Nach einer Spezialwaffe treffen Blitze drei verschiedene Gegner und bremsen sie. Frühestens alle 10 Sekunden.",
+  "e28Ausweichstempel": "Dein Ausweichsprung lässt einen Stempel zurück. Er trifft und bremst kurz danach sechs Verfolger. Frühestens alle 8 Sekunden.",
+  "e28Sternkruemel": "Jeder achte Schuss lässt einen Stern in die Gegnergruppe krachen. Frühestens alle 9 Sekunden.",
+  "e28Quittung": "Nach zwanzig besiegten Gegnern lässt dein nächster Schuss eine große Explosion am Ziel entstehen. Frühestens alle 12 Sekunden.",
+  "legendaryFeast": "6 % mehr Nussschaden und volle Heilung.",
+  "legendaryStock": "Eine zusätzliche Ladung pro Waffe und 8 % mehr Waffenschaden.",
+  "legendaryMix": "Zwei zusätzliche Neuwahlen und ein Herz Heilung."
+};
+  const WEAPON_TEXTS34={
+  "nutBomb": "Eine Nussbombe explodiert am Ziel und trifft eine große Gegnergruppe.",
+  "pretzelSling": "Feuert drei breite Brezeln, die Gegner durchschlagen.",
+  "sausageMortar": "Drei schwere Weißwürste schlagen rund um dein Ziel ein.",
+  "carrotMine": "Legt eine große Möhrenmine am Ziel. Sie explodiert nach kurzer Verzögerung.",
+  "peanutBoomerang": "Ein Bumerang durchschlägt Gegner und kann sie auf dem Rückweg erneut treffen.",
+  "acornNova": "Feuert zwanzig Eicheln in alle Richtungen. Sie durchschlagen Gegner.",
+  "pigPopper": "Ein großer Schockstoß trifft alles um dich. Besonders stark gegen Schweine und Bosse.",
+  "walnutCannon": "Feuert eine schwere Walnuss mit hohem Schaden durch eine ganze Gegnerlinie.",
+  "hazelnutShotgun": "Elf Haselnussgeschosse auf einmal. Am stärksten aus kurzer Entfernung.",
+  "carrotLaser": "Ein breiter Laser trifft sofort alle Gegner in deiner Schusslinie.",
+  "acornRocket": "Eine Rakete explodiert am Ziel. Sehr stark gegen Gruppen und Bosse.",
+  "nutDrill": "Eine schwere Bohrnuss durchschlägt eine lange Gegnerreihe.",
+  "mustardBazooka": "Eine riesige Senfexplosion verteilt zusätzliche Splitter.",
+  "nutTesla": "Ein Kettenblitz springt durch bis zu acht Gegner.",
+  "pickleMortar": "Eine große Explosion verletzt und bremst Gegner am Ziel.",
+  "ossiWall": "Errichtet eine Mauer gegen Gegner und Geschosse. In Bosskämpfen wird sie dreimal so groß.",
+  "creamRailgun": "Ein gewaltiger Sahnestrahl trifft eine ganze Gegnerlinie. Besonders stark gegen Bosse.",
+  "gnomeArtillery": "Sechs schwere Einschläge treffen Gegner rund um dein Ziel.",
+  "ratTerror": "Feuert neun Ratten. Sie suchen sich Gegner und treffen jeweils einmal.",
+  "singularity": "Ein Sog hält normale Gegner 2,8 Sekunden zusammen und explodiert dann. Bosse bleiben stehen.",
+  "thunderRail": "Drei parallele Blitzstrahlen durchschlagen das ganze Bild.",
+  "hiveLauncher": "Zwölf Hummeln suchen sich selbst ihre Ziele.",
+  "iceComet": "Ein großer Komet explodiert am Ziel und bremst Überlebende 3 Sekunden, Bosse halb so lang.",
+  "orbitSaw": "Vier Sägen umkreisen dich 3 Sekunden lang und verletzen nahe Gegner mehrfach.",
+  "incubator": "Stellt einen Brutkasten am Ziel auf. Daraus schlüpfen acht Küken, die Gegner suchen.",
+  "corkscrew": "Drei schwere Spiralnüsse durchschlagen jeweils drei Gegner.",
+  "goulashStorm": "Drei Gulascheinschläge treffen nacheinander rund um dein Ziel.",
+  "creamCompressor": "Fünf kurze Sahnestrahlen schubsen Gegner zurück und räumen bis zu zwölf Geschosse weg.",
+  "starStomper": "Nach kurzer Warnung kracht ein Stern am Ziel ein. Der große Einschlag verletzt und bremst Gegner.",
+  "scrapSpinner": "Zwei Schrottscheiben fliegen zurück zu dir. Sie treffen auf Hin- und Rückweg.",
+  "stormJar": "Ein Glas am Ziel verschießt innerhalb von 3,5 Sekunden drei starke Blitze.",
+  "sunBrood": "Ein goldenes Ei explodiert am Ziel. Danach jagen sechs Küken die Überlebenden.",
+  "sausageBlinker": "Eine Wurst explodiert dreimal entlang deiner Zielrichtung. Du bleibst stehen.",
+  "moonMill": "Drei Kreissägenwellen treffen alle Gegner rund um dein Ziel.",
+  "diarrheaSling": "Drei Schlammpfützen verletzen und bremsen Gegner am Ziel für 3,4 Sekunden.",
+  "ngCheeseGatling": "Sechs schnelle Käsegeschosse durchschlagen jeweils zwei Gegner.",
+  "ng2StarRoaster": "Vier schwere Einschläge treffen nacheinander dein Zielgebiet.",
+  "potatoSalvo": "Zwei schwere Kartoffeln schlagen nacheinander am Ziel ein.",
+  "ratWhistle": "Ruft Ratten aus einem Tunnelnetz. Sie jagen nahe Gegner.",
+  "pigPan": "Erzeugt heiße Schmalzflächen, die Gegner wiederholt verletzen.",
+  "carrotCyclone": "Erzeugt eine Wurzelfalle, die Gegner festhält und mehrfach trifft.",
+  "trollFanfare": "Eine breite Schallwand trifft Gegner und räumt feindliche Geschosse weg.",
+  "e24EckigeKugel": "Eine schwere Kugel springt durch vier Gegner. Einen Boss trifft sie höchstens zweimal, beim zweiten Mal schwächer.",
+  "e24BrotTacker": "Ein starker Brotschuss trifft sechs Gegner in einer Linie und schickt einen schwächeren Treffer hinterher. Entfernt vier Geschosse."
+};
+  const DAMAGE_UPGRADES34={"brunoUp2": 0.36, "narrathUp2": 0.085, "knisterKnightUp2": 0.65, "potencyMinisterUp2": 0.65, "olangolilUp2": 0.48, "pigPatrolUp2": 0.33, "troutDormianUp2": 0.7, "lominarWormUp2": 0.38, "nutSentryUp2": 0.3, "carrotDroneUp2": 0.85, "eggBoogerUp2": 0.42, "erweinLewyUp2": 0.4, "soapedRatUp2": 0.55, "daimDuoUp2": 0.36, "orbitUp2": 0.32, "creamPuffUp2": 0.42, "eichelkopfUp2": 0.62, "ratKingUp2": 0.34};
+  TEXTS34.wollenkampsUp2='Der Schirm trifft sein Hauptziel stärker.';
+  const UPGRADE_TEXTS32_34={
+    e32Pfandpfote:['Köder nach 6 statt 8 Nüssen. Lockt 5 statt 4 Gegner an und verursacht 20 % mehr Schaden.','Köder nach 4 statt 6 Nüssen. Lockt 6 statt 5 Gegner an und verursacht rund 17 % mehr Schaden.'],
+    e32KeksSpiegel:['Wandelt 3 statt 2 Geschosse um. Wartet 7 statt 8 Sekunden.','Wandelt 4 statt 3 Geschosse um. Wartet 6 statt 7 Sekunden.'],
+    e32Wartemarke:['Trifft 5 statt 4 Gegner, etwa 16 % stärker. Wartet 8 statt 9 Sekunden.','Trifft 6 statt 5 Gegner, etwa 14 % stärker. Wartet 7 statt 8 Sekunden.'],
+    e32Doppelbelichtung:['Erzeugt 3 statt 2 Lichtbilder. Jedes trifft etwa 21 % stärker. Wartet 11 statt 12 Sekunden.','Die 3 Lichtbilder treffen etwa 17 % stärker. Wartet 10 statt 11 Sekunden.'],
+    e32Mieterbeirat:['Fängt 6 statt 5 Geschosse ab. Wartet 14 statt 16 Sekunden.','Fängt 7 statt 6 Geschosse ab. Wartet 12 statt 14 Sekunden.'],
+    e32Hintertuer:['Trifft 5 statt 4 Gegner, etwa 18 % stärker. Wartet 11 statt 12 Sekunden.','Trifft 6 statt 5 Gegner, etwa 15 % stärker. Wartet 10 statt 11 Sekunden.'],
+    e32Zeitpfandhaus:['Braucht 16 statt 18 besiegte Gegner und wandelt 10 statt 8 Geschosse um.','Braucht 14 statt 16 besiegte Gegner und wandelt 12 statt 10 Geschosse um.'],
+    e32Singularitaet:['Größerer Sog und größere Explosion. Entfernt 12 statt 10 Geschosse. Wartet 16 statt 18 Sekunden.','Noch größerer Sog und Explosion. Entfernt 14 statt 12 Geschosse. Wartet 14 statt 16 Sekunden.']
+  };
+  const upgradeable34=new Set(catalogBooks28().flatMap(([,book])=>Object.values(book).map(c=>c.requires).filter(Boolean)));
+  for(const [,book]of catalogBooks28())for(const [id,c]of Object.entries(book)){
+    if(TEXTS34[id])c.desc=TEXTS34[id];
+    if(!c.requires&&(upgradeable34.has(id)||c.maxStacks>1||stackCaps[id]>1))c.desc+=' Aufwertbar.';
+  }
+  for(const [id,w]of Object.entries(weaponBook))if(WEAPON_TEXTS34[id])w.desc=WEAPON_TEXTS34[id];
+  const STAT_TEXTS34={damage:'+10 % Schaden deiner normalen Angriffe.',speed:'+10 % Lauftempo.',fireRate:'+10 % Schusstempo.',dash:'10 % kürzere Wartezeit zwischen Ausweichsprüngen.',powerLuck:'+10 % Chance auf temporäre Power-ups.',dodge:'+2 Prozentpunkte Chance, einem Treffer zu entgehen.',heart:'Ein zusätzliches Herz.',ammo:'Eine zusätzliche maximale und aktuelle Ladung pro Waffe.',shuffle:'Eine zusätzliche Neuwahl.',pickupRange:'32 zusätzlicher Sammelradius. Funde fliegen schon aus größerer Entfernung zu dir.'};
+  for(const [id,text]of Object.entries(STAT_TEXTS34))if(scoreSkillBook[id])scoreSkillBook[id].desc=text;
+  function rewardCardText34(c){
+    let desc=c.desc,title=c.title;const rank=player?.skills?.[c.id]||0;
+    if(UPGRADE_TEXTS32_34[c.id]&&rank>0){desc=UPGRADE_TEXTS32_34[c.id][Math.min(1,rank-1)];title+=' · STUFE '+(rank+1);}
+    else if(c.repeatable&&rank>0){desc=(TEXTS34[c.id]||c.desc).replace(/ Aufwertbar\./g,'')+' Nächste Stufe: '+(rank+1)+'/'+(c.maxStacks||stackCaps[c.id])+'.';}
+    if(DAMAGE_UPGRADES34[c.id]&&player)desc='Jeder eigene Treffer bekommt '+displayNumber(DAMAGE_UPGRADES34[c.id]*abilityPower(player))+' zusätzlichen Grundschaden.';
+    if(c.id==='wollenkampsUp2'&&player)desc='Der Schirm verursacht am Hauptziel '+displayNumber(1.1*abilityPower(player))+' zusätzlichen Grundschaden.';
+    return {...c,desc,title};
+  }
+
+  // One weighted draw per card. No weapon, hero, follow-up or wave-pool bias.
+  const RARITY_WEIGHTS34={green:55,blue:28,purple:14,orange:3};
+  const WAVE_ONLY34=new Set(['madelpulator','e31AugenAusstechen']);
+  let rewardSource34='wave';
+  function rewardRarity34(c){const css=rarityClass(c);return c.legendary||css.includes('legendary')||css.includes('orange')?'orange':css.includes('purple')?'purple':css.includes('blue')?'blue':'green';}
+  const availableBefore34=availableRewards;
+  availableRewards=function(...args){
+    const seen=new Set(),reserved=new Set(trollQuest&&trollQuest.status!=='reward'?(trollQuest.legendRefs||[]).map(r=>r.id):[]);return availableBefore34(...args).filter(c=>{
+      if(!c?.id||seen.has(c.id)||reserved.has(c.id)||rewardSource34!=='wave'&&WAVE_ONLY34.has(c.id))return false;
+      if(c.hero&&c.hero!==player?.characterId)return false;
+      if(c.requires&&!player?.skills?.[c.requires]&&!player?.[c.requiresFlag])return false;
+      if(c.ngplus2&&!(gamePlusLevel===2||endlessMode&&((endlessFromHall&&endlessBuildTier>=2)||wave>=13)))return false;
+      if(c.ngplus&&!(newGamePlus||endlessMode&&((endlessFromHall&&endlessBuildTier>=1)||wave>=5)))return false;
+      if(c.endless&&!endlessMode)return false;
+      seen.add(c.id);return true;
+    }).map(c=>rewardCardText34(c));
+  };
+  function weightedRewards34(pool,count=3){
+    const groups=Object.fromEntries(Object.keys(RARITY_WEIGHTS34).map(k=>[k,[]]));
+    for(const c of pool)groups[rewardRarity34(c)].push(c);
+    const out=[];while(out.length<count){const keys=Object.keys(groups).filter(k=>groups[k].length);if(!keys.length)break;
+      let roll=Math.random()*keys.reduce((n,k)=>n+RARITY_WEIGHTS34[k],0),key=keys.at(-1);
+      for(const k of keys){roll-=RARITY_WEIGHTS34[k];if(roll<0){key=k;break;}}
+      const list=groups[key],at=Math.floor(Math.random()*list.length);out.push(list.splice(at,1)[0]);
+    }return out;
+  }
+  rewardChoices=function(){let pool=availableRewards();if(!pool.length&&endlessMode)pool=availableRewards(true);return weightedRewards34(pool);};
+  function fromRewardSource34(source,fn,args){const old=rewardSource34;rewardSource34=source;try{return fn(...args);}finally{rewardSource34=old;}}
+  const permanentBefore34=permanentReward;
+  permanentReward=function(...args){return fromRewardSource34('map',permanentBefore34,args);};
+  const lootOptionsBefore34=bossRewardOptions33;
+  bossRewardOptions33=function(...args){return fromRewardSource34('miniboss',lootOptionsBefore34,args);};
+  const questRewardBefore34=completeMapQuest28;
+  completeMapQuest28=function(q){const before=q?.status,r=fromRewardSource34('quest',questRewardBefore34,[q]);if(before==='active'&&q?.status==='done'){
+    const notice=player.notices28?.at(-1);if(notice){notice.questComplete34=true;notice.questName34=questSpecs28[q.questType].name;}saveRunNow();
+  }return r;};
+  const catalogBefore34=catalogEntries28;
+  catalogEntries28=function(){return catalogBefore34().map(c=>WAVE_ONLY34.has(c.id)?{...c,obtain:'Nur in der Auswahl nach einer Welle. '+(c.hero?'Nur mit '+characterRoster[c.hero].name+'.':'')}:c);};
+
+  // Tier boundaries continue the previous combat curve instead of resetting it.
+  hordeWave31=function(){return (endlessMode?Math.min(100,Math.max(0,wave)*.28):Math.min(14,Math.max(0,wave)))+18*hordeTier31();};
+  balanceSpawnCap=function(){const h=hordeRules31();return Math.min(440,Math.max(24,Math.round((h.cap+h.capWave*hordeWave31()+hordeTier31()*20-(getMiniBoss()?10:0))*1.025*hordePressure31('cap'))));};
+  balanceSpawnInterval=function(){
+    const h=hordeRules31(),globalWave=hordeWave31(),progress=clamp(waveTime/currentWaveLength(),0,1);
+    const growth=1+.025*globalWave+.11*hordeTier31();
+    const recovery=waveTime%55>47?1.55:1,mini=getMiniBoss()?1.28:1,moving=hordeMoving31()?.93:1;
+    return Math.max(.25,h.interval*(1-.16*progress)/growth)*recovery*mini*moving*hordePressure31('interval')/(1.012+.0017*Math.min(64,globalWave)+.006*hordeTier31());
+  };
+  hordeBatch31=function(){return Math.min(10,hordeRules31().size+Math.floor(hordeWave31()/5)+hordeTier31());};
+  function miniFactor34(){return (1+.052*Math.min(100,hordeWave31()))*(1+.14*hordeTier31())*(impossibleMode?1.16:hardMode?1.10:1.05);}
+  function scaleMini34(e){if(!e||e.scale34)return e;const f=miniFactor34();e.hp*=f;e.maxHp*=f;e.scale34=f;e.speed*=1+Math.min(.18,wave*.004+hordeTier31()*.035);return e;}
+  const miniSpawnBefore34=spawnWaveMini;
+  spawnWaveMini=function(...args){return scaleMini34(miniSpawnBefore34(...args));};
+  const guardianBefore34=spawnWorldGuardian;
+  spawnWorldGuardian=function(p,...args){const saved=p.hp,oldScale=p.miniScale34,r=guardianBefore34(p,...args),e=r||enemies.find(e=>e.worldPoi===p.id&&!e.dead);scaleMini34(e);if(e){if(saved>0)e.hp=Math.min(e.maxHp,saved*(oldScale?e.scale34/oldScale:1));p.miniScale34=e.scale34;}return r;};
+  const queenSpawnBefore34=spawnInnieQueen31;
+  spawnInnieQueen31=function(p){const saved=p?.hp,oldScale=p?.miniScale34,e=scaleMini34(queenSpawnBefore34(p));if(e){if(saved>0)e.hp=Math.min(e.maxHp,saved*(oldScale?e.scale34/oldScale:1));p.miniScale34=e.scale34;}return e;};
+  const strongBossBefore34=strengthenBoss31;
+  strengthenBoss31=function(e){strongBossBefore34(e);if(!e||e.balance34||hasenbeinMode)return;const f=1.08;e.hp*=f;e.maxHp*=f;if(e.balanceInitialHp)e.balanceInitialHp*=f;e.balance34=true;};
+
+  const resolveBefore34=resolveReward;
+  resolveReward=function(ref){const c=resolveBefore34(ref);return c?rewardCardText34(c):null;};
+  const buildStatsBefore34=buildStatsMarkup;
+  buildStatsMarkup=function(p,...args){
+    const caps={
+      'HERZEN':['maxHp',BALANCE.maxHearts],'MAX. HERZEN':['maxHp',BALANCE.maxHearts],
+      'NUSS-SCHADEN':['damage',BALANCE.maxDamage],'SALVEN PRO SEKUNDE':['fireRate',BALANCE.minInterval,true],
+      'LAUFTEMPO':['speed',BALANCE.maxSpeed],'DASH-COOLDOWN':['dashCooldown',BALANCE.minDash,true],
+      'SPEZIALSCHADEN':['specialDamage',STAT_CAPS32.specialDamage],'BOSSSCHADEN':['bossDamage',STAT_CAPS32.bossDamage],
+      'HASENSCHADEN':['rabbitDamage',STAT_CAPS32.rabbitDamage],'KRITISCHE TREFFER':['crit',STAT_CAPS32.crit],
+      'DODGE':['dodgeChance',STAT_CAPS32.dodgeChance],'BLOCKCHANCE':['damageGuard',STAT_CAPS32.damageGuard],
+      'DURCHSCHLAG':['pierce',STAT_CAPS32.pierce],'SAMMELRADIUS':['magnet',STAT_CAPS32.magnet],
+      'POWER-UP-FAKTOR':['powerLuck',BALANCE.maxPowerLuck],'MUNITIONS-FAKTOR':['ammoDropLuck',STAT_CAPS32.ammoDropLuck],
+      'POWER-UP-DAUER':['powerDuration',STAT_CAPS32.powerDuration]
+    };
+    const names={'THEORETISCHER FRONT-DPS':'SCHADEN PRO SEKUNDE','BASIS-SALVEN-DPS':'SCHADEN PRO SEKUNDE',
+      'DASH-COOLDOWN':'AUSWEICHPAUSE','DODGE':'AUSWEICHCHANCE','SPEZIALSCHADEN':'WAFFENSCHADEN',
+      'POWER-UP-FAKTOR':'POWER-UP-GLÜCK','MUNITIONS-FAKTOR':'MUNITIONSGLÜCK'};
+    const hints={'HERZEN':'maximal '+BALANCE.maxHearts,'MAX. HERZEN':'maximal '+BALANCE.maxHearts,
+      'THEORETISCHER FRONT-DPS':'Rechenwert für normale Schüsse; Begleiter und Waffen zählen extra.',
+      'BASIS-SALVEN-DPS':'Rechenwert für normale Schüsse; Begleiter und Waffen zählen extra.',
+      'DODGE':'Chance, einem Treffer zu entgehen · maximal 50 %',
+      'BLOCKCHANCE':'Zusätzliche Chance, den Treffer abzufangen · maximal 55 %',
+      'POWER-UP-FAKTOR':'Bis zu '+displayNumber(Math.min(.45,.07425*(p.powerLuck||1))*100)+' % pro Gegner; 6 Sekunden Pause zwischen Power-ups.',
+      'SAMMELRADIUS':'Funde werden aus dieser Entfernung angezogen. Die Magnet-Möhre sammelt alle Nüsse und Power-ups ein.'};
+    return buildStatsBefore34(p,...args).replace(/<div class="build-stat"><small>([^<]+)<\/small><strong>(.*?)<\/strong><span>(.*?)<\/span><\/div>/g,(all,label,value,hint)=>{
+      const c=caps[label],n=c?Number(p[c[0]]):NaN,reached=c&&Number.isFinite(n)&&(c[2]?n<=c[1]+.0001:n>=c[1]-.0001)&&!(label==='DASH-COOLDOWN'&&p.madelpulator);
+      return `<div class="build-stat"><small>${names[label]||label}</small><strong>${value}${reached?' <em class="e32-cap-badge">MAX</em>':''}</strong><span>${hints[label]||hint}</span></div>`;
+    });
+  };
+
   // PIXELWERK_WORLD_END
   // PIXELWERK_INTEGRATION_BEGIN · installed by tools/build_pixel_edition.py
   function installPixelEdition(){
@@ -9945,7 +10541,7 @@
     clearCombatExtras=function(...args){echoes.length=0;trailClock=0;return craftedClear(...args);};
     // Web Audio is created only after the existing sound button's user gesture.
     let scoreEngine=null,audioOwner=null,suppressLegacySfx=0,lastBattleTrack='garden';
-    const scoreState=()=>({enabled:soundOn&&!document.hidden,volume:settings.volume,musicMute:settings.musicMute,sfxMute:settings.sfxMute,paused:['paused','build','settings','guide','skins','share','worldMap','worldShop','worldNuts'].includes(mode),intensity:boss&&!boss.dead?1:Math.min(1,enemies.length/28)});
+    const scoreState=()=>({enabled:soundOn&&!document.hidden,volume:settings.volume,musicVolume:settings.musicVolume,sfxVolume:settings.sfxVolume,musicMute:settings.musicMute,sfxMute:settings.sfxMute,paused:['paused','build','settings','guide','skins','share','worldMap','worldShop','worldNuts'].includes(mode),intensity:boss&&!boss.dead?1:Math.min(1,enemies.length/28)});
     function audioEngine(){if(!audioContext||!window.PixelAudio)return null;if(audioOwner!==audioContext){scoreEngine?.dispose();audioOwner=audioContext;scoreEngine=window.PixelAudio.create(audioContext);}return scoreEngine;}
     function soundEffect(name,x=player?.x||W/2,volume=1){const engine=audioEngine();if(!engine)return;engine.mix(scoreState());engine.effect(name,{pan:clamp((x-(camX+viewW/2))/(viewW*.7),-.7,.7),volume});}
     function scoreForScene(){
@@ -10262,7 +10858,7 @@
       const t=reducedMotion?1:clamp(houseSceneTime27/.95,0,1),y=550-180*(t*t*(3-2*t)),id=player.characterId||'snickers',width=id==='koettitroeter'?154:id==='krustenbraten'?147:139;
       x.fillStyle='#20180e55';x.fillRect(418,y+26,83,10);art.draw(x,art.hero(id,t<1?'walk':'idle',t<1?Math.floor(houseSceneTime27*9)%4:Math.floor(houseSceneTime27*2)%4,selectedSkin||'classic',Boolean(player.madelpulator),'up'),460,y,width,.73);
       if(shop&&t>=1){const line=houseSceneTime27%9<3?'Na, wieder Ärger im Garten?':houseSceneTime27%9<7?'Anschreiben gibt’s nur für Nüsse.':'Und die müssen echt sein.';x.font='19px NuttyPixel';const w=x.measureText(line).width+30;x.fillStyle='#192e39';x.fillRect(550-w/2-2,69,w+4,40);x.fillStyle='#ffedc5';x.fillRect(550-w/2,67,w,35);x.fillRect(541,101,9,10);x.fillStyle='#35404a';x.textAlign='center';x.fillText(line,550,91);}
-      if(!shop){for(let i=0;i<3;i++)art.draw(x,art.world('nut-chest'),310+i*165,270,106,.8);}
+      if(!shop){for(let i=0;i<3;i++){x.save();if(p.done&&p.selectedPile34!==i)x.globalAlpha=.35;art.draw(x,art.world('nut-chest'),310+i*165,270,106,.8);if(p.done&&p.selectedPile34===i){x.fillStyle='#d8f592';x.font='bold 20px NuttyPixel';x.textAlign='center';x.fillText('GEÖFFNET',310+i*165,300);}x.restore();}}
     }
     const houseActor27=drawHamster;
     drawHamster=function(p,alpha=1){if(mode!=='worldEntering'||!houseEntry27)return houseActor27(p,alpha);const id=p.characterId||'snickers',t=houseEntry27.t/(reducedMotion?.22:.85),width=id==='koettitroeter'?112:id==='krustenbraten'?104:98;art.draw(ctx,art.hero(id,'walk',reducedMotion?0:Math.floor(houseEntry27.t*10)%4,selectedSkin||'classic',Boolean(p.madelpulator),'up'),p.x,p.y,width,.73,false,alpha*(1-clamp((t-.62)/.38,0,1)));};
@@ -10341,13 +10937,13 @@
     const heroEyes31=art.hero,eyeFrames31=new WeakMap();
     const frontEyes31={snickers:[[61,65],[78,65]],raffzahn:[[66,65],[80,65]],krustenbraten:[[61,64],[76,65]],slanny:[[62,64],[80,64]],koettitroeter:[[62,41],[73,41]]};
     art.hero=function(id,pose='idle',frame=0,skin='classic',madel=false,facing='right'){
-      const base=heroEyes31(id,pose,frame,skin,id==='koettitroeter'?false:madel,facing);
+      const base=heroEyes31(id,pose,frame,skin,madel,facing);
       if(!base||!madel||pose==='death'||facing==='up'||!frontEyes31[id])return base;
       if(eyeFrames31.has(base))return eyeFrames31.get(base);
       const c=art.surface(base.width,base.height),x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(base,0,0);
       const data=x.getImageData(0,0,c.width,c.height),pixels=data.data,w=c.width,h=c.height,eyes=[];
       const light=(px,py)=>{if(px<0||py<0||px>=w||py>=h)return 0;const q=(py*w+px)*4;return pixels[q+3]>160?pixels[q]*.3+pixels[q+1]*.59+pixels[q+2]*.11:0;};
-      if(facing==='down'||id==='koettitroeter'){
+      if(facing==='down'){
         let hints=frontEyes31[id];
         if(id==='koettitroeter'){
           let brow=33;for(let yy=24;yy<66;yy++){let green=0;for(let xx=60;xx<83;xx++){const q=(yy*w+xx)*4;if(pixels[q+3]>160&&pixels[q]>65&&pixels[q+1]>85&&pixels[q+1]>pixels[q]*1.04&&pixels[q+2]<pixels[q+1]*.75)green++;}if(green>=7){brow=yy;break;}}
@@ -10450,7 +11046,7 @@
       pepperMill:['kitchen-detail27-2','kitchen-flora28-0'],
       dryGrass:['quarry-flora28-0','quarry-flora28-2'],
       stoneCairn:['quarry-detail27-1','quarry-flora28-0'],
-      mineLantern:['trading-post','quarry-flora28-0'],
+      mineLantern:['quarry-prop0','quarry-flora28-0'],
       glassFern:['lab-flora28-1','lab-flora28-0'],
       cableCoil:['stage-detail27-1','lab-flora28-0'],
       sampleCrate:['crates','lab-flora28-0'],
@@ -10490,14 +11086,8 @@
         x.drawImage(base,52,66,155,146,0,0,168,146);x.restore();
         cut32(x,accent,26,189,45,47);cut32(x,accent,187,185,40,46);
       }else if(item==='mineLantern'){
-        // Hanging brass lantern cut out of the trading post. All texture and
-        // glass are original pixels; the small stone/grass grounding is new.
-        const lamp=art.surface(40,69),lc=lamp.getContext('2d');lc.imageSmoothingEnabled=false;
-        lc.drawImage(base,70,70,40,69,0,0,40,69);
-        lc.globalCompositeOperation='destination-in';lc.fillStyle='#fff';
-        lc.beginPath();[[20,12],[23,15],[23,24],[31,28],[35,34],[33,41],[31,43],[28,54],[21,63],[14,55],[11,43],[8,41],[6,34],[10,27],[17,24],[17,16]].forEach(([a,b],i)=>i?lc.lineTo(a,b):lc.moveTo(a,b));lc.closePath();lc.fill();
-        cut32(x,lamp,63,54,125,183,{x:0,y:0,w:40,h:69});
-        cut32(x,accent,43,197,58,39);cut32(x,accent,172,202,43,35);
+        // Replace the acorn-shaped ornament with an authored ore cart.
+        cut32(x,base,18,51,220,181);cut32(x,accent,170,197,54,38);
       }else if(item==='pepperMill'){
         // Wood grain of an old kitchen cask forms the grinder body; brass
         // bands, tapered cap and pepper flecks retain a readable silhouette.
@@ -10782,11 +11372,14 @@
     render=function(dt){renderRouteBefore33(dt);
       const mini=$('waveMiniBar')?.querySelector('small'),enemy=enemies.find(e=>e.miniBoss&&!e.dead);
       if(mini)mini.textContent=enemy?.mapBoss33?'MINIBOSS · KARTENBEUTE':'MINIBOSS · 3 POWER-UPS';
-      if(!guide33||guide33.classList.contains('hidden')||!wave33){placeNotices33();return;}
+      if(!wave33){placeNotices33();return;}
       const root=shell.getBoundingClientRect(),bar=wave33.getBoundingClientRect();
       let top=bar.bottom-root.top+9;
       if(boss33&&!boss33.classList.contains('hidden')){const b=boss33.getBoundingClientRect();if(b.top<top+30+root.top)top=b.bottom-root.top+7;}
-      guide33.style.left=(bar.left-root.left+bar.width/2)+'px';guide33.style.top=top+'px';
+      const center=bar.left-root.left+bar.width/2;
+      if(guide33&&!guide33.classList.contains('hidden')){guide33.style.left=center+'px';guide33.style.top=top+'px';top+=guide33.getBoundingClientRect().height+6;}
+      const quest=$('questHud28');if(quest&&!quest.classList.contains('hidden')){quest.style.left=center+'px';quest.style.top=top+'px';quest.style.maxWidth=Math.max(150,Math.min(bar.width,root.width-24))+'px';}
+
       placeNotices33();
     };
 
@@ -10835,6 +11428,57 @@
         ctx.rotate(ambientTime*4);art.draw(ctx,art.companion('creamPuff',0),0,0,23,.5);
       }
       ctx.restore();return true;
+    };
+
+    // Full-resolution illustrated portraits; native transparent assets work offline.
+    const skillIconBefore34=art.icon,skillUrlBefore34=art.url;
+    art.icon=function(id){return window.PixelSkillArt34?.[id]||skillIconBefore34(id);};
+    art.url=function(kind,id,...args){if(kind==='icon'&&window.PIXEL_SKILLS34?.[id])return window.PIXEL_SKILLS34[id];return skillUrlBefore34(kind,id,...args);};
+    function skillImage34(id,x,y,size,angle=0,alpha=1){const im=art.icon(id);ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.globalAlpha*=alpha;ctx.imageSmoothingEnabled=true;ctx.drawImage(im,-size/2,-size/2,size,size);ctx.restore();}
+    function ring34(x,y,rx,ry,color,alpha=1,width=2,angle=0,start=0,end=TAU){ctx.save();ctx.globalAlpha*=alpha;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.ellipse(x,y,Math.max(1,rx),Math.max(1,ry),angle,start,end);ctx.stroke();ctx.restore();}
+    function sparks34(x,y,r,t,color,count=10,inward=false){ctx.save();ctx.fillStyle=color;for(let i=0;i<count;i++){const a=i*TAU/count+t*2,d=r*(inward?1-(t+i/count)%1:.3+((t+i/count)%1)*.7);ctx.globalAlpha=.25+.5*(1-i/count);ctx.beginPath();ctx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d*.65,1.5+i%3,0,TAU);ctx.fill();}ctx.restore();}
+    // Replace the old flat rectangles with distinct animated effects. Gameplay
+    // positions, active duration and target count come from the real skill actors.
+    drawExpansion=function(...args){const result=drawSkillsBefore32(...args),s=player?.e32Skills;if(!s||hasenbeinMode)return result;
+      const clock=reducedMotion?0:runTime;
+      for(const a of s.actors||[]){if(!worldVisible(a,250))continue;const x=a.x,y=a.y;
+        ctx.save();
+        if(a.kind==='bait'){
+          ring34(x,y+8,63+Math.sin(clock*4)*5,27,'#cbd981',.65,2);
+          sparks34(x,y+5,70,clock*.4,'#edcf8c',7,true);
+          skillImage34(a.id,x,y-16+Math.sin(clock*3)*3,57,Math.sin(clock*2)*.08);
+        }else if(a.kind==='ticket'){
+          skillImage34(a.id,x,y-27,45,Math.sin(clock*6)*.12);
+        }else if(a.kind==='ward'){
+          ctx.globalAlpha=.10;ctx.fillStyle='#f5d89a';ctx.beginPath();ctx.ellipse(x,y,146,108,0,0,TAU);ctx.fill();ctx.globalAlpha=1;
+          ring34(x,y,146,108,'#e9d8a7',.65,3);ring34(x,y,139,100,'#b3e9be',.35,1);
+          for(let i=0;i<Math.min(7,a.left);i++){const angle=i*TAU/Math.min(7,a.left)+clock*.45;skillImage34(a.id,x+Math.cos(angle)*140,y+Math.sin(angle)*96,32,Math.sin(angle)*.12,.85);}
+        }else if(a.kind==='vortex'){
+          const r=185+(a.rank-1)*20;ctx.fillStyle='#231336';ctx.globalAlpha=.30;ctx.beginPath();ctx.ellipse(x,y,r*.54,r*.3,0,0,TAU);ctx.fill();ctx.globalAlpha=1;
+          for(let i=0;i<4;i++)ring34(x,y,r*(.36+i*.13),r*(.20+i*.071),['#eddc9e','#b692e1','#835bbe','#eacba0'][i],.75,2+i%2,0,clock*1.9+i,clock*1.9+i+4.2);
+          sparks34(x,y,r,clock*.48,'#efd9a0',14,true);skillImage34(a.id,x,y,100+Math.sin(clock*4)*8,clock*.24,.95);
+        }else if(a.kind==='picture'){
+          const progress=clamp(1-(a.at-runTime)/.6,0,1);ctx.translate(x,y-16);ctx.rotate((progress-.5)*.16);ctx.globalAlpha=.3+progress*.55;ctx.fillStyle='#102a2c';ctx.fillRect(-49,-48,98,87);ctx.strokeStyle='#f6efd6';ctx.lineWidth=5;ctx.strokeRect(-49,-48,98,87);skillImage34(a.id,0,-4,85,0,.9);
+        }
+        ctx.restore();
+      }
+      for(const f of s.fx||[]){if(!worldVisible(f,(f.radius||0)+90))continue;const t=clamp(1-f.life/f.maxLife,0,1),alpha=Math.min(1,f.life*6),x=f.x,y=f.y;ctx.save();ctx.globalAlpha=alpha;
+        if(['reflection','ticket','echo'].includes(f.fx)){
+          const travel=Math.min(1,t*2.5),px=f.fromX+(x-f.fromX)*travel,py=f.fromY+(y-f.fromY)*travel-Math.sin(travel*Math.PI)*24;
+          const color=f.fx==='ticket'?'#f7d987':f.fx==='echo'?'#caa2ee':'#b4eeef';
+          for(let i=0;i<4;i++){const u=Math.max(0,travel-i*.05);ring34(f.fromX+(x-f.fromX)*u,f.fromY+(y-f.fromY)*u-Math.sin(u*Math.PI)*24,6-i,4-i*.7,color,(1-i/4)*.55);}
+          skillImage34(f.id,px,py-10,32,Math.sin(t*5)*.12);
+          if(f.fx==='echo')skillImage34('e32Hintertuer',f.fromX,f.fromY-28,80,0,1-t);
+          if(travel===1){ring34(x,y,15+t*28,9+t*16,color,1-t,3);sparks34(x,y,30,t,color,6);}
+        }else{
+          const color=f.id==='e32Singularitaet'?'#d3adef':f.id==='e32Pfandpfote'?'#eac87d':'#b3e5ce',r=f.radius||60;
+          ring34(x,y,r*(.22+t*.7),r*(.16+t*.48),color,1-t,4*(1-t)+1);
+          sparks34(x,y,r*.8,t,color,10);
+          if(f.fx==='flash')skillImage34(f.id,x,y-35,66,0,1-t);
+          if(f.fx==='ward')ring34(x,y,r,Math.max(1,r*.68), '#ffeab5',1-t,2);
+        }ctx.restore();
+      }
+      return result;
     };
 
     // Fixed source grid makes pixel density independent of HiDPI display resolution.

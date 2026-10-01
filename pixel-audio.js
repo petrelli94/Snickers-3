@@ -102,8 +102,8 @@
   }
   function mix(state){enabled=!!state.enabled;musicMuted=!!state.musicMute;sfxMuted=!!state.sfxMute;intensity=state.intensity||0;
    const value=enabled?clamp(state.volume/100,0,1)*.65:0;ramp(master.gain,value);
-   const level=musicMuted?0:state.paused?.22:.68;ramp(musicGain.gain,level,.06);
-   const fx=sfxMuted?0:.9;ramp(sfxGain.gain,fx);
+   const level=musicMuted?0:(state.paused?.22:.68)*clamp((state.musicVolume??100)/100,0,1);ramp(musicGain.gain,level,.06);
+   const fx=sfxMuted?0:.9*clamp((state.sfxVolume??100)/100,0,1);ramp(sfxGain.gain,fx);
   }
   function update(id,state){mix(state);if(!enabled||musicMuted||state.volume<=0||context.state==='suspended')return;change(id);
    if(next<context.currentTime-.15)next=context.currentTime+.025;

@@ -1,0 +1,18 @@
+/* Edition 34: readable achievements, audio controls, and discovery controls. */
+.achievement-row{grid-template-columns:42px minmax(0,1fr) auto;gap:14px;padding:15px;margin-bottom:8px}
+.achievement-row.done{border:2px solid #cfe975;background:linear-gradient(110deg,#334932,#162d2a);box-shadow:inset 4px 0 #d5ec86}
+.achievement-row.done .achievement-badge{color:#ecffae;background:#45612c;border:1px solid #cfe975}
+.achievement-earned34{display:block;color:#d6f995;font-size:11px;letter-spacing:.06em;margin:6px 0}
+.audio-section>label{display:flex;justify-content:space-between;gap:16px;margin:20px 0 8px}.audio-section input[type=range]{width:100%;margin:0 0 8px}
+.shuffle-panel>div,.shuffle-bar>div{display:flex;flex-direction:column;gap:7px}.shuffle-panel strong,.shuffle-bar strong{display:block;margin-bottom:7px}.shuffle-panel small,.shuffle-bar small{display:block;line-height:1.5}
+#questHud28{transform:translateX(-50%);right:auto;bottom:auto;text-align:center;white-space:normal;line-height:1.35;padding:6px 10px;pointer-events:none}
+.nut-pile-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0;position:relative;z-index:3}
+.nut-pile-options button{min-width:0;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;cursor:pointer}.nut-pile-options img{width:48px;height:48px;object-fit:contain}
+.house-scene27:has(+.house-dialog27) canvas{touch-action:manipulation}.quest-success34{border:2px solid #cfe975;padding:18px;background:#203d30}.quest-success34 strong{font-size:20px;color:#ddfba5}
+.queen-verdict34{max-width:650px;margin:20px auto;font-size:18px;line-height:1.65}.queen-verdict34 strong{display:block;color:#f1d494;margin:20px 0}
+@media(max-width:600px){.achievement-row{gap:8px;padding:12px;grid-template-columns:30px minmax(0,1fr) auto}.nut-pile-options{gap:6px}.nut-pile-options button{padding:8px 4px;font-size:11px}.nut-pile-options small{font-size:10px}.queen-verdict34{font-size:15px}.quest-success34{padding:10px}#questHud28{font-size:10px}}
+
+.house-scene27{position:relative}.chest-hits34{position:absolute;inset:0;pointer-events:none}.chest-hits34 button{position:absolute;top:26%;width:13.4%;height:22%;pointer-events:auto;border:2px solid transparent;background:transparent;cursor:pointer;touch-action:manipulation}.chest-hits34 button:hover,.chest-hits34 button:focus-visible{border-color:#ebefaa;background:#e9e6b81c;outline:0}.chest-hits34 button span{position:absolute;bottom:0;left:calc(50% - 12px);width:24px;height:24px;border:1px solid #dbe994;background:#192b25;color:#f3ffbc;line-height:22px;text-align:center}
+.upgrade[data-skill^="e32"] img,.gallery-entry img[src^="data:image/webp"],.skill34-icon{image-rendering:auto}
+
+.gallery-card28 img[src^="data:image/webp"],.reward-card img[src^="data:image/webp"]{image-rendering:auto}
