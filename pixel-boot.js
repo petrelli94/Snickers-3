@@ -4,7 +4,7 @@
   const notice=document.getElementById('assetLoading');
   try {
     await window.PixelStudio?.ready;
-    const script=document.createElement('script');script.src='game.js?rev=stambouli32';
+    const script=document.createElement('script');script.src='game.js?rev=stambouli33a';
     script.onload=()=>notice?.remove();
     script.onerror=()=>{if(notice)notice.textContent='Das Spiel konnte nicht geladen werden. Bitte lade die Seite neu.';};
     document.body.appendChild(script);

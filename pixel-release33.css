@@ -1,0 +1,13 @@
+/* Edition 33: legible help cards and HUD aligned to the wave meter. */
+.achievement-hud{left:18px;right:auto;top:112px;z-index:26;max-width:280px;width:calc(100% - 155px)}
+.achievement-pop{overflow-wrap:anywhere}
+.skin-unlock-notice32{max-width:280px;min-width:0;box-sizing:border-box}
+@media(max-width:760px){.achievement-hud{left:10px;right:auto;top:194px;max-width:calc(100% - 139px)}.achievement-pop{padding:8px;font-size:10px}.achievement-pop strong{font-size:12px}}
+@media(min-width:1101px){.hud{grid-template-columns:minmax(215px,260px) minmax(210px,390px) minmax(166px,190px)}}
+@media(min-width:761px) and (max-width:1100px){.hud{grid-template-columns:minmax(174px,215px) minmax(190px,330px) minmax(128px,148px)}}
+@media(max-width:760px){.hud{grid-template-columns:minmax(0,1fr) 118px}.poi-guide32{transform:translateX(-50%);max-width:min(245px,78%);font-size:9px;padding:4px 7px}.poi-guide32.boss32{max-width:min(245px,78%)}}
+@media(max-width:360px){.hud{grid-template-columns:minmax(0,1fr) 101px}.poi-guide32{max-width:72%;font-size:8px}}
+@media(max-height:550px) and (min-width:640px){.hud{grid-template-columns:minmax(154px,196px) minmax(140px,290px) minmax(98px,115px)}.poi-guide32{max-width:195px;padding:2px 5px;font-size:8px}}
+.mechanics-grid>article{min-width:0;padding:16px 18px;background:#243d49;border:2px solid #779b8c;border-left:5px solid #d5bc7b;box-shadow:inset 0 0 0 2px #142934,0 3px #0a1b25;color:#e6dfc7}
+.mechanics-grid>article b{display:block;color:#f6dfaa;font-size:18px;line-height:1.25}
+.mechanics-grid>article p{margin:7px 0 0;font-size:15px;line-height:1.45;overflow-wrap:anywhere}

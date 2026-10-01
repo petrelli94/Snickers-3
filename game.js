@@ -1202,7 +1202,7 @@
   function formatTime(n) { return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(Math.floor(n%60)).padStart(2,'0')}`; }
   function updateHud() {
     if (!player) return;
-    $('healthBar').innerHTML = Array.from({length:Math.min(34,player.maxHp)},(_,i)=>`<i class="health-segment${i < player.hp ? '' : ' empty'}"></i>`).join('');
+    $('healthBar').innerHTML = Array.from({length:Math.min(35,player.maxHp)},(_,i)=>`<i class="health-segment${i < player.hp ? '' : ' empty'}"></i>`).join('');
     $('healthText').textContent = `${displayNumber(player.hp)}/${player.maxHp}`;
     $('scoreValue').textContent = String(score).padStart(6,'0');
     $('waveLabel').textContent = boss ? (endlessMode?`ENDLOS · BOSS · WELLE ${wave+1}`:`${gamePlusLevel===2?'NG+2 · ':newGamePlus?'NG+ · ':''}${boss.ottah?'BOSS 04 / 04':boss.karnil?'BOSS 03 / 03':boss.cyber?'BOSS 02 / 03':'BOSS 01 / 03'}`) : (endlessMode?`ENDLOS · WELLE ${String(displayWave25()).padStart(2,'0')}`:`${gamePlusLevel===2?'NG+2 · ':newGamePlus?'NG+ · ':''}WELLE ${String(displayWave25()).padStart(2,'0')} / 15`);
@@ -1669,7 +1669,7 @@
     for(const p of pickups){
       p.life-=dt;p.phase+=dt*3;const d=dist(player,p),magnetRadius=Math.min(480,player.magnet+(runTime<(player.e24?.magnetUntil||0)?45:0))*(player.powerups.magnet>0?2.2:1);
       if((d<magnetRadius||p.permanentHeart)&&d>1){p.x+=(player.x-p.x)/d*310*dt;p.y+=(player.y-p.y)/d*310*dt;}
-      if(d<25){p.life=0;event24(p.type==='heart'?'heartPickup':p.type==='nut'?'nutPickupCount':'pickup',p);if(p.permanentHeart){collectPermanentHeart(p);}else if(p.type==='heart'){player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-35,'+1 ♥',accent());tone(700,.13,'sine',.055,1050);}else if(p.type==='power'){collectPowerup(p);}else if(p.type==='ammo'){grantSpecialAmmo();}else{score+=Math.round((player.powerups.jackpot>0?16:4)*(player.powerups.scoreRush>0?2:1)*runScoreMultiplier());setAchievementProgress('score_hog',score);tone(1000,.045,'sine',.022,1400);}}
+      if(d<25){if(p.mapMiniLoot33){collectMapMiniLoot33(p);continue;}p.life=0;event24(p.type==='heart'?'heartPickup':p.type==='nut'?'nutPickupCount':'pickup',p);if(p.permanentHeart){collectPermanentHeart(p);}else if(p.type==='heart'){player.hp=Math.min(player.maxHp,player.hp+1);floater(player.x,player.y-35,'+1 ♥',accent());tone(700,.13,'sine',.055,1050);}else if(p.type==='power'){collectPowerup(p);}else if(p.type==='ammo'){grantSpecialAmmo();}else{score+=Math.round((player.powerups.jackpot>0?16:4)*(player.powerups.scoreRush>0?2:1)*runScoreMultiplier());setAchievementProgress('score_hog',score);tone(1000,.045,'sine',.022,1400);}}
     }
     pickups=pickups.filter(p=>p.life>0);enemies=enemies.filter(e=>!e.dead);
     if(!boss&&!worldRoomActive()&&waveSpawningComplete())beginVictory(upgradeScreen);
@@ -1736,7 +1736,7 @@
   skillBook.ratTerror=weaponUnlock('ratTerror');
   const survivalWeaponUpgrades=Object.fromEntries(['singularity','thunderRail','hiveLauncher','iceComet','orbitSaw'].map(id=>[id,weaponUnlock(id,true)]));
   Object.assign(scoreSkillBook,{
-    heart:{icon:'♥',title:'PERMANENTES HERZ',desc:'+1 maximales Herz und +1 Herz Heilung. Maximal 30 Herzen.',apply:p=>{p.maxHp++;p.hp=Math.min(p.maxHp,p.hp+1);}},
+    heart:{icon:'♥',title:'PERMANENTES HERZ',desc:'+1 maximales Herz und +1 Herz Heilung. Maximal 35 Herzen.',apply:p=>{p.maxHp++;p.hp=Math.min(p.maxHp,p.hp+1);}},
     ammo:{icon:'⊕',title:'EXTRA-MUNITION',desc:'+1 maximale und aktuelle Ladung pro Waffe, auch für später freigeschaltete Waffen. Maximal +12.',apply:p=>{p.ammoBonus++;for(const id of p.weapons)p.weaponUses[id]=(p.weaponUses[id]||0)+1;}},
     shuffle:{icon:'↻',title:'EXTRA-SHUFFLE',desc:'+1 einmalige Shuffle-Ladung. Bleibt bis zur Verwendung erhalten; lädt sich nach einer Welle nicht auf.',apply:p=>p.shuffleBonusBank=(p.shuffleBonusBank||0)+1}
   });
@@ -5706,7 +5706,7 @@
   };
   const worldDamageEnemy=damageEnemy;
   damageEnemy=function(e,...args){const wasDead=e.dead,oldHp=e.hp;const result=worldDamageEnemy(e,...args);if(!wasDead&&e.dead&&e.worldGuardian&&exploration){const p=exploration.pois.find(p=>p.id===e.worldPoi);if(p){p.done=true;p.hp=0;p.active=false;}pickups.push({type:'heart',permanentHeart:true,x:e.x,y:e.y,life:Infinity,phase:0});floater(e.x,e.y-65,'DAUERHERZ GEFUNDEN','#ffb09e');if(e.worldIndoor&&exploration.room)exploration.room.cleared=true;saveRunNow();}if(settings.showDamage&&oldHp>e.hp&&!wasDead){const amount=Math.min(oldHp,oldHp-e.hp);floater(e.x+rnd(-9,9),e.y-e.r-24,amount<10?amount.toFixed(1):String(Math.round(amount)),'#fff3d7');}return result;};
-  function collectPermanentHeart(p){if(p.claimed)return;p.claimed=true;p.life=0;const gained=player.maxHp<30;if(gained){player.maxHp++;player.hp=Math.min(player.maxHp,player.hp+1);}else player.hp=Math.min(player.maxHp,player.hp+3);floater(player.x,player.y-55,gained?'DAUERHAFT +1 HERZ':'+3 HEILUNG · HERZLIMIT','#ffb09e');updateHud();saveRunNow();}
+  function collectPermanentHeart(p){if(p.claimed)return;p.claimed=true;p.life=0;const gained=player.maxHp<BALANCE.maxHearts;if(gained){player.maxHp++;player.hp=Math.min(player.maxHp,player.hp+1);}else player.hp=Math.min(player.maxHp,player.hp+3);floater(player.x,player.y-55,gained?'DAUERHAFT +1 HERZ':'+3 HEILUNG · HERZLIMIT','#ffb09e');updateHud();saveRunNow();}
   const worldFloater=floater;
   floater=function(x,y,text,...rest){if(!settings.showKillPoints&&/^\+\d+(?:[.,]\d+)?$/.test(String(text)))return;worldFloater(x,y,text,...rest);if(floaters.length>90)floaters.splice(0,floaters.length-90);};
   function permanentReward(kind){
@@ -5737,7 +5737,7 @@
     const p=exploration?.pois.find(p=>p.id===exploration.interior);if(!p)return;
     if(p.outcome==='shop'){
       prepareStatShop(p);
-      const cards=p.offers.map((o,i)=>{const c=o.stat?scoreSkillBook[o.stat]:resolveReward(o.ref);if(!c)return '';const valid=o.stat?scorePerkAvailable(o.stat):availableRewards(false).some(a=>a.id===c.id),disabled=o.bought||!valid||wallet()<o.price;return `<button class="upgrade ${o.stat?'rarity-blue':rarityClass(c)}" id="worldBuy${i}" data-skill="${o.stat?'stat-'+o.stat:c.id}" ${disabled?'disabled':''}><small class="upgrade-kind">${o.bought?'VERKAUFT':o.stat?'DAUERHAFTER WERT':'UPGRADE'}</small><span class="upgrade-icon"><img src="${worldArt?.url('icon',o.stat?({damage:'giantNut',speed:'haste',fireRate:'overclock',dash:'phase',powerLuck:'jackpot',dodge:'barrier',heart:'health',ammo:'ammo',shuffle:'clock'}[o.stat]):c.id)||''}" alt=""></span><strong>${escapeHTML(c.title)}</strong><span>${escapeHTML(c.desc)}</span><em>${o.bought?'BEREITS GEKAUFT':!valid?'BEREITS AUSGEREIZT':o.price.toLocaleString('de-DE')+' PUNKTE'}</em></button>`;}).join('');
+      const cards=p.offers.map((o,i)=>{const c=o.stat?scoreSkillBook[o.stat]:resolveReward(o.ref);if(!c)return '';const valid=o.stat?scorePerkAvailable(o.stat):availableRewards(false).some(a=>a.id===c.id),disabled=o.bought||!valid||wallet()<o.price,icon=o.stat?({damage:'giantNut',speed:'haste',fireRate:'overclock',dash:'phase',powerLuck:'jackpot',dodge:'barrier',heart:'health',ammo:'ammo',shuffle:'clock',pickupRange:'magnet'}[o.stat]||'magnet'):c.id;return `<button class="upgrade ${o.stat?'rarity-blue':rarityClass(c)}" id="worldBuy${i}" data-skill="${o.stat?'stat-'+o.stat:c.id}" ${disabled?'disabled':''}><small class="upgrade-kind">${o.bought?'VERKAUFT':o.stat?'DAUERHAFTER WERT':'UPGRADE'}</small><span class="upgrade-icon"><img src="${worldArt?.url('icon',icon)||''}" alt=""></span><strong>${escapeHTML(c.title)}</strong><span>${escapeHTML(c.desc)}</span><em>${o.bought?'BEREITS GEKAUFT':!valid?'BEREITS AUSGEREIZT':o.price.toLocaleString('de-DE')+' PUNKTE'}</em></button>`;}).join('');
       showOverlay(worldRoomMarkup(p,'WILLKOMMEN BEI KNACK & SOHN.','„Anschauen ist gratis. Anfassen auch. Mitnehmen kostet.“')+`<p class="shop-wallet"><b>GUTHABEN ${wallet().toLocaleString('de-DE')}</b><span>Highscore ${score.toLocaleString('de-DE')} · bleibt beim Einkauf erhalten</span></p><div class="upgrades shop-offers">${cards}</div><button class="primary-button" id="worldLeave">GEBÄUDE VERLASSEN</button>`);
       p.offers.forEach((o,i)=>bindWorldButton('worldBuy'+i,()=>buyWorldOffer(p,i)));
     }else{
@@ -7189,7 +7189,7 @@
     const id=shuffled(stats)[0],c=scoreSkillBook[id];c.apply(player);player.scorePerks[id]=(player.scorePerks[id]||0)+1;normalizeBuild(player);statDiscovery28(id,kind?'ERSATZBONUS · KEINE PASSENDE KARTE':'DAUERHAFTER WERTEBONUS');return(kind?'ERSATZ-BONUS · ':'')+c.title;
   };
   const heartDiscovery28=collectPermanentHeart;
-  collectPermanentHeart=function(p){const eligible=!p.claimed,before=player.maxHp;heartDiscovery28(p);if(eligible&&p.claimed)queueDiscovery28({title:player.maxHp>before?'DAUERHAFT EIN HERZ MEHR':'HERZEN AUFGEFÜLLT',desc:player.maxHp>before?`Dein Lebensmaximum steigt von ${before} auf ${player.maxHp}. Ein fehlendes Herz wurde ebenfalls geheilt.`:'Du hast bereits 30 maximale Herzen. Der Fund heilt stattdessen bis zu drei fehlende Herzen.',icon:'health',kind:'WÄCHTERBELOHNUNG'});};
+  collectPermanentHeart=function(p){const eligible=!p.claimed,before=player.maxHp;heartDiscovery28(p);if(eligible&&p.claimed)queueDiscovery28({title:player.maxHp>before?'DAUERHAFT EIN HERZ MEHR':'HERZEN AUFGEFÜLLT',desc:player.maxHp>before?`Dein Lebensmaximum steigt von ${before} auf ${player.maxHp}. Ein fehlendes Herz wurde ebenfalls geheilt.`:`Du hast bereits ${BALANCE.maxHearts} maximale Herzen. Der Fund heilt stattdessen bis zu drei fehlende Herzen.`,icon:'health',kind:'WÄCHTERBELOHNUNG'});};
   const shopDiscovery28=buyWorldOffer;
   buyWorldOffer=function(p,i){const o=p.offers?.[i],before=!!o?.bought;const r=shopDiscovery28(p,i);if(o&&!before&&o.bought&&o.stat){statDiscovery28(o.stat,'GEKAUFT · HIGH SCORE BLEIBT ERHALTEN');showDiscovery28();}return r;};
   const pileDiscovery28=chooseWorldPile;
@@ -8763,7 +8763,7 @@
 
   // Stambouli Edition: more room to grow, with predictable ten-stage shop paths.
   Object.assign(BALANCE,{maxDamage:21,maxSpeed:465,minInterval:.105,minDash:.88,
-    maxHearts:34,maxAmmoBonus:10,maxPowerLuck:3.6});
+    maxHearts:35,maxAmmoBonus:10,maxPowerLuck:3.6});
   const STAT_CAPS32={dodgeChance:.34,damageGuard:.39,crit:.54,specialDamage:7,
     bossDamage:2.8,rabbitDamage:1.95,ammoDropLuck:3.5,powerDuration:1.9,
     pierce:9,magnet:480};
@@ -9248,7 +9248,7 @@
   };
 
   // Edition 32: a deliberately small atlas vocabulary and a persistent route target.
-  const mapKinds32=new Set(['building','permanent','cache','quest28']);
+  const mapKinds32=new Set(['building','permanent','cache','quest28','guardian']);
   const mapPoi32=p=>Boolean(p&&mapKinds32.has(p.kind)&&(!p.done||p.kind==='building'||p.kind==='quest28'));
   const visibleMapPois32=()=>exploration?.pois.filter(mapPoi32)||[];
   const originalLandmark32=landmarkName27;
@@ -9307,7 +9307,7 @@
     const canvas=$('worldMapCanvas'),nav=$('overlayContent')?.querySelector('.map-destinations27');
     canvas?.setAttribute('aria-label','Weltkarte. Tippe auf ein Symbol, um das Ziel zu verfolgen. Erneut tippen entfernt die Markierung.');
     const legend=$('overlayContent')?.querySelector('.map-legend');
-    if(legend)legend.innerHTML='<span class="map-house">GEBÄUDE</span><span class="map-power">PERMANENTES UPGRADE</span><span class="map-cache">NUSSTRUHE</span><span>! QUESTGEBERIN</span><span class="map-player">DU · WEISSER PFEIL</span><span>Fundort antippen: Richtung im Spiel verfolgen · erneutes Tippen: Ziel löschen</span>';
+    if(legend)legend.innerHTML='<span class="map-house">GEBÄUDE</span><span class="map-power">PERMANENTES UPGRADE</span><span class="map-cache">NUSSTRUHE</span><span class="map-boss">MINIBOSS</span><span>! QUESTGEBERIN</span><span class="map-player">DU · WEISSER PFEIL</span><span>Fundort antippen: Richtung im Spiel verfolgen · erneutes Tippen: Ziel löschen</span>';
     if(nav){let n=0;for(const button of nav.querySelectorAll('[data-map-poi]')){
       const p=exploration.pois.find(q=>q.id===button.dataset.mapPoi);
       if(!mapPoi32(p)){button.remove();continue;}
@@ -9420,6 +9420,172 @@
     <article><b>Shop und Fortschritt</b><p>Kaufe dauerhafte Verbesserungen mit deinem Run-Guthaben. Fähigkeiten, Skins und Spielmodi schaltest du durch Spielen frei.</p></article>
     </div></section>`;};
 
+  // Edition 33: bounded discoveries and separate outdoor/indoor miniboss pools.
+  const MAP_BOSSES33=Object.keys(MINI_BOSSES31),HOUSE_BOSSES33=Object.keys(worldGuardians);
+  const mapBossPool33=()=>MAP_BOSSES33.filter(id=>MINI_BOSSES31[id].tier<=(impossibleMode?2:hardMode?1:0));
+  function normalizeMap33(map){
+    if(!map||map.rules33===2||map.arena||map.testArena28)return map;
+    const random=worldRandom((map.seed^0x33a7b1d)>>>0);
+    const limits={building:5,permanent:2,cache:5,guardian:2,quest28:1};
+    const counts={building:3,permanent:1,cache:1,guardian:1,quest28:1};
+    // Recover missing candidates when upgrading a saved Edition-33 map. Saved
+    // objects win over templates: claimed rewards and shop purchases stay spent.
+    const candidates=new Map((map.retiredPois33||[]).map(p=>[p.id,p]));
+    if(map.rules33)for(const p of createMapBefore33(map.seed,map.biome,map.epoch).pois)if(limits[p.kind]&&!candidates.has(p.id))candidates.set(p.id,p);
+    for(const p of map.pois)if(limits[p.kind])candidates.set(p.id,p);
+    const groups=Object.fromEntries(Object.keys(limits).map(k=>[k,[]]));
+    for(const p of candidates.values())groups[p.kind].push(p);
+    const priority=p=>p.id===map.room?.id||p.id===map.interior||p.hp>0?100:p.reward33&&!p.rewardClaimed33?80:p.visited||p.done?20:p.id==='building0'?10:0;
+    for(let total=7;total<10;total++){
+      let eligible=Object.keys(counts).filter(k=>counts[k]<Math.min(limits[k],groups[k].length));
+      const used=eligible.filter(k=>groups[k].filter(p=>priority(p)>=20).length>counts[k]);
+      if(used.length)eligible=used;
+      if(!eligible.length)throw new Error('Karte enthält zu wenige POI-Kandidaten');
+      counts[eligible[Math.floor(random()*eligible.length)]]++;
+    }
+    const keep=new Set();
+    for(const [kind,limit]of Object.entries(counts)){
+      const list=groups[kind].map(p=>({p,tie:random()})).sort((a,b)=>priority(b.p)-priority(a.p)||a.tie-b.tie).map(row=>row.p);
+      const chosen=list.slice(0,limit);
+      const shop=list.find(p=>p.id==='building0');
+      if(kind==='building'&&shop&&!chosen.includes(shop)&&priority(chosen.at(-1))<20)chosen[chosen.length-1]=shop;
+      for(const p of chosen)keep.add(p);
+    }
+    map.retiredPois33=[...candidates.values()].filter(p=>!keep.has(p));
+    map.pois=[...map.pois.filter(p=>!groups[p.kind]),...keep];
+    const pool=mapBossPool33();
+    for(const p of map.pois)if(p.kind==='guardian'&&!p.done&&!(p.hp>0)){
+      p.guardian=pool[Math.floor(random()*pool.length)];p.mapBoss33=true;p.hp=null;p.active=false;
+    }
+    map.rules33=2;return map;
+  }
+  const createMapBefore33=createExploration;
+  createExploration=function(...args){return normalizeMap33(createMapBefore33(...args));};
+  const geometryBefore33=rebuildWorldGeometry;
+  rebuildWorldGeometry=function(...args){if(exploration)normalizeMap33(exploration);return geometryBefore33(...args);};
+
+  // Indoor guards retain their permanent-heart reward. Only outdoor guards use
+  // the larger encounter pool; a saved guard already in combat keeps its HP.
+  const spawnGuardianBefore33=spawnWorldGuardian;
+  spawnWorldGuardian=function(p,indoor=false){
+    if(indoor||!p.mapBoss33||!MINI_BOSSES31[p.guardian])return spawnGuardianBefore33(p,indoor);
+    const previousLast=lastMiniWave,e=spawnWaveMini(p.guardian);lastMiniWave=previousLast;
+    if(!e)return null;
+    Object.assign(e,freeWorldPoint(p.x,p.y,e.r+3));
+    e.worldPoi=p.id;e.mapBoss33=true;e.worldGuardian=false;e.worldIndoor=false;
+    e.hp=p.hp||e.hp;e.maxHp=Math.max(e.maxHp,e.hp);e.spawnGrace=1.1;
+    p.active=true;announce('KARTEN-MINIBOSS · BEUTE NACH DEM KAMPF',miniBossBook[p.guardian].name);
+    return e;
+  };
+  function bossRewardOptions33(){
+    const available=availableRewards(false);
+    return {
+      nuts:true,
+      stat:Object.keys(scoreSkillBook).some(id=>id!=='shuffle'&&scorePerkAvailable(id)),
+      upgrade:available.some(c=>c.requires&&player.skills[c.requires]),
+      weapon:available.some(c=>c.weapon&&!player.weapons.includes(c.weapon)),
+      skill:available.some(c=>!c.special&&!c.weapon&&!c.requires&&!player.skills[c.id])
+    };
+  }
+  function chooseBossReward33(p){
+    const random=worldRandom((exploration.seed^Math.imul(p.id.length+Math.floor(p.x),0x9e3779b1)^Math.floor(p.y))>>>0);
+    const choices=[['nuts',45],['stat',27],['upgrade',15],['weapon',8],['skill',5]].filter(([key])=>bossRewardOptions33()[key]);
+    const sum=choices.reduce((n,item)=>n+item[1],0);let roll=random()*sum;
+    for(const [kind,weight]of choices){roll-=weight;if(roll<0)return kind;}return 'nuts';
+  }
+  function ensureMapLoot33(){
+    if(!worldOutside())return;
+    for(const p of exploration.pois)if(p.mapBoss33&&p.done&&p.reward33&&!p.rewardClaimed33&&!pickups.some(d=>d.mapMiniLoot33===p.id)){
+      const q=freeWorldPoint(p.lootX33??p.x,p.lootY33??p.y,24);
+      pickups.push({x:q.x,y:q.y,type:'mapLoot33',phase:0,life:Infinity,mapMiniLoot33:p.id});
+    }
+  }
+  const updateWorldBefore33=updateWorld;
+  updateWorld=function(dt){updateWorldBefore33(dt);if(mode==='playing')ensureMapLoot33();};
+  const damageBeforeMap33=damageEnemy;
+  damageEnemy=function(e,...args){
+    const alive=e&&!e.dead,mapBoss=alive&&e.mapBoss33,start=pickups.length;
+    const ammoBefore=mapBoss?{drops:player.ammoDropsThisWave,dry:player.ammoDryKills,last:player.lastAmmoDrop}:null;
+    const result=damageBeforeMap33(e,...args);
+    if(mapBoss&&e.dead&&exploration){
+      // A miniboss normally creates three temporary boosts and sometimes ammo.
+      // The map contract replaces all its death drops with one persistent cache.
+      pickups.splice(start);
+      player.ammoDropsThisWave=ammoBefore.drops;player.ammoDryKills=ammoBefore.dry;
+      if(ammoBefore.last===undefined)delete player.lastAmmoDrop;else player.lastAmmoDrop=ammoBefore.last;
+      const p=exploration.pois.find(q=>q.id===e.worldPoi);
+      if(p){p.done=true;p.active=false;p.hp=0;p.lootX33=e.x;p.lootY33=e.y;p.reward33=chooseBossReward33(p);p.rewardClaimed33=false;ensureMapLoot33();saveRunNow();}
+      floater(e.x,e.y-64,'BEUTE GEFUNDEN','#f7dc97');
+    }
+    return result;
+  };
+  function collectMapMiniLoot33(drop){
+    const p=exploration?.pois.find(q=>q.id===drop.mapMiniLoot33);
+    drop.life=0;if(!p||p.rewardClaimed33)return;
+    p.rewardClaimed33=true;
+    const possible=bossRewardOptions33(),kind=possible[p.reward33]?p.reward33:'nuts';
+    let title;
+    if(kind==='nuts'){
+      const amount=Math.round((900+Math.min(200,wave)*105)*(1+Math.min(2,gamePlusLevel)*.65)*runScoreMultiplier());
+      score+=amount;title='+'+amount.toLocaleString('de-DE')+' NÜSSE';
+    }else title=permanentReward({stat:0,upgrade:1,skill:2,weapon:3}[kind]);
+    setAchievementProgress('score_hog',score);
+    floater(player.x,player.y-48,title,'#f9d993');toast('MINIBOSS-BEUTE · '+title);
+    burst(player.x,player.y,'#edca87',23,155);victoryFanfare();updateHud();updateSkills();saveRunNow();
+  }
+  const sweepBeforeMap33=claimSweepPickup27;
+  claimSweepPickup27=function(p){
+    if(!p.mapMiniLoot33)return sweepBeforeMap33(p);
+    if(p.sweepTaken27||!p.victoryFlight27)return;
+    p.sweepTaken27=true;collectMapMiniLoot33(p);player.sweepCount27=(player.sweepCount27||0)+1;
+  };
+  // Legacy wave encounters remain available in the test arena. In a regular
+  // outdoor run the miniboss icons correspond to actual map encounters.
+  const planBeforeMap33=planMiniBoss;
+  planMiniBoss=function(w){return worldOutside()?null:planBeforeMap33(w);};
+
+  // Eight local rabbit/pig variants use the existing telegraphed attack engine.
+  const RABBITS_PIGS33={
+    hedgeCourier33:{name:'HECKENKURIER',biome:'garden',species:'rabbit',stats:[5.1,105,22,170],color:'#a2ca86',attack:'charge',rushSpeed:270,stop:80,note:'Trägt eine Blattposttasche; erst raschelt das Laub, dann sprintet er auf einer markierten Geraden.'},
+    drainPlumber33:{name:'ROHRFERKEL',biome:'sewer',species:'pig',stats:[6.2,74,26,180],color:'#9fc6bb',attack:'mark',radius:37,stop:214,note:'Mit Kupferhelm und Schraubenschlüssel; ein kleiner Gullykreis warnt vor seinem Druckstoß.'},
+    pastryHare33:{name:'TEIGLÖFFEL',biome:'kitchen',species:'rabbit',stats:[4.8,91,20,165],color:'#eac89e',attack:'fan',shots:3,spread:.38,shotSpeed:158,stop:243,note:'Trägt eine Bäckermütze und verschießt drei langsame Teigflocken mit Zwischenräumen.'},
+    quarryBoar33:{name:'SCHOTTERKEILER',biome:'quarry',species:'pig',stats:[8.2,69,29,205],color:'#b8a68d',attack:'charge',rushSpeed:260,stop:83,note:'Ein gepanzerter Steinbruchkeiler kündigt seinen geraden Ansturm mit einer staubigen Spur an.'},
+    circuitHare33:{name:'KABELHASE',biome:'lab',species:'rabbit',stats:[5.2,104,21,180],color:'#94d8d3',attack:'single',shotSpeed:180,stop:264,note:'Leuchtende Spule auf dem Rücken; sein einzelner Funke lädt gut sichtbar auf.'},
+    reedPig33:{name:'SCHILFFERKEL',biome:'swamp',species:'pig',stats:[6.5,80,25,188],color:'#b3bd8b',attack:'ring',shots:8,shotSpeed:150,stop:227,note:'Ein schilfgeschmücktes Ferkel sendet einen langsamen Moorring mit offener Fluchtlücke.'},
+    orbitHare33:{name:'ORBITLÖFFEL',biome:'astral',species:'rabbit',stats:[5.5,100,21,185],color:'#c5aee7',attack:'blink',shots:6,shotSpeed:156,stop:236,note:'Sternenkranz über den Ohren; kündigt den Sprung an und verschießt einen Ring mit Ausweichfenster.'},
+    applausePig33:{name:'APPLAUSSAU',biome:'stage',species:'pig',stats:[5.8,86,24,184],color:'#e5aeaa',attack:'scatter',shots:3,spread:.42,shotSpeed:162,stop:240,note:'Glitzerfrack und goldene Schellen; nach einer Verbeugung fliegen drei hörbare Klangscheiben.'}
+  };
+  for(const [id,c]of Object.entries(RABBITS_PIGS33)){
+    ENEMIES32[id]={...c,tier:0};ENEMY32_BY_BIOME[c.biome].push(id);
+    extraEnemyBook[id]={...ENEMIES32[id],icon:'!',unlock:c.biome+' · Normal'};
+  }
+  const specialBefore33=hordeSpecial24;
+  hordeSpecial24=function(){
+    const biome=biome25(),row=Object.keys(RABBITS_PIGS33).find(id=>RABBITS_PIGS33[id].biome===biome);
+    if(row&&Math.random()<.27&&enemies.filter(e=>!e.dead&&e.type===row).length<3)return row;
+    return specialBefore33();
+  };
+
+  // Animation follows simulation time. Pauses freeze the windup/release too;
+  // walking frames alone must never decide when an attack appears to fire.
+  const animateEnemyBefore33=updateExtraEnemy;
+  updateExtraEnemy=function(e,dt){
+    if(!RABBITS_PIGS33[e.type])return animateEnemyBefore33(e,dt);
+    const windup=e.windup||0,x=e.x,y=e.y;
+    e.release33=Math.max(0,(e.release33||0)-dt);
+    const result=animateEnemyBefore33(e,dt);
+    if(windup<=0&&e.windup>0)e.windupDuration33=e.windup;
+    if(windup>0&&e.windup<=0){e.release33=1.03;e.releaseX33=x;e.releaseY33=y;}
+    return result;
+  };
+  function enemyPose33(e,moving){
+    if(!RABBITS_PIGS33[e.type])return null;
+    if(e.windup>0)return{pose:'windup',frame:e.windup/(e.windupDuration33||.83)>.48?0:1};
+    if(e.charge32>0)return{pose:'attack',frame:2};
+    if(e.release33>0&&e.rest32>0)return{pose:'attack',frame:e.rest32>.39?2:3};
+    return{pose:e.hit>0?'hurt':moving.speed>3?'walk':'idle',frame:moving.speed>3?Math.floor(moving.phase*1.65)%4:0};
+  }
+
   // PIXELWERK_WORLD_END
   // PIXELWERK_INTEGRATION_BEGIN · installed by tools/build_pixel_edition.py
   function installPixelEdition(){
@@ -9454,9 +9620,10 @@
     drawSkin=()=>{}; // Outfits are authored inside each hero sprite, including the dance.
     function enemyId(e){if(e.pafti)return 'pafti';if(e.knoll)return 'knoll';if(e.troll)return 'bergTroll';if(e.miniKind)return e.miniKind;if(e.hardType)return e.hardType;if(e.endlessBoss)return ({general:'hasenbein',cyber:'cyberHasenbein'})[e.endlessKind]||e.endlessKind;if(e.ottah)return 'ottah';if(e.karnil)return 'karnil';if(e.cyber||e.cyberMini)return 'cyberHasenbein';if(e.type==='boss')return 'hasenbein';return e.type;}
     drawRabbit=function(e){if(!e||e.dead)return;const id=enemyId(e),large=e.type==='boss'||e.pafti||e.endlessBoss,mid=e.miniKind||e.troll||e.type==='zombieBoss';const size=large?(id==='karnil'?182:id==='ottah'?164:154):mid?118:e.type==='brute'||e.type==='pigJuggernaut'?104:86;
-      const moving=motionOf(e),pose=e.hit>0?'hurt':id==='hasenbein'&&e.windup>0?'windup':e.charge>0?'dash':e.windup>0||e.attack25>0||e.attackPulse26>0||e.burstLeft>0||e.fireCd<.2?'attack':moving.speed>3?'walk':'idle',f=Math.floor(moving.phase)%(id==='hasenbein'?8:4);
+      const moving=motionOf(e),animation33=enemyPose33(e,moving),pose=animation33?.pose||(e.hit>0?'hurt':id==='hasenbein'&&e.windup>0?'windup':e.charge>0?'dash':e.windup>0||e.attack25>0||e.attackPulse26>0||e.burstLeft>0||e.fireCd<.2?'attack':moving.speed>3?'walk':'idle'),f=animation33?.frame??Math.floor(moving.phase)%(id==='hasenbein'?8:4);
       drawMiniWarning31(e);
-      art.draw(ctx,art.enemy(e.spriteKey31||id,f,pose,hardMode&&!e.hasenbeinAlly),e.x,e.y,size,.73,e.hasenbeinControlled?e.face<0:Boolean(player&&player.x<e.x),e.spawnGrace>0?.7:1);
+      const facing33=animation33&&(pose==='windup'||pose==='attack')&&Number.isFinite(e.aim32)?Math.cos(e.aim32)<0:Boolean(player&&player.x<e.x);
+      art.draw(ctx,art.enemy(e.spriteKey31||id,f,pose,hardMode&&!e.hasenbeinAlly),e.x,e.y,size,.73,e.hasenbeinControlled?e.face<0:facing33,e.spawnGrace>0?.7:1);
       if(e.slow>0)pixelRing(e.x,e.y+12,e.r+5,'#9bcbd8',3,.7);
       if(e.shieldTime>0)pixelRing(e.x,e.y,e.r+8,'#afdcdf',4,.8);
       if(e.hp<e.maxHp&&!large)drawPixelHpBar(e.x,e.y-size*.76,mid?58:38,e.hp/e.maxHp,hardMode?'#cf8888':'#b5c696');
@@ -10587,6 +10754,88 @@
     if(chapter32)chapter32.textContent='STAMBOULI EDITION';
     const menuVersion32=document.querySelector('.menu-version-tag');
     if(menuVersion32)menuVersion32.textContent='STAMBOULI EDITION';
+
+    // Map-boss loot uses its own authored chest. Route placement follows the
+    // actual wave panel, including the compact mobile HUD.
+    const drawPickupBefore33=drawPickup;
+    drawPickup=function(p){if(!p.mapMiniLoot33)return drawPickupBefore33(p);
+      const y=p.y+(reducedMotion?0:Math.sin(p.phase)*4);ctx.save();pixelRing(p.x,y,26,'#f0d68f',2,.8);
+      art.draw(ctx,art.world('nut-chest'),p.x,y,50,.72);ctx.restore();};
+    const renderRouteBefore33=render,guide33=$('poiGuide32'),wave33=$('hud')?.querySelector('.wave-panel'),boss33=$('bossHud');
+    function placeNotices33(){
+      const notices=[$('achievementHud'),$('skinUnlockNotice32')].filter(n=>n&&!n.classList.contains('hidden'));
+      if(!notices.length)return;
+      const root=shell.getBoundingClientRect(),health=$('hud')?.querySelector('.health-panel')?.getBoundingClientRect();
+      if(!health)return;
+      const left=Math.max(8,health.left-root.left),map=$('miniMap27');
+      const mapLeft=map&&!map.classList.contains('hidden')?map.getBoundingClientRect().left-root.left:root.width;
+      const width=Math.max(140,Math.min(280,health.width+30,mapLeft-left-10,root.width-left-12));
+      let top=health.bottom-root.top+8;
+      const blockers=[wave33,boss33,$('waveMiniBar'),$('hasenbeinHud'),$('questHud28'),guide33].filter(n=>n&&!n.classList.contains('hidden')).map(n=>n.getBoundingClientRect()).filter(b=>b.width>0&&b.left<root.left+left+width&&b.right>root.left+left).sort((a,b)=>a.top-b.top);
+      for(const notice of notices){
+        notice.style.left=left+'px';notice.style.width=width+'px';
+        const height=notice.getBoundingClientRect().height;
+        for(const b of blockers)if(b.top<root.top+top+height&&b.bottom>root.top+top)top=b.bottom-root.top+8;
+        notice.style.top=top+'px';top+=height+8;
+      }
+    }
+    render=function(dt){renderRouteBefore33(dt);
+      const mini=$('waveMiniBar')?.querySelector('small'),enemy=enemies.find(e=>e.miniBoss&&!e.dead);
+      if(mini)mini.textContent=enemy?.mapBoss33?'MINIBOSS · KARTENBEUTE':'MINIBOSS · 3 POWER-UPS';
+      if(!guide33||guide33.classList.contains('hidden')||!wave33){placeNotices33();return;}
+      const root=shell.getBoundingClientRect(),bar=wave33.getBoundingClientRect();
+      let top=bar.bottom-root.top+9;
+      if(boss33&&!boss33.classList.contains('hidden')){const b=boss33.getBoundingClientRect();if(b.top<top+30+root.top)top=b.bottom-root.top+7;}
+      guide33.style.left=(bar.left-root.left+bar.width/2)+'px';guide33.style.top=top+'px';
+      placeNotices33();
+    };
+
+    // Per-creature release effects share the combat clock and actual targets.
+    const creatureDrawBefore33=drawRabbit;
+    drawRabbit=function(e){
+      creatureDrawBefore33(e);
+      if(!e||e.dead||!RABBITS_PIGS33[e.type]||worldOutside()&&!worldVisible(e,240))return;
+      const c=RABBITS_PIGS33[e.type],active=e.windup>0||e.release33>0;
+      if(!active)return;
+      const a=e.aim32||0,age=1.03-(e.release33||0),charging=e.windup>0;
+      ctx.save();ctx.lineWidth=2;ctx.strokeStyle=c.color;ctx.fillStyle=c.color;
+      if(e.type==='drainPlumber33'){
+        if(!charging&&age>=.70){const r=(age-.70)/.33*c.radius;pixelRing(e.targetX32,e.targetY32,r,'#8be0ec',3,1-(age-.7)/.4);
+          for(let i=0;i<6;i++){const t=i*TAU/6;pixelLine(e.targetX32+Math.cos(t)*r,e.targetY32+Math.sin(t)*r,e.targetX32+Math.cos(t)*r*.7,e.targetY32+Math.sin(t)*r*.7-12,'#b6edf2',2,.9);}}
+      }else if(e.type==='hedgeCourier33'||e.type==='quarryBoar33'){
+        if(e.charge32>0){for(let i=0;i<5;i++){const d=12+i*9,t=a+Math.PI+(i%2?-.17:.17);ctx.globalAlpha=(1-i/6)*.7;ctx.fillStyle=e.type==='hedgeCourier33'?'#a6c36e':'#bfa182';ctx.fillRect(Math.round(e.x+Math.cos(t)*d),Math.round(e.y+Math.sin(t)*d+12),e.type==='hedgeCourier33'?7:4,3);}}
+      }else if(e.type==='orbitHare33'){
+        const x=charging?e.x:e.releaseX33,y=charging?e.y:e.releaseY33;
+        pixelRing(x,y,charging?24+Math.sin(ambientTime*9)*4:20+age*38,'#d1b2ee',2,charging?.6:Math.max(0,.8-age));
+      }else if(e.type==='circuitHare33'&&charging){
+        const x=e.x+Math.cos(a)*29,y=e.y-22;ctx.strokeStyle='#adfff1';ctx.beginPath();
+        for(let i=0;i<5;i++){const px=x+i*4,py=y-12+(i%2?8:-4);i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.stroke();
+      }else if(e.type==='reedPig33'&&!charging&&age<.4){
+        pixelRing(e.x,e.y,22+age*70,'#c6d58c',2,1-age/.4);
+      }else if(e.type==='applausePig33'&&!charging&&age<.4){
+        ctx.strokeStyle='#f6d887';for(let i=0;i<2;i++){ctx.globalAlpha=1-age/.4;ctx.beginPath();ctx.arc(e.x,e.y-15,13+age*65+i*8,a-.7,a+.7);ctx.stroke();}
+      }
+      ctx.restore();
+    };
+    drawExtraEnemy=drawRabbit;drawContentEnemy=drawRabbit;drawNewBoss=drawRabbit;drawPaftiBoss=drawRabbit;
+    const shotBefore33=drawPixelEnemyProjectile;
+    drawPixelEnemyProjectile=function(b){
+      const id=String(b.tag||'').slice(8);
+      if(!String(b.tag||'').startsWith('burst32:')||!RABBITS_PIGS33[id])return shotBefore33(b);
+      ctx.save();ctx.translate(Math.round(b.x),Math.round(b.y));ctx.rotate(b.a||0);ctx.lineWidth=2;
+      if(id==='circuitHare33'){
+        ctx.strokeStyle='#154854';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-13,0);ctx.lineTo(-4,-4);ctx.lineTo(-1,4);ctx.lineTo(11,0);ctx.stroke();ctx.strokeStyle='#a8fff0';ctx.lineWidth=2;ctx.stroke();
+      }else if(id==='orbitHare33'){
+        ctx.rotate(ambientTime*5);ctx.strokeStyle='#f9e0a2';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,8,-1.2,1.2);ctx.stroke();ctx.fillStyle='#dcbeff';ctx.fillRect(-4,-2,4,4);
+      }else if(id==='reedPig33'){
+        ctx.fillStyle='#8aaf5d';ctx.beginPath();ctx.ellipse(0,0,8,4,0,0,TAU);ctx.fill();ctx.fillStyle='#e6ed9c';ctx.fillRect(1,-2,4,3);ctx.strokeStyle='#a5c970';ctx.beginPath();ctx.moveTo(-6,0);ctx.lineTo(-14,-3);ctx.stroke();
+      }else if(id==='applausePig33'){
+        ctx.strokeStyle='#f5cc76';ctx.beginPath();ctx.arc(-3,0,9,-.9,.9);ctx.stroke();ctx.beginPath();ctx.arc(-3,0,14,-.8,.8);ctx.stroke();ctx.fillStyle='#fff0b3';ctx.fillRect(-4,-2,4,4);
+      }else if(id==='pastryHare33'){
+        ctx.rotate(ambientTime*4);art.draw(ctx,art.companion('creamPuff',0),0,0,23,.5);
+      }
+      ctx.restore();return true;
+    };
 
     // Fixed source grid makes pixel density independent of HiDPI display resolution.
     makeGround();
